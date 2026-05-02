@@ -1,0 +1,83 @@
+.sidebar {
+  width: var(--sidebar-width);
+  height: 100vh;
+  background: var(--bg-base);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.brandRow {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+}
+
+.brand {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: var(--font-size-heading);
+  line-height: var(--line-height-heading);
+  letter-spacing: var(--ls-heading);
+  color: var(--text-primary);
+}
+
+.brandActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+}
+
+.workspace {
+  display: flex;
+  flex-direction: column;
+}
+
+.workspaceHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 8px 4px;
+}
+
+.workspaceLabel {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--ls-body);
+  color: var(--text-tertiary);
+}
+
+.workspaceChevron {
+  color: var(--text-tertiary);
+  width: 10px;
+  height: 10px;
+}
+
+.footer {
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+}
+
+.version {
+  font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+  font-weight: 400;
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+  letter-spacing: var(--ls-caption);
+  color: var(--text-disabled);
+}

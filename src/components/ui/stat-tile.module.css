@@ -1,0 +1,56 @@
+.tile {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 120px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.numberRow {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.value {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: var(--font-size-stat-num);
+  line-height: var(--line-height-stat-num);
+  letter-spacing: var(--ls-stat);
+  color: var(--text-primary);
+}
+
+.unit {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: var(--font-size-stat-unit);
+  line-height: var(--line-height-heading);
+  letter-spacing: var(--ls-stat);
+  color: var(--text-primary);
+}
+
+.label {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--ls-body);
+  color: var(--text-secondary);
+}

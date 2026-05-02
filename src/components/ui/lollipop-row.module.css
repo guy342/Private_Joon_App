@@ -1,0 +1,67 @@
+.row {
+  display: grid;
+  grid-template-columns: 120px 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.label {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--ls-body);
+  color: var(--text-secondary);
+  width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track {
+  position: relative;
+  height: 14px;
+}
+
+.track::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--border);
+  transform: translateY(-50%);
+}
+
+.fill {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 1.5px;
+  width: var(--lollipop-pct, 0%);
+  background: var(--text-secondary);
+  transform: translateY(-50%);
+}
+
+.dot {
+  position: absolute;
+  top: 50%;
+  left: var(--lollipop-pct, 0%);
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--text-primary);
+  transform: translate(-50%, -50%);
+}
+
+.value {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--ls-body);
+  color: var(--text-primary);
+  text-align: right;
+  min-width: 32px;
+}

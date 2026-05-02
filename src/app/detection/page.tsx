@@ -1,0 +1,2000 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import {
+  Activity,
+  ArrowUpRight,
+  Calendar,
+  ChevronDown,
+  ChevronRight,
+  Database,
+  HeartPulse,
+  Maximize2,
+  PanelLeftClose,
+  Plus,
+  RefreshCw,
+  Search,
+  Settings,
+  ShieldCheck,
+  Signal,
+  Timer,
+  User,
+} from "lucide-react";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type IconComponent = React.ComponentType<{
+  size?: number;
+  strokeWidth?: number;
+  color?: string;
+  style?: React.CSSProperties;
+}>;
+
+interface WorkloadChild {
+  id: string;
+  name: string;
+  status: string;
+  time: string;
+}
+
+interface WorkloadGroup {
+  label: string;
+  count: string;
+  expanded?: boolean;
+  runningBadge?: string;
+  children?: WorkloadChild[];
+}
+
+// ─── Static data ──────────────────────────────────────────────────────────────
+
+const WORKLOAD_GROUPS: WorkloadGroup[] = [
+  {
+    label: "Closing Coverage Gaps",
+    count: "3 items",
+    expanded: true,
+    runningBadge: "3 Running",
+    children: [
+      { id: "DET--730", name: "Detection WN-730", status: "Validating", time: "1h 36min" },
+      { id: "DET--715", name: "Detection WN-715", status: "Rule_generation", time: "1h 36min" },
+      { id: "DET--714", name: "Detection WN-714", status: "Rule_generation", time: "1h 36min" },
+    ],
+  },
+  {
+    label: "Improving Detection Quality",
+    count: "3 items",
+    runningBadge: "3 Running",
+    children: [
+      { id: "DET--712", name: "Detection WN-712", status: "Validating", time: "1h 36min" },
+      { id: "DET--711", name: "Detection WN-711", status: "Rule_generation", time: "1h 36min" },
+      { id: "DET--710", name: "Detection WN-710", status: "Validating", time: "1h 36min" },
+    ],
+  },
+  {
+    label: "Protecting Critical Assets",
+    count: "3 items",
+    runningBadge: "3 Running",
+    children: [
+      { id: "DET--708", name: "Detection WN-708", status: "Rule_generation", time: "1h 36min" },
+      { id: "DET--707", name: "Detection WN-707", status: "Validating", time: "1h 36min" },
+      { id: "DET--706", name: "Detection WN-706", status: "Rule_generation", time: "1h 36min" },
+    ],
+  },
+  {
+    label: "Building Baseline Coverage",
+    count: "3 items",
+    runningBadge: "3 Running",
+    children: [
+      { id: "DET--703", name: "Detection WN-703", status: "Validating", time: "1h 36min" },
+      { id: "DET--702", name: "Detection WN-702", status: "Validating", time: "1h 36min" },
+      { id: "DET--701", name: "Detection WN-701", status: "Rule_generation", time: "1h 36min" },
+    ],
+  },
+  {
+    label: "Improving Detection Quality",
+    count: "3 items",
+    runningBadge: "3 Running",
+    children: [
+      { id: "DET--699", name: "Detection WN-699", status: "Rule_generation", time: "1h 36min" },
+      { id: "DET--698", name: "Detection WN-698", status: "Validating", time: "1h 36min" },
+      { id: "DET--697", name: "Detection WN-697", status: "Rule_generation", time: "1h 36min" },
+    ],
+  },
+  {
+    label: "Responding to Threats",
+    count: "3 items",
+    runningBadge: "3 Running",
+    children: [
+      { id: "DET--695", name: "Detection WN-695", status: "Validating", time: "1h 36min" },
+      { id: "DET--694", name: "Detection WN-694", status: "Rule_generation", time: "1h 36min" },
+      { id: "DET--693", name: "Detection WN-693", status: "Validating", time: "1h 36min" },
+    ],
+  },
+  {
+    label: "Protecting Critical Assets",
+    count: "3 items",
+    runningBadge: "3 Running",
+    children: [
+      { id: "DET--691", name: "Detection WN-691", status: "Rule_generation", time: "1h 36min" },
+      { id: "DET--690", name: "Detection WN-690", status: "Validating", time: "1h 36min" },
+      { id: "DET--689", name: "Detection WN-689", status: "Rule_generation", time: "1h 36min" },
+    ],
+  },
+];
+
+const PROPOSAL_DRIVERS = [
+  { label: "Coverage Gap",       value: 210, max: 220 },
+  { label: "Baseline Coverage",  value: 180, max: 220 },
+  { label: "Threat",             value: 95,  max: 220 },
+  { label: "Exposure",           value: 72,  max: 220 },
+  { label: "Detection Quality",  value: 48,  max: 220 },
+  { label: "Platform",           value: 35,  max: 220 },
+  { label: "Critical Asset",     value: 22,  max: 220 },
+];
+
+const TEAMWORK_ITEMS = [
+  {
+    title: "Reported on 50 hunting hits for Invistigation rule",
+    meta: "From Helen To Sean",
+    fromAvatar: "/Avatar_Helen.png",
+    toAvatar: "/Avatar_Sean.png",
+  },
+  {
+    title: "Reported on 92 hunting hits for Hunting rule",
+    meta: "From Valery To Sean",
+    fromAvatar: "/Avatar_Valery.png",
+    toAvatar: "/Avatar_Sean.png",
+  },
+];
+
+const LAST_COVERED = [
+  { name: "Brute Force Authentication Atte...", date: "Mar 1" },
+  { name: "Suspicious PowerShell Execution",   date: "Mar 5" },
+  { name: "Anomalous Service Account Acti...",  date: "Mar 10" },
+  { name: "Suspicious PowerShell Execution",   date: "Mar 5" },
+  { name: "MFA Fatigue Attack Detection",       date: "Mar 15" },
+];
+
+const HEATMAP: number[][] = [
+  [100, 100,  50,  25, 100, 100,  25,  50, 100,  25, 100,  50,  25,  10],
+  [100,  50, 100,  50,  25, 100,  25, 100,  25,  50, 100, 100,  50, 100],
+  [ 50,  25, 100, 100, 100,  25, 100,  50,  25, 100,  25,  50, 100,  25],
+  [ 25, 100,  50, 100,  25, 100,  50,  25, 100,  50, 100,  25, 100,  50],
+  [100,  25, 100,  25,  50, 100,  25, 100,  50,  25, 100,  50, 100,  25],
+  [ 50, 100,  25, 100,  50,  25, 100,  50, 100,  25,  50, 100,  25, 100],
+  [100,  50, 100,  50, 100,  50,  25, 100,  50, 100,  25,  50, 100,  50],
+];
+
+function heatColor(pct: number): string {
+  if (pct >= 90) return "#07d582";
+  if (pct >= 50) return "rgba(7,213,130,0.5)";
+  if (pct >= 25) return "rgba(7,213,130,0.25)";
+  if (pct > 0)   return "rgba(7,213,130,0.10)";
+  return "#1e2026";
+}
+
+// ─── Shared style fragments ───────────────────────────────────────────────────
+
+const FONT_INTER = "var(--font-inter), 'Inter', sans-serif";
+const FONT_MONO = "var(--font-jetbrains-mono), 'JetBrains Mono', monospace";
+
+const T_HEADING: React.CSSProperties = {
+  fontFamily: FONT_INTER, fontWeight: 500, fontSize: 18, lineHeight: "24px", color: "#f2f4f7",
+};
+const T_BODY: React.CSSProperties = {
+  fontFamily: FONT_INTER, fontWeight: 400, fontSize: 12, lineHeight: "18px", letterSpacing: "-0.2px",
+};
+const T_BODY_MED: React.CSSProperties = {
+  fontFamily: FONT_INTER, fontWeight: 500, fontSize: 12, lineHeight: "18px", letterSpacing: "-0.2px",
+};
+const T_BODY_SEMI: React.CSSProperties = {
+  fontFamily: FONT_INTER, fontWeight: 600, fontSize: 12, lineHeight: "18px", letterSpacing: "-0.2px",
+};
+const T_CAPTION: React.CSSProperties = {
+  fontFamily: FONT_INTER, fontWeight: 400, fontSize: 10, lineHeight: "16px", letterSpacing: "-0.2px",
+};
+const T_CAPTION_MED: React.CSSProperties = {
+  fontFamily: FONT_INTER, fontWeight: 500, fontSize: 10, lineHeight: "16px", letterSpacing: "-0.2px",
+};
+const T_MONO_SMALL: React.CSSProperties = {
+  fontFamily: FONT_MONO, fontWeight: 400, fontSize: 10, lineHeight: "16px", letterSpacing: "-0.2px",
+};
+const T_MONO_MED: React.CSSProperties = {
+  fontFamily: FONT_MONO, fontWeight: 500, fontSize: 12, lineHeight: "18px", letterSpacing: "-0.2px",
+};
+const T_DISPLAY: React.CSSProperties = {
+  fontFamily: FONT_INTER, fontWeight: 700, fontSize: 46, lineHeight: "46px", letterSpacing: "-0.03px", color: "#f2f4f7",
+};
+const T_STAT_NUM: React.CSSProperties = {
+  fontFamily: FONT_INTER, fontWeight: 700, fontSize: 30, lineHeight: "34px", letterSpacing: "-0.02px", color: "#f2f4f7",
+};
+const T_STAT_UNIT: React.CSSProperties = {
+  fontFamily: FONT_INTER, fontWeight: 700, fontSize: 18, lineHeight: "24px", letterSpacing: "-0.02px", color: "#f2f4f7",
+};
+
+// ─── Inner Card ───────────────────────────────────────────────────────────────
+// Shared visual treatment for any card-shaped element nested inside a top-level
+// Card or the StatusBar. Background matches the sidebar (--bg-elevated, #1e2026)
+// so inner surfaces feel "lifted" off the parent Card (--bg-card, #1a1c22).
+
+const INNER_CARD: React.CSSProperties = {
+  background: "#1e2026",
+  borderRadius: 8,
+};
+
+// ─── Status Pill (glass) ─────────────────────────────────────────────────────
+// Shared visual treatment for the two floating pills that replace the StatusBar
+// once MainContent is scrolled past it. Translucent gradient + 1px border + drop
+// shadow + backdrop blur. Registered border exception in DESIGN_SYSTEM_1.md
+// (action chip — the pill IS the button-like surface).
+
+const STATUS_PILL_GLASS: React.CSSProperties = {
+  borderRadius: 100,
+  border: "1px solid #23252a",
+  background:
+    "linear-gradient(90deg, rgba(26,28,34,0.75) 0%, rgba(31,33,41,0.75) 100%)",
+  boxShadow: "0 2px 20px 0 rgba(0,0,0,0.40)",
+  backdropFilter: "blur(5px)",
+  WebkitBackdropFilter: "blur(5px)",
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+};
+
+// ─── Sidebar ──────────────────────────────────────────────────────────────────
+
+function SidebarIconBtn({ icon: Icon, label }: { icon: IconComponent; label: string }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      style={{
+        width: 34,
+        height: 34,
+        borderRadius: 100,
+        background: "rgba(255,255,255,0.02)",
+        border: "1px solid rgba(255,255,255,0.02)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        flexShrink: 0,
+        color: "#b4b9c2",
+        padding: 0,
+      }}
+    >
+      <Icon size={14} strokeWidth={1.75} />
+    </button>
+  );
+}
+
+function NavRow({
+  label,
+  icon: Icon,
+  initials,
+  avatarUrl,
+  active,
+}: {
+  label: string;
+  icon?: IconComponent;
+  initials?: string;
+  avatarUrl?: string;
+  active?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      style={{
+        height: 30,
+        padding: "5px 8px",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        borderRadius: 5,
+        width: "100%",
+        background: active ? "#292b31" : "transparent",
+        border: "none",
+        cursor: "pointer",
+        color: active ? "#f2f4f7" : "#b4b9c2",
+        fontFamily: FONT_INTER,
+        fontWeight: 400,
+        fontSize: 12,
+        lineHeight: "18px",
+        letterSpacing: "-0.2px",
+        textAlign: "left",
+      }}
+    >
+      {avatarUrl ? (
+        <span
+          role="img"
+          aria-label={`${label} avatar`}
+          style={{
+            width: 16,
+            height: 16,
+            borderRadius: "50%",
+            backgroundColor: "#1a1c22",
+            backgroundImage: `url('${avatarUrl}')`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            flexShrink: 0,
+          }}
+        />
+      ) : initials ? (
+        <span
+          style={{
+            width: 16,
+            height: 16,
+            borderRadius: "50%",
+            background: "#1a1c22",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 8,
+            lineHeight: 1,
+            color: active ? "#f2f4f7" : "#b4b9c2",
+            flexShrink: 0,
+          }}
+        >
+          {initials}
+        </span>
+      ) : Icon ? (
+        <Icon size={16} strokeWidth={1.75} style={{ flexShrink: 0 }} />
+      ) : null}
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function Sidebar() {
+  return (
+    <aside
+      style={{
+        display: "flex",
+        width: 280,
+        flexDirection: "column",
+        alignItems: "flex-start",
+        gap: 4,
+        flexShrink: 0,
+        alignSelf: "stretch",
+        marginTop: 12,
+        marginBottom: 12,
+        background: "#1e2026",
+        borderRadius: 16,
+      }}
+    >
+      <div
+        style={{
+          alignSelf: "stretch",
+          minHeight: 56,
+          padding: "8px 10px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <span
+          style={{
+            margin: "8px 6px 8px 10px",
+            padding: "6px 6px 6px 4px",
+            display: "inline-flex",
+            alignItems: "center",
+          }}
+          aria-label="Joon"
+        >
+          <svg width={78} height={20} viewBox="0 0 90 23" fill="none" role="img">
+            <path
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M54.5042 0.0995671C60.9088 0.0995671 66.1008 5.226 66.1008 11.5498C66.1008 17.8736 60.9088 23 54.5042 23C48.0996 23 42.9076 17.8736 42.9076 11.5498C42.9076 5.226 48.0996 0.0995671 54.5042 0.0995671ZM54.5042 4.67965C50.6614 4.67965 47.5462 7.75552 47.5462 11.5498C47.5462 15.3441 50.6614 18.4199 54.5042 18.4199C58.347 18.4199 61.4622 15.3441 61.4622 11.5498C61.4622 7.75552 58.347 4.67965 54.5042 4.67965Z"
+              fill="white"
+            />
+            <path
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M28.6891 0.0995671C35.0937 0.0995671 40.2857 5.226 40.2857 11.5498C40.2857 17.8736 35.0937 23 28.6891 23C22.2844 23 17.0924 17.8736 17.0924 11.5498C17.0924 5.226 22.2844 0.0995671 28.6891 0.0995671ZM28.6891 4.67965C24.8463 4.67965 21.7311 7.75552 21.7311 11.5498C21.7311 15.3441 24.8463 18.4199 28.6891 18.4199C32.5319 18.4199 35.6471 15.3441 35.6471 11.5498C35.6471 7.75552 32.5319 4.67965 28.6891 4.67965Z"
+              fill="white"
+            />
+            <path
+              d="M79.4118 0C85.2595 0 90 4.68066 90 10.4545V22.8009H85.3613V10.4545C85.3613 7.21017 82.6976 4.58009 79.4118 4.58009C76.1259 4.58009 73.4622 7.21017 73.4622 10.4545V22.8009H68.8235V10.4545C68.8235 4.68066 73.564 0 79.4118 0Z"
+              fill="white"
+            />
+            <path
+              d="M14.1176 15.7316C14.1176 19.5809 10.9573 22.7013 7.05882 22.7013C3.16034 22.7013 0 19.5809 0 15.7316V14.0028H4.63866V15.7316C4.63866 17.0513 5.7222 18.1212 7.05882 18.1212C8.39545 18.1212 9.47899 17.0513 9.47899 15.7316V0.298701H14.1176V15.7316Z"
+              fill="white"
+            />
+          </svg>
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <SidebarIconBtn icon={Search} label="Search" />
+          <SidebarIconBtn icon={Plus} label="Add" />
+        </div>
+      </div>
+
+      <nav
+        style={{
+          alignSelf: "stretch",
+          padding: "0 8px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+        }}
+      >
+        <NavRow label="Activity" icon={Activity} />
+        <NavRow label="Detection" avatarUrl="/Avatar_Sean.png" active />
+        <NavRow label="Investigation" avatarUrl="/Avatar_Helen.png" />
+        <NavRow label="Hunting" avatarUrl="/Avatar_Helen.png" />
+        <NavRow label="Validation" avatarUrl="/Avatar_Valery.png" />
+      </nav>
+
+      <div
+        style={{
+          alignSelf: "stretch",
+          padding: "18px 8px 0",
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+        }}
+      >
+        <div
+          style={{
+            padding: "6px 8px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <span
+            style={{
+              fontFamily: FONT_INTER,
+              fontWeight: 500,
+              fontSize: 12,
+              lineHeight: "18px",
+              letterSpacing: "-0.2px",
+              color: "#858a94",
+            }}
+          >
+            Workspace
+          </span>
+          <ChevronDown size={10} strokeWidth={1.75} color="#858a94" />
+        </div>
+        <NavRow label="Customer Profile" icon={User} />
+        <NavRow label="Memory" icon={Database} />
+        <NavRow label="Settings" icon={Settings} />
+      </div>
+
+      <div style={{ flex: 1, alignSelf: "stretch" }} />
+
+      <div
+        style={{
+          alignSelf: "stretch",
+          padding: "6px 8px 8px",
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+        }}
+      >
+        <SidebarIconBtn icon={PanelLeftClose} label="Collapse sidebar" />
+        <span
+          style={{
+            marginLeft: "auto",
+            padding: "0 6px",
+            fontFamily: FONT_MONO,
+            fontWeight: 400,
+            fontSize: 10,
+            lineHeight: "16px",
+            letterSpacing: "-0.2px",
+            color: "#5e6370",
+          }}
+        >
+          v0.43.2
+        </span>
+      </div>
+    </aside>
+  );
+}
+
+// ─── StatusBar ────────────────────────────────────────────────────────────────
+
+function StatusBar() {
+  return (
+    <header
+      style={{
+        alignSelf: "stretch",
+        background: "#1a1c22",
+        borderRadius: 16,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "16px 20px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+        <div
+          role="img"
+          aria-label="Dawn — Detection Engineering"
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: "50%",
+            backgroundColor: "#292b31",
+            backgroundImage: "url('/Avatar_Dawn.png')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            flexShrink: 0,
+          }}
+        />
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+          <span
+            style={{
+              ...T_BODY,
+              color: "#f2f4f7",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            Detection Engineering <span style={{ color: "#5e6370" }}>·</span> Dawn
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: 999,
+                background: "#03d07d",
+                boxShadow: "0 0 0 2px rgba(3,208,125,0.25)",
+                flexShrink: 0,
+              }}
+            />
+            <span style={{ ...T_BODY, color: "#b4b9c2" }}>Active</span>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+        <span
+          style={{
+            ...T_CAPTION,
+            background: "#1f2126",
+            border: "1px solid #23252a",
+            borderRadius: 100,
+            padding: "8px 10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#b4b9c2",
+          }}
+        >
+          ⌘K
+        </span>
+
+        <button
+          type="button"
+          style={{
+            ...T_BODY_MED,
+            background: "#1f2126",
+            border: "1px solid #23252a",
+            borderRadius: 100,
+            padding: "8px 10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 6,
+            color: "#f2f4f7",
+            cursor: "pointer",
+          }}
+        >
+          <Calendar size={12} strokeWidth={1.75} />
+          <span>Last 7 days</span>
+          <ChevronDown size={12} strokeWidth={1.75} />
+        </button>
+
+        <span style={{ ...T_BODY, color: "#858a94" }}>Updated 2h ago</span>
+      </div>
+    </header>
+  );
+}
+
+// ─── FloatingStatusPills ──────────────────────────────────────────────────────
+// Replaces the StatusBar once MainContent has scrolled past it. Two glass pills
+// fixed at the top of the viewport (left = identity, right = actions). The
+// outer overlay is `pointer-events: none` so cards beneath stay interactive;
+// each pill turns pointer-events back on while visible.
+
+function FloatingStatusPills({ visible }: { visible: boolean }) {
+  return (
+    <div
+      aria-hidden={!visible}
+      style={{
+        position: "fixed",
+        top: 12,
+        // sidebar (280) + shell padding-left (12) + shell-gap (20) = 312
+        left: 312,
+        right: 0,
+        zIndex: 50,
+        pointerEvents: "none",
+        display: "flex",
+        justifyContent: "center",
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(-8px)",
+        transition: "opacity 200ms ease, transform 200ms ease",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 1400,
+          paddingRight: 12,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          flex: "1 0 0",
+        }}
+      >
+        {/* LEFT PILL — identity */}
+        <div
+          style={{
+            ...STATUS_PILL_GLASS,
+            padding: "12px 24px 12px 12px",
+            pointerEvents: visible ? "auto" : "none",
+          }}
+        >
+          <div
+            role="img"
+            aria-label="Dawn — Detection Engineering"
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: "50%",
+              backgroundColor: "#292b31",
+              backgroundImage: "url('/Avatar_Dawn.png')",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              flexShrink: 0,
+            }}
+          />
+          <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+            <span
+              style={{
+                ...T_BODY,
+                color: "#f2f4f7",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              Detection Engineering <span style={{ color: "#5e6370" }}>·</span> Dawn
+            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 999,
+                  background: "#03d07d",
+                  boxShadow: "0 0 0 2px rgba(3,208,125,0.25)",
+                  flexShrink: 0,
+                }}
+              />
+              <span style={{ ...T_BODY, color: "#b4b9c2" }}>Active</span>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT PILL — actions */}
+        <div
+          style={{
+            ...STATUS_PILL_GLASS,
+            padding: 12,
+            pointerEvents: visible ? "auto" : "none",
+          }}
+        >
+          <span
+            style={{
+              ...T_CAPTION,
+              background: "#1f2126",
+              border: "1px solid #23252a",
+              borderRadius: 100,
+              padding: "8px 10px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#b4b9c2",
+            }}
+          >
+            ⌘K
+          </span>
+
+          <button
+            type="button"
+            style={{
+              ...T_BODY_MED,
+              background: "#1f2126",
+              border: "1px solid #23252a",
+              borderRadius: 100,
+              padding: "8px 10px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              color: "#f2f4f7",
+              cursor: "pointer",
+            }}
+          >
+            <Calendar size={12} strokeWidth={1.75} />
+            <span>Last 7 days</span>
+            <ChevronDown size={12} strokeWidth={1.75} />
+          </button>
+
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              color: "#858a94",
+            }}
+          >
+            <RefreshCw size={12} strokeWidth={1.75} />
+            <span style={{ ...T_BODY }}>Updated 2h ago</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Card primitives ──────────────────────────────────────────────────────────
+
+function Card({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div
+      style={{
+        background: "#1a1c22",
+        borderRadius: 16,
+        display: "flex",
+        flexDirection: "column",
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function CardHeader({
+  title,
+  subtitle,
+  right,
+}: {
+  title: string;
+  subtitle?: string;
+  right?: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        padding: "20px 20px 0",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+        <span style={T_HEADING}>{title}</span>
+        {subtitle && (
+          <span style={{ ...T_BODY, color: "#858a94" }}>{subtitle}</span>
+        )}
+      </div>
+      {right && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          {right}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function IconBtn({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      style={{
+        width: 34,
+        height: 34,
+        borderRadius: 100,
+        background: "#292b31",
+        border: "1px solid #23252a",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        flexShrink: 0,
+        color: "#b4b9c2",
+        padding: 0,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function DeltaBadge({ text }: { text: string }) {
+  return (
+    <span
+      style={{
+        ...T_CAPTION,
+        borderRadius: 999,
+        padding: "2px 6px",
+        background: "rgba(3,208,125,0.05)",
+        color: "#03d07d",
+        display: "inline-flex",
+        alignItems: "center",
+      }}
+    >
+      {text}
+    </span>
+  );
+}
+
+function RunningBadge({ text }: { text: string }) {
+  return (
+    <span
+      style={{
+        ...T_CAPTION,
+        borderRadius: 999,
+        padding: "2px 6px",
+        background: "rgba(3,208,125,0.05)",
+        color: "#03d07d",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+      }}
+    >
+      <span
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: 999,
+          background: "#03d07d",
+          boxShadow: "0 0 0 2px rgba(3,208,125,0.25)",
+          flexShrink: 0,
+        }}
+      />
+      {text}
+    </span>
+  );
+}
+
+function NeutralBadge({ text }: { text: string }) {
+  return (
+    <span
+      style={{
+        ...T_CAPTION,
+        borderRadius: 999,
+        padding: "2px 6px",
+        background: "rgba(255,255,255,0.05)",
+        color: "#858a94",
+        display: "inline-flex",
+        alignItems: "center",
+      }}
+    >
+      {text}
+    </span>
+  );
+}
+
+function ConnectorChip({
+  label,
+  color,
+  logo,
+}: {
+  label: string;
+  color: string;
+  logo?: React.ReactNode;
+}) {
+  return (
+    <span
+      style={{
+        display: "flex",
+        padding: "2px 8px 2px 2px",
+        alignItems: "center",
+        gap: 4,
+        borderRadius: 100,
+        background: "rgba(255,255,255,0.05)",
+      }}
+    >
+      <span
+        style={{
+          display: "flex",
+          width: 20,
+          height: 20,
+          padding: 4,
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 10,
+          borderRadius: 100,
+          background: "#1e2026",
+          flexShrink: 0,
+        }}
+      >
+        {logo ?? (
+          <span
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: 2,
+              background: color,
+            }}
+          />
+        )}
+      </span>
+      <span style={{ ...T_BODY, color: "#858a94" }}>{label}</span>
+    </span>
+  );
+}
+
+// ─── Health & Performance ─────────────────────────────────────────────────────
+
+function StatTile({
+  icon: Icon,
+  stat,
+  unit,
+  caption,
+  delta,
+}: {
+  icon: IconComponent;
+  stat: string;
+  unit: string;
+  caption: string;
+  delta: string;
+}) {
+  return (
+    <div
+      style={{
+        background: "#1e2026",
+        borderRadius: 8,
+        padding: 16,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        minHeight: 120,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 100,
+            background: "#292b31",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#b4b9c2",
+            flexShrink: 0,
+          }}
+        >
+          <Icon size={16} strokeWidth={1.75} />
+        </span>
+        <DeltaBadge text={delta} />
+      </div>
+      <div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
+          <span style={T_STAT_NUM}>{stat}</span>
+          <span style={T_STAT_UNIT}>{unit}</span>
+        </div>
+        <span style={{ ...T_BODY, color: "#858a94" }}>{caption}</span>
+      </div>
+    </div>
+  );
+}
+
+function HealthAndPerformance() {
+  const breakdown = [
+    { label: "Deployed",  value: "210", color: "#07d582" },
+    { label: "Drafts",    value: "210", color: "#4a90e2" },
+    { label: "Proposals", value: "95",  color: "#6993be" },
+    { label: "In test",   value: "72",  color: "#b4b9c2" },
+  ];
+
+  const stats = [
+    { icon: Signal,      stat: "98",   unit: "%", caption: "Telemetry completeness", delta: "↑ 1.6%" },
+    { icon: HeartPulse,  stat: "100",  unit: "%", caption: "Telemetry uptime",        delta: "↑ 0.1%" },
+    { icon: Timer,       stat: "98",   unit: "%", caption: "Avg. time to fix",         delta: "↑ 0.1%" },
+    { icon: ShieldCheck, stat: "18.5", unit: "h", caption: "Avg. time to close gap",  delta: "↑ 1.6%" },
+  ];
+
+  return (
+    <Card style={{ alignSelf: "stretch" }}>
+      <CardHeader
+        title="Health & Performance"
+        subtitle="Overview of the agent and the system"
+        right={
+          <IconBtn label="Open Health & Performance in Jira">
+            <img
+              src="/jira_icon.svg"
+              alt=""
+              width={14}
+              height={14}
+              style={{ display: "block" }}
+            />
+          </IconBtn>
+        }
+      />
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "640px 1fr",
+          gap: 8,
+          padding: 20,
+        }}
+      >
+        <div
+          style={{
+            ...INNER_CARD,
+            display: "flex",
+            width: 640,
+            padding: "16px 24px",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: 12,
+            alignSelf: "stretch",
+          }}
+        >
+          <span style={{ ...T_BODY, color: "#858a94" }}>Total rules</span>
+
+          <div
+            style={{
+              alignSelf: "stretch",
+              display: "inline-flex",
+              justifyContent: "space-between",
+              alignItems: "flex-end",
+            }}
+          >
+            <span style={T_DISPLAY}>730</span>
+            <DeltaBadge text="↑ +7%" />
+          </div>
+
+          <div style={{ alignSelf: "stretch", display: "flex", gap: 4, height: 12 }}>
+            <span
+              style={{
+                flex: 71,
+                background: "#07d582",
+                borderTopLeftRadius: 6,
+                borderBottomLeftRadius: 6,
+                borderTopRightRadius: 2,
+                borderBottomRightRadius: 2,
+              }}
+            />
+            <span style={{ flex: 17, background: "#4a90e2", borderRadius: 2 }} />
+            <span style={{ flex: 11, background: "#6993be", borderRadius: 2 }} />
+            <span
+              style={{
+                flex: 1,
+                background: "#b4b9c2",
+                borderTopLeftRadius: 2,
+                borderBottomLeftRadius: 2,
+                borderTopRightRadius: 6,
+                borderBottomRightRadius: 6,
+              }}
+            />
+          </div>
+
+          <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column" }}>
+            {breakdown.map((row, i) => (
+              <div key={row.label}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    height: 38,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: 999,
+                        background: row.color,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span style={{ ...T_BODY, color: "#b4b9c2" }}>{row.label}</span>
+                  </div>
+                  <span style={{ ...T_BODY_SEMI, color: "#f2f4f7" }}>{row.value}</span>
+                </div>
+                {i < breakdown.length - 1 && (
+                  <div style={{ height: 1, background: "#23252a" }} />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gridTemplateRows: "1fr 1fr",
+            gap: 8,
+          }}
+        >
+          {stats.map((s) => (
+            <StatTile key={s.caption} {...s} />
+          ))}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ─── Active Workload Queue ────────────────────────────────────────────────────
+
+function ActiveWorkloadQueue() {
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
+
+  function toggle(i: number) {
+    setExpandedIndex((prev) => (prev === i ? null : i));
+  }
+
+  return (
+    <Card>
+      <CardHeader
+        title="Active Workload Queue"
+        subtitle="3 Active detections"
+        right={
+          <>
+            <ConnectorChip
+              label="Jira"
+              color="#2684ff"
+              logo={
+                <img
+                  src="/jira_icon.svg"
+                  alt=""
+                  width={12}
+                  height={12}
+                  style={{ display: "block" }}
+                />
+              }
+            />
+            <ConnectorChip
+              label="CrowdStrike Falcon"
+              color="#da1b1b"
+              logo={
+                <img
+                  src="/crowdstrike_icon.svg"
+                  alt=""
+                  width={12}
+                  height={12}
+                  style={{ display: "block" }}
+                />
+              }
+            />
+            <NeutralBadge text="+2" />
+          </>
+        }
+      />
+      <div
+        style={{
+          padding: 20,
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+        }}
+      >
+        {WORKLOAD_GROUPS.map((group, i) => {
+          const isOpen = expandedIndex === i;
+          return (
+            <div key={i} style={{ display: "flex", flexDirection: "column" }}>
+              <div style={INNER_CARD}>
+                <button
+                  type="button"
+                  onClick={() => toggle(i)}
+                  style={{
+                    width: "100%",
+                    height: 44,
+                    padding: "0 14px",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                    {isOpen ? (
+                      <ChevronDown size={12} strokeWidth={1.75} color="#858a94" style={{ flexShrink: 0 }} />
+                    ) : (
+                      <ChevronRight size={12} strokeWidth={1.75} color="#858a94" style={{ flexShrink: 0 }} />
+                    )}
+                    <span style={{ ...T_BODY_MED, color: "#f2f4f7", textAlign: "left" }}>
+                      {group.label}
+                    </span>
+                  </div>
+                  {isOpen && group.runningBadge ? (
+                    <RunningBadge text={group.runningBadge} />
+                  ) : (
+                    <NeutralBadge text={group.count} />
+                  )}
+                </button>
+              </div>
+
+              {group.children && (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateRows: isOpen ? "1fr" : "0fr",
+                    opacity: isOpen ? 1 : 0,
+                    transition:
+                      "grid-template-rows 200ms ease, opacity 160ms ease",
+                  }}
+                >
+                  <div style={{ overflow: "hidden" }}>
+                <div
+                  style={{
+                    position: "relative",
+                    padding: "16px 14px 12px 38px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 12,
+                  }}
+                >
+                  <div
+                    aria-hidden
+                    style={{
+                      position: "absolute",
+                      left: 20,
+                      top: 0,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    {group.children.map((_, idx, arr) => {
+                      const isFirst = idx === 0;
+                      const isLast = idx === arr.length - 1;
+                      const isOnly = isFirst && isLast;
+                      const height = isFirst ? 27 : 34;
+                      let d: string;
+                      if (isOnly) {
+                        d = "M0.5 0V19C0.5 23.4183 4.08172 27 8.5 27H14";
+                      } else if (isFirst) {
+                        d = "M0.5 0V27M0.5 19C0.5 23.4183 4.08172 27 8.5 27H14";
+                      } else if (isLast) {
+                        d = "M0.5 0V26C0.5 30.4183 4.08172 34 8.5 34H14";
+                      } else {
+                        d = "M0.5 0V34M0.5 26C0.5 30.4183 4.08172 34 8.5 34H14";
+                      }
+                      return (
+                        <svg
+                          key={idx}
+                          width={20}
+                          height={height}
+                          viewBox={`0 0 20 ${height}`}
+                          fill="none"
+                          style={{ display: "block", flexShrink: 0, overflow: "visible" }}
+                        >
+                          <path d={d} stroke="#292b31" />
+                        </svg>
+                      );
+                    })}
+                  </div>
+                  {group.children.map((child) => (
+                    <div
+                      key={child.id}
+                      style={{
+                        height: 22,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          flex: 1,
+                          minWidth: 0,
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: "inline-block",
+                            padding: 1,
+                            borderRadius: 999,
+                            background:
+                              "linear-gradient(90deg, rgba(151,71,255,0.15), rgba(204,165,255,0.15))",
+                            flexShrink: 0,
+                          }}
+                        >
+                        <span
+                          style={{
+                            display: "flex",
+                            padding: "2px 8px",
+                            alignItems: "center",
+                            gap: 4,
+                            borderRadius: 999,
+                            backgroundColor: "#1a1c22",
+                            backgroundImage:
+                              "linear-gradient(rgba(151,71,255,0.05), rgba(151,71,255,0.05))",
+                          }}
+                        >
+                          <svg width={14} height={14} viewBox="0 0 14 14" fill="none" role="img" aria-hidden="true">
+                            <path
+                              d="M9.02399 3.19064C9.19485 3.01979 9.47179 3.01979 9.64265 3.19064L13.1426 6.69064C13.3135 6.8615 13.3135 7.13844 13.1426 7.30929L9.64265 10.8093C9.47179 10.9801 9.19485 10.9801 9.02399 10.8093C8.85314 10.6384 8.85314 10.3615 9.02399 10.1906L12.2147 6.99997L9.02399 3.80929C8.85314 3.63844 8.85314 3.3615 9.02399 3.19064Z"
+                              fill="#9747ff"
+                            />
+                            <path
+                              d="M4.35733 3.19064C4.52818 3.01979 4.80513 3.01979 4.97598 3.19064C5.14683 3.3615 5.14683 3.63844 4.97598 3.80929L1.78531 6.99997L4.97598 10.1906C5.14683 10.3615 5.14683 10.6384 4.97598 10.8093C4.80513 10.9801 4.52818 10.9801 4.35733 10.8093L0.857328 7.30929C0.686473 7.13844 0.686473 6.8615 0.857328 6.69064L4.35733 3.19064Z"
+                              fill="#9747ff"
+                            />
+                          </svg>
+                          <span
+                            style={{
+                              ...T_MONO_SMALL,
+                              textAlign: "right",
+                              backgroundImage:
+                                "linear-gradient(90deg, #9747ff 0%, #b67eff 50%, #9747ff 100%)",
+                              backgroundSize: "200% 100%",
+                              backgroundRepeat: "repeat",
+                              animationName: "joon-shimmer",
+                              animationDuration: "2.5s",
+                              animationTimingFunction: "linear",
+                              animationIterationCount: "infinite",
+                              WebkitBackgroundClip: "text",
+                              backgroundClip: "text",
+                              WebkitTextFillColor: "transparent",
+                            }}
+                          >
+                            {child.id}
+                          </span>
+                        </span>
+                        </span>
+                        <span
+                          style={{
+                            ...T_BODY,
+                            backgroundImage:
+                              "linear-gradient(90deg, rgba(255,255,255,0.25) 0%, #ffffff 50%, rgba(255,255,255,0.25) 100%)",
+                            backgroundSize: "200% 100%",
+                            backgroundRepeat: "repeat",
+                            animationName: "joon-shimmer",
+                            animationDuration: "2.5s",
+                            animationTimingFunction: "linear",
+                            animationIterationCount: "infinite",
+                            WebkitBackgroundClip: "text",
+                            backgroundClip: "text",
+                            WebkitTextFillColor: "transparent",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {child.name}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+                        <span style={{ ...T_CAPTION, color: "#03d07d", width: 94, flexShrink: 0 }}>
+                          {child.status}
+                          <span
+                            style={{
+                              animationName: "joon-dot-1",
+                              animationDuration: "1.5s",
+                              animationTimingFunction: "step-end",
+                              animationIterationCount: "infinite",
+                            }}
+                          >
+                            .
+                          </span>
+                          <span
+                            style={{
+                              animationName: "joon-dot-2",
+                              animationDuration: "1.5s",
+                              animationTimingFunction: "step-end",
+                              animationIterationCount: "infinite",
+                            }}
+                          >
+                            .
+                          </span>
+                          <span
+                            style={{
+                              animationName: "joon-dot-3",
+                              animationDuration: "1.5s",
+                              animationTimingFunction: "step-end",
+                              animationIterationCount: "infinite",
+                            }}
+                          >
+                            .
+                          </span>
+                        </span>
+                        <span style={{ ...T_MONO_SMALL, color: "#858a94" }}>{child.time}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+// ─── Proposal Drivers ─────────────────────────────────────────────────────────
+
+function ProposalRow({ label, value, max }: { label: string; value: number; max: number }) {
+  const pct = (value / max) * 100;
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "120px 1fr 36px",
+        alignItems: "center",
+        gap: 12,
+      }}
+    >
+      <span style={{ ...T_BODY, color: "#b4b9c2" }}>{label}</span>
+      <div style={{ position: "relative", height: 14 }}>
+        <span
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: "50%",
+            height: 1,
+            background: "#23252a",
+            transform: "translateY(-50%)",
+          }}
+        />
+        <span
+          style={{
+            position: "absolute",
+            left: 0,
+            top: "50%",
+            height: 1.5,
+            width: `${pct}%`,
+            background: "#f2f4f7",
+            transform: "translateY(-50%)",
+          }}
+        />
+        <span
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: `${pct}%`,
+            width: 8,
+            height: 8,
+            borderRadius: 999,
+            background: "#f2f4f7",
+            transform: "translate(-50%, -50%)",
+          }}
+        />
+      </div>
+      <span style={{ ...T_BODY_SEMI, color: "#f2f4f7", textAlign: "right" }}>{value}</span>
+    </div>
+  );
+}
+
+function ProposalDrivers() {
+  return (
+    <Card style={{ maxWidth: 600 }}>
+      <CardHeader
+        title="Proposal Drivers"
+        subtitle="Sub handled"
+        right={
+          <IconBtn label="Open Proposal Drivers">
+            <ArrowUpRight size={14} strokeWidth={1.75} />
+          </IconBtn>
+        }
+      />
+      <div
+        style={{
+          padding: 20,
+          display: "flex",
+          flexDirection: "column",
+          gap: 18,
+        }}
+      >
+        {PROPOSAL_DRIVERS.map((row) => (
+          <ProposalRow key={row.label} {...row} />
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// ─── Teamwork ─────────────────────────────────────────────────────────────────
+
+function Teamwork() {
+  return (
+    <Card style={{ maxWidth: 600 }}>
+      <CardHeader
+        title="Teamwork"
+        subtitle="2 Tasks since yesterday"
+        right={
+          <IconBtn label="Open Teamwork">
+            <ArrowUpRight size={14} strokeWidth={1.75} />
+          </IconBtn>
+        }
+      />
+      <div
+        style={{
+          padding: 20,
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+        }}
+      >
+        {TEAMWORK_ITEMS.map((item, i) => (
+          <div
+            key={i}
+            style={{
+              ...INNER_CARD,
+              padding: "12px 14px",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            <div style={{ position: "relative", width: 51, height: 30, flexShrink: 0 }}>
+              <span
+                role="img"
+                aria-label="From"
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  width: 30,
+                  height: 30,
+                  borderRadius: 999,
+                  backgroundColor: "#1a1c22",
+                  backgroundImage: `url('${item.fromAvatar}')`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  border: "2px solid #1e2026",
+                }}
+              />
+              <span
+                role="img"
+                aria-label="To"
+                style={{
+                  position: "absolute",
+                  left: 21,
+                  top: 0,
+                  width: 30,
+                  height: 30,
+                  borderRadius: 999,
+                  backgroundColor: "#1a1c22",
+                  backgroundImage: `url('${item.toAvatar}')`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  border: "2px solid #1e2026",
+                }}
+              />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+              <span style={{ ...T_BODY_MED, color: "#f2f4f7" }}>{item.title}</span>
+              <span style={{ ...T_CAPTION, color: "#858a94" }}>{item.meta}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// ─── Last Covered ─────────────────────────────────────────────────────────────
+
+function LastCovered() {
+  return (
+    <Card>
+      <CardHeader
+        title="Last Covered"
+        subtitle="Covered by Dawn"
+        right={
+          <IconBtn label="Open Last Covered">
+            <ArrowUpRight size={14} strokeWidth={1.75} />
+          </IconBtn>
+        }
+      />
+      <div
+        style={{
+          padding: 20,
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+        }}
+      >
+        {LAST_COVERED.map((row, i) => (
+          <div
+            key={i}
+            style={{
+              ...INNER_CARD,
+              display: "flex",
+              padding: "12px 16px",
+              alignItems: "center",
+              gap: 12,
+              alignSelf: "stretch",
+            }}
+          >
+            <span
+              style={{
+                ...T_BODY,
+                color: "#f2f4f7",
+                flex: 1,
+                minWidth: 0,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {row.name}
+            </span>
+            <span
+              style={{
+                ...T_CAPTION_MED,
+                borderRadius: 999,
+                padding: "2px 8px",
+                background: "#154a3a",
+                color: "#03d07d",
+                flexShrink: 0,
+              }}
+            >
+              Deployed
+            </span>
+            <span style={{ ...T_MONO_SMALL, color: "#858a94", flexShrink: 0, width: 48 }}>
+              {row.date}
+            </span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// ─── Detection Coverage Heatmap ───────────────────────────────────────────────
+
+function DetectionCoverageHeatmap() {
+  const legend = [
+    { label: "100%", bg: "#07d582" },
+    { label: "75%",  bg: "rgba(7,213,130,0.5)" },
+    { label: "50%",  bg: "rgba(7,213,130,0.25)" },
+    { label: "25%",  bg: "rgba(7,213,130,0.10)" },
+    { label: "0%",   bg: "#1e2026" },
+  ];
+
+  return (
+    <Card>
+      <CardHeader
+        title="Detection Coverage Heatmap"
+        subtitle="Covered by Dawn"
+        right={
+          <IconBtn label="Expand heatmap">
+            <Maximize2 size={14} strokeWidth={1.75} />
+          </IconBtn>
+        }
+      />
+      <div
+        style={{
+          padding: 20,
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
+        }}
+      >
+        <div style={{ position: "relative" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(14, 1fr)",
+              gap: 6,
+            }}
+          >
+            {HEATMAP.flatMap((row, r) =>
+              row.map((pct, c) => (
+                <span
+                  key={`${r}-${c}`}
+                  style={{
+                    height: 24,
+                    borderRadius: 4,
+                    background: heatColor(pct),
+                  }}
+                />
+              ))
+            )}
+          </div>
+
+          <div
+            style={{
+              position: "absolute",
+              top: 4,
+              right: 0,
+              width: 164,
+              background: "#1e2026",
+              borderRadius: 8,
+              padding: 12,
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+            }}
+          >
+            <span style={T_STAT_UNIT}>93%</span>
+            <div style={{ display: "flex", gap: 8 }}>
+              <span
+                style={{
+                  width: 2,
+                  borderRadius: 4,
+                  background: "#03d07d",
+                  flexShrink: 0,
+                }}
+              />
+              <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+                <span style={{ ...T_MONO_MED, color: "#f2f4f7" }}>T1190</span>
+                <span style={{ ...T_CAPTION, color: "#858a94" }}>Valid Accounts</span>
+              </div>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingTop: 8,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span
+                  style={{
+                    width: 8,
+                    height: 6,
+                    background: "#07d582",
+                    borderRadius: 1,
+                  }}
+                />
+                <span style={{ ...T_CAPTION, color: "#b4b9c2" }}>Initial Access</span>
+              </div>
+              <span style={{ ...T_CAPTION_MED, color: "#f2f4f7" }}>81%</span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          {legend.map(({ label, bg }) => (
+            <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 2,
+                  background: bg,
+                }}
+              />
+              <span style={{ ...T_CAPTION, color: "#b4b9c2" }}>{label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ─── MainContent ──────────────────────────────────────────────────────────────
+
+function MainContent() {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [showPills, setShowPills] = useState(false);
+
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    let frame = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const top = el.scrollTop;
+        // Fade kicks in as soon as content starts scrolling past the viewport top.
+        // Threshold > 4 to avoid jitter at rest (browsers can report sub-pixel scrollTop).
+        setIsScrolled(top > 4);
+        // Pills appear once StatusBar is fully out (offsetTop 12 + height ~76 = 88).
+        setShowPills(top > 88);
+      });
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      el.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={wrapperRef}
+      style={{
+        flex: "1 0 0",
+        minWidth: 0,
+        overflowY: "auto",
+        display: "flex",
+        justifyContent: "center",
+      }}
+    >
+      <main
+        style={{
+          display: "flex",
+          width: "100%",
+          maxWidth: 1400,
+          flexDirection: "column",
+          alignItems: "flex-start",
+          gap: 12,
+          paddingTop: 12,
+          paddingRight: 12,
+          paddingBottom: 12,
+        }}
+      >
+        <StatusBar />
+
+        <HealthAndPerformance />
+
+        <div
+          style={{
+            alignSelf: "stretch",
+            display: "grid",
+            gridTemplateColumns: "1fr 600px",
+            gap: 12,
+          }}
+        >
+          <ActiveWorkloadQueue />
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <ProposalDrivers />
+            <Teamwork />
+          </div>
+        </div>
+
+        <div
+          style={{
+            alignSelf: "stretch",
+            display: "grid",
+            gridTemplateColumns: "469fr 625fr",
+            gap: 12,
+          }}
+        >
+          <LastCovered />
+          <DetectionCoverageHeatmap />
+        </div>
+      </main>
+
+      {/* Top edge fade — color gradient + progressive backdrop blur. Sits below
+          the pills (z 40 < 50) so the pills paint cleanly over it. Visible
+          band shows in the gap between the two pills (and the 12px strip above
+          them). Three stacked blur layers, each masked into a band so the
+          blur intensity decreases from top to bottom; color overlay sits on
+          top so the page-bg gradient stays opaque at the top edge. */}
+      <div
+        aria-hidden
+        style={{
+          position: "fixed",
+          top: 0,
+          // sidebar (280) + shell padding-left (12) + shell-gap (20) = 312
+          left: 312,
+          right: 0,
+          height: 60,
+          pointerEvents: "none",
+          zIndex: 40,
+          opacity: isScrolled ? 1 : 0,
+          transition: "opacity 200ms ease",
+        }}
+      >
+        {/* Blur band 3 — lightest, near the bottom of the fade */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backdropFilter: "blur(1px)",
+            WebkitBackdropFilter: "blur(1px)",
+            maskImage:
+              "linear-gradient(to bottom, transparent 33%, #000 66%, #000 100%)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, transparent 33%, #000 66%, #000 100%)",
+          }}
+        />
+        {/* Blur band 2 — medium, centered in the fade */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backdropFilter: "blur(2px)",
+            WebkitBackdropFilter: "blur(2px)",
+            maskImage:
+              "linear-gradient(to bottom, transparent 0%, #000 33%, #000 66%, transparent 100%)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, transparent 0%, #000 33%, #000 66%, transparent 100%)",
+          }}
+        />
+        {/* Blur band 1 — heaviest, at the top edge */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backdropFilter: "blur(4px)",
+            WebkitBackdropFilter: "blur(4px)",
+            maskImage:
+              "linear-gradient(to bottom, #000 0%, #000 33%, transparent 66%)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, #000 0%, #000 33%, transparent 66%)",
+          }}
+        />
+        {/* Color overlay — page bg with a top-biased fall-off */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(to bottom, #0f1116 0%, rgba(15,17,22,0.55) 50%, transparent 100%)",
+          }}
+        />
+      </div>
+
+      <FloatingStatusPills visible={showPills} />
+    </div>
+  );
+}
+
+// ─── Page root ────────────────────────────────────────────────────────────────
+
+export default function DetectionPage() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        height: "100vh",
+        overflow: "hidden",
+        padding: "0 0 0 12px",
+        gap: 20,
+        background: "#0f1116",
+      }}
+    >
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            @keyframes joon-shimmer {
+              0% { background-position: 200% 0; }
+              100% { background-position: -200% 0; }
+            }
+            @keyframes joon-dot-1 {
+              0% { opacity: 0; }
+              25% { opacity: 1; }
+              100% { opacity: 1; }
+            }
+            @keyframes joon-dot-2 {
+              0% { opacity: 0; }
+              50% { opacity: 1; }
+              100% { opacity: 1; }
+            }
+            @keyframes joon-dot-3 {
+              0% { opacity: 0; }
+              75% { opacity: 1; }
+              100% { opacity: 1; }
+            }
+          `,
+        }}
+      />
+      <Sidebar />
+      <MainContent />
+    </div>
+  );
+}

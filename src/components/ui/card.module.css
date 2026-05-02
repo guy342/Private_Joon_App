@@ -1,0 +1,21 @@
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: var(--card-padding);
+}
+
+.default {
+  border-radius: var(--card-radius);
+}
+
+.inner {
+  border-radius: var(--card-radius-inner);
+}
+
+.sub {
+  border-radius: var(--card-radius-sub);
+}
+
+.noPadding {
+  padding: 0;
+}

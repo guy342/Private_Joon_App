@@ -1,0 +1,50 @@
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--nav-item-height);
+  padding: 0 8px;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--ls-body);
+  color: var(--text-secondary);
+  background: transparent;
+}
+
+.active {
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border-left-color: var(--text-primary);
+}
+
+.icon {
+  flex-shrink: 0;
+  color: inherit;
+  width: 16px;
+  height: 16px;
+}
+
+.initials {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  line-height: 1;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

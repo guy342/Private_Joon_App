@@ -1,0 +1,265 @@
+/* =============================================================================
+   JOON DESIGN TOKENS
+   Single source of truth for all CSS variables.
+   Import this in globals.css — do not override these values in components.
+   ============================================================================= */
+
+:root {
+
+  /* ---------------------------------------------------------------------------
+     BACKGROUNDS
+  --------------------------------------------------------------------------- */
+  --bg-page:           #0f1116;  /* outermost page background */
+  --bg-base:           #1e2026;  /* sidebar (left rail) — was #1a1c22 */
+  --bg-card:           #1a1c22;  /* top-level cards in MainContent + topbar — was #1e2026 */
+  --bg-elevated:       #1e2026;  /* Inner Card surfaces — stat tiles, list rows, tooltip, expanded queue groups, Teamwork rows. Same value as --bg-base; kept as a separate token so the semantic role (sub-card vs sidebar) is explicit at the call site. */
+  --bg-icon:           #292b31;  /* icon button + active nav item background */
+
+  /* ---------------------------------------------------------------------------
+     BORDERS
+  --------------------------------------------------------------------------- */
+  --border:            #23252a;
+  --border-subtle:     rgba(255, 255, 255, 0.02);
+  --border-input:      #2d3038;
+
+  /* ---------------------------------------------------------------------------
+     TEXT
+  --------------------------------------------------------------------------- */
+  --text-primary:      #f2f4f7;
+  --text-secondary:    #b4b9c2;
+  --text-tertiary:     #858a94;
+  --text-disabled:     #5e6370;
+
+  /* ---------------------------------------------------------------------------
+     BRAND — GREEN (primary accent)
+  --------------------------------------------------------------------------- */
+  --green:             #03d07d;
+  --green-bg:          rgba(3, 208, 125, 0.05);
+  --green-stroke:      rgba(3, 208, 125, 0.25);
+  --green-deep:        #154a3a;
+
+  /* Heatmap scale */
+  --heatmap-100:       #07d582;
+  --heatmap-50:        rgba(7, 213, 130, 0.50);
+  --heatmap-25:        rgba(7, 213, 130, 0.25);
+  --heatmap-10:        rgba(7, 213, 130, 0.10);
+
+  /* ---------------------------------------------------------------------------
+     ACCENT — BLUE
+  --------------------------------------------------------------------------- */
+  --blue:              #2684ff;
+  --blue-bg:           rgba(38, 132, 255, 0.05);
+  --blue-mid:          #4a90e2;
+  --blue-light:        #6993be;
+
+  /* ---------------------------------------------------------------------------
+     ACCENT — PURPLE
+  --------------------------------------------------------------------------- */
+  --purple:            #9747ff;
+  --purple-bg:         rgba(151, 71, 255, 0.05);
+
+  /* ---------------------------------------------------------------------------
+     SEMANTIC
+  --------------------------------------------------------------------------- */
+  --red:               #da1b1b;
+  --white-5:           rgba(255, 255, 255, 0.05);
+  --white-2:           rgba(255, 255, 255, 0.02);
+
+  /* ---------------------------------------------------------------------------
+     SPACING & LAYOUT
+  --------------------------------------------------------------------------- */
+  --card-padding:           20px;
+  --card-radius:            16px;
+  --card-radius-inner:      8px;
+  --card-radius-sub:        4px;
+  --card-border:            1px solid var(--border);
+  --card-title-gap:         0px;
+  --section-gap:            8px;
+  --section-vertical-gap:   24px;
+  --sidebar-width:          280px;
+  --topbar-height:          76px;
+  --icon-btn-size:          34px;
+  --icon-btn-radius:        100px;
+  --icon-size:              16px;
+  --nav-item-height:        30px;
+  --badge-radius:           999px;
+
+  /* ---------------------------------------------------------------------------
+     TYPOGRAPHY — sizes
+  --------------------------------------------------------------------------- */
+  --font-size-display:     46px;
+  --font-size-stat-num:    30px;
+  --font-size-stat-unit:   18px;
+  --font-size-heading:     18px;
+  --font-size-body:        12px;
+  --font-size-caption:     10px;
+
+  /* ---------------------------------------------------------------------------
+     TYPOGRAPHY — line heights
+  --------------------------------------------------------------------------- */
+  --line-height-display:   46px;
+  --line-height-stat-num:  34px;
+  --line-height-heading:   24px;
+  --line-height-body:      18px;
+  --line-height-caption:   16px;
+
+  /* ---------------------------------------------------------------------------
+     TYPOGRAPHY — letter spacing
+  --------------------------------------------------------------------------- */
+  --ls-display:    -0.03px;
+  --ls-stat:       -0.02px;
+  --ls-heading:     0px;
+  --ls-body:       -0.2px;
+  --ls-caption:    -0.2px;
+
+}
+
+/* =============================================================================
+   TYPOGRAPHY UTILITY CLASSES
+   Use these on text elements — no inline font styles in components.
+   ============================================================================= */
+
+.type-display {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: var(--font-size-display);
+  line-height: var(--line-height-display);
+  letter-spacing: var(--ls-display);
+}
+
+.type-stat-num {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: var(--font-size-stat-num);
+  line-height: var(--line-height-stat-num);
+  letter-spacing: var(--ls-stat);
+}
+
+.type-stat-unit {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: var(--font-size-stat-unit);
+  line-height: var(--line-height-heading);
+  letter-spacing: var(--ls-stat);
+}
+
+.type-heading {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: var(--font-size-heading);
+  line-height: var(--line-height-heading);
+  letter-spacing: var(--ls-heading);
+}
+
+.type-body {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--ls-body);
+}
+
+.type-body-medium {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--ls-body);
+}
+
+.type-body-semibold {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--ls-body);
+}
+
+.type-caption {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+  letter-spacing: var(--ls-caption);
+}
+
+.type-caption-medium {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+  letter-spacing: var(--ls-caption);
+}
+
+.type-mono {
+  font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+  font-weight: 400;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--ls-body);
+}
+
+.type-mono-medium {
+  font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--ls-body);
+}
+
+.type-mono-small {
+  font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+  font-weight: 400;
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+  letter-spacing: var(--ls-caption);
+}
+
+/* =============================================================================
+   COMPONENT BASE CLASSES
+   ============================================================================= */
+
+.card {
+  background: var(--bg-card);
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+}
+
+.icon-btn {
+  width: var(--icon-btn-size);
+  height: var(--icon-btn-size);
+  border-radius: var(--icon-btn-radius);
+  background: var(--bg-icon);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.badge {
+  border-radius: var(--badge-radius);
+  padding: 2px 6px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+  letter-spacing: var(--ls-caption);
+}
+
+.badge-green {
+  background: var(--green-bg);
+  color: var(--green);
+  border: 1px solid var(--green-stroke);
+}
+
+.badge-blue {
+  background: var(--blue-bg);
+  color: var(--blue);
+}
+
+.badge-purple {
+  background: var(--purple-bg);
+  color: var(--purple);
+}
