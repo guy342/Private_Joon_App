@@ -2017,7 +2017,7 @@ function HeatmapSlider({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElemen
         opacity: thumb.visible ? 1 : 0,
         transition: "opacity 200ms ease",
         minWidth: 160,
-        borderRadius: 999,
+        borderRadius: 3,
         border: "1px solid rgba(255,255,255,0.05)",
         background:
           "linear-gradient(90deg, #07D582 0%, #0ABE77 12.5%, #0DA86B 25%, #137B54 50%, #1E2026 100%)",
