@@ -2023,6 +2023,10 @@ function HeatmapSlider({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElemen
         opacity: thumb.visible ? 1 : 0,
         transition: "opacity 200ms ease",
         minWidth: 160,
+        // Cap the slider at ~70% of the prior fill width — keeps it visually
+        // anchored to the right via justify-content: space-between on the
+        // footer, with the leftover gap sitting between legend and slider.
+        maxWidth: 360,
         borderRadius: 3,
         border: "1px solid rgba(255,255,255,0.05)",
         background:

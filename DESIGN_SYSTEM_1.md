@@ -878,6 +878,7 @@ background: linear-gradient(90deg,
 background-clip: padding-box                         /* gradient stops at the border's inner edge — without this the gradient bleeds through the translucent border at the corners and produces a faint stray-pixel artifact on the right end */
 box-sizing: border-box                               /* keeps the 3px height inclusive of border */
 min-width: 160
+max-width: 360                                        /* keeps the slider compact on wide viewports — the leftover space sits between legend and slider via the footer's justify-content: space-between */
 opacity: visible ? 1 : 0
 transition: opacity 200ms ease
 ```
