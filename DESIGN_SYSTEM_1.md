@@ -161,7 +161,7 @@ These are the *only* places where text breaks the type scale. New code must not 
 | `--heatmap-50` | `#07d582` at 50% | Heatmap — partial |
 | `--heatmap-25` | `#07d582` at 25% | Heatmap — low |
 | `--heatmap-10` | `#07d582` at 10% | Heatmap — minimal |
-| `--green-deep` | `#154a3a` | Deployed badge background |
+| ~~`--green-deep`~~ | ~~`#154a3a`~~ | _retired 2026-05-08_ — Last Covered's Deployed pill now uses `--green-bg` / `--green` (translucent green at 5%) to match the rest of the green-tier badge family (DeltaBadge, Running Badge, severity Medium). Token still in `tokens.css`; remove on next cleanup pass. |
 
 #### Heatmap tiers — DetectionCoverageHeatmap
 
