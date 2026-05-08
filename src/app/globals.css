@@ -72,9 +72,14 @@ body {
    (so the grid sees a flat sequence of cells) but :hover still fires when
    the cursor is over any descendant, propagating to the cell-bg, the ID
    weight bump, and the action-column icon reveal in a single CSS rule.
-   No React state involved — hover is purely browser-native. */
+   No React state involved — hover is purely browser-native.
+
+   250ms ease-out on bg + icon opacity is the gentle fade — long enough to
+   read as a deliberate transition (not a snap), short enough not to drag
+   when the cursor is moving down the table fast. ease-out fronts the speed
+   so the row "lands" softly into its hovered state. */
 .workload-row .workload-cell {
-  transition: background-color 120ms ease;
+  transition: background-color 250ms ease-out;
 }
 .workload-row:hover .workload-cell {
   background-color: var(--bg-elevated);
@@ -84,7 +89,7 @@ body {
 }
 .workload-row .workload-cell-action-icon {
   opacity: 0;
-  transition: opacity 120ms ease;
+  transition: opacity 250ms ease-out;
 }
 .workload-row:hover .workload-cell-action-icon {
   opacity: 1;

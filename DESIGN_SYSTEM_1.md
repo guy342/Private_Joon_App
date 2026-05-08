@@ -1053,7 +1053,7 @@ The row "selected" visual is **purely a hover state** — no click handler, no R
 | `.workload-cell-id` (ID cell only) | font-weight `400` → `600` (Inter Semi Bold) on `.workload-row:hover` |
 | `.workload-cell-action-icon` (the ArrowUpRight `<svg>`) | `opacity: 0` at rest → `1` on `.workload-row:hover`. Icon is always rendered; only its alpha animates. |
 
-The row wrapper has `display: contents` so the grid still sees a flat sequence of cells — but `:hover` still fires on the wrapper when the cursor is over any descendant, and the cascade reaches all the cells in one rule. 120ms ease transition on the bg + opacity.
+The row wrapper has `display: contents` so the grid still sees a flat sequence of cells — but `:hover` still fires on the wrapper when the cursor is over any descendant, and the cascade reaches all the cells in one rule. **250ms ease-out** on the bg + icon opacity — long enough to read as a deliberate fade (not a snap), short enough not to drag when the cursor is moving down the table fast. `ease-out` fronts the speed so the row "lands" softly into its hovered state.
 
 Don't reintroduce a `useState`-driven hover/selected pattern: pure CSS is faster (no React re-render on every mouseenter) and the row treatment never needs to outlive the cursor's presence over it.
 
