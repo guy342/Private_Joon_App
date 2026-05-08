@@ -989,7 +989,7 @@ function RunningBadge({ text }: { text: string }) {
           position: "absolute",
           inset: 0,
           borderRadius: 999,
-          padding: 1,
+          padding: "0.5px",
           background:
             "conic-gradient(from var(--joon-rb-angle, 0deg), #B6E8D4, rgba(182,232,212,0.25), #B6E8D4, rgba(182,232,212,0.25), #B6E8D4)",
           WebkitMask:
@@ -1988,6 +1988,8 @@ function ProposalDrivers() {
           alignItems: "flex-start",
           flex: "1 0 0",
           alignSelf: "stretch",
+          borderRadius: 8,
+          background: "#21232a",
         }}
       >
         {PROPOSAL_DRIVERS.map((row) => (

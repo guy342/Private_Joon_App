@@ -668,7 +668,7 @@ The animated 1px stroke is a **separate absolute overlay** layered on top:
 position: absolute
 inset: 0
 border-radius: 999px
-padding: 1px                                /* defines the ring thickness via the mask below */
+padding: 0.5px                              /* defines the ring thickness via the mask below — sub-pixel for a hairline ring */
 background: conic-gradient(from var(--joon-rb-angle, 0deg),
   #B6E8D4,
   rgba(182, 232, 212, 0.25),
