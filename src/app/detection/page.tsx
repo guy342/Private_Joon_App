@@ -2045,7 +2045,12 @@ function DetectionCoverageHeatmap() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   return (
-    <Card>
+    // minWidth: 0 is mandatory — without it, the Card (a grid item) lets its
+    // children determine min-content, so the inner column flex grows to fit
+    // all 14 × 145px columns instead of clipping. With minWidth: 0 the Card
+    // stays at the grid column's allocated width and the inner scroll
+    // container becomes the actual scrollable area.
+    <Card style={{ minWidth: 0 }}>
       <CardHeader
         title="Detection Coverage Heatmap"
         subtitle="Covered by Dawn"
@@ -2166,7 +2171,10 @@ function MainContent() {
           style={{
             alignSelf: "stretch",
             display: "grid",
-            gridTemplateColumns: "469fr 625fr",
+            // minmax(0, fr) is mandatory here — the heatmap card's intrinsic
+            // width is its 14 × 145px column grid (~2150px). Without minmax(0, ...)
+            // the column won't shrink below that and the card overflows the row.
+            gridTemplateColumns: "minmax(0, 469fr) minmax(0, 625fr)",
             gap: 12,
           }}
         >
