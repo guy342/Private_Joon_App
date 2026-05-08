@@ -55,8 +55,8 @@ Spelled out so future code lands on the right token without guessing:
 | StatusBar ⌘K kbd chip | `--type-caption` |
 | StatusBar "Last 7 days" pill button label | `--type-body-medium` |
 | StatusBar "Updated 2h ago" | `--type-body` |
-| Sidebar nav item label | `--type-body` (active state same weight, darker color) |
-| Sidebar "Workspace" section label | `--type-body-medium` |
+| Sidebar nav item label | Inter Regular **14 / 20** (one step larger than `--type-body` — rail reads as primary nav, not metadata; active state same weight, brighter `--text-primary` color) |
+| Sidebar "Workspace" section label | Inter Medium **14 / 20** w/ `--text-tertiary` |
 | Sidebar `v0.43.2` version | `--type-mono-small` |
 | Card title | `--type-heading` |
 | Card subtitle | `--type-body` |
@@ -77,7 +77,7 @@ Spelled out so future code lands on the right token without guessing:
 | Workload group label | `--type-body-medium` |
 | Workload child id (DET--730) | **ID Pill** — `--type-mono-small` font, **animated shimmer text fill**: `background-image: linear-gradient(90deg, #9747FF 0%, #B67EFF 50%, #9747FF 100%)` + `background-size: 200% 100%` + `animation: joon-shimmer 2.5s linear infinite` clipped to text via `background-clip: text` + `-webkit-text-fill-color: transparent`. The lighter purple peak sweeps left → right across the ID, matching the description's shimmer. Two-element structure: an outer wrapper that paints the gradient border, and an inner pill with the actual content. **Outer wrapper:** `display: inline-block; padding: 1; border-radius: 999; background: linear-gradient(90deg, rgba(151,71,255,0.15), rgba(204,165,255,0.15))` (15% opacity gradient `#9747FF → #CCA5FF`). The 1px padding is what makes the gradient visible as a border ring. **Inner pill:** `display: flex; padding: 2px 8px; gap: 4; border-radius: 999`, with `background-color: #1a1c22` (= `--bg-card`, the Card's bg) plus `background-image: linear-gradient(rgba(151,71,255,0.05), rgba(151,71,255,0.05))` layered on top. The visual result is identical to a single `rgba(151,71,255,0.05)` painted over the Card bg, but the inner pill is now **fully opaque** — that's required because the inner sits on top of the outer wrapper's gradient, and a semi-transparent inner would let the gradient bleed through and darken the fill. Don't simplify back to `background: rgba(151,71,255,0.05)`. Don't try to do this with `border: 1px solid <gradient>` or layered backgrounds clipped to `padding-box / border-box` either — `border-image` doesn't honor `border-radius` for rounded shapes, and layered clips still blend in the inner area. **The gradient border is an explicit exception to the "no borders on containers" rule** — this pill is intentionally treated as an identity tag with brand styling. Don't generalize the exception or the wrapper-with-padding technique. |
 | Workload child name ("Detection WN-730") | `--type-body` with **animated left-to-right shimmer text**: `background-image: linear-gradient(90deg, rgba(255,255,255,0.25) 0%, #FFF 50%, rgba(255,255,255,0.25) 100%)` + `background-size: 200% 100%` + `animation: joon-shimmer 2.5s linear infinite` + `background-clip: text` + `-webkit-text-fill-color: transparent`. The gradient's bright peak (full white) sweeps left → right across the text continuously, signaling that the workload is in progress. Baseline (25% white) on either side lets the peak read as a moving highlight. Note: Figma exports may show line-height `17.4` / letter-spacing `-0.195` — that's noise; map to the canonical `--type-body` (18 / -0.2). |
-| Workload child **status** ("Validating…", "Rule_generation…") | `--type-caption` + `color: var(--green)` + `width: 94px; flex-shrink: 0` — green sans-serif, fixed-width column so all status labels align across rows. Note: Figma exports may show line-height `15.95` / letter-spacing `-0.195` — that's noise; map to the canonical `--type-caption` (16 / -0.2). |
+| Workload child **status** ("Validating…", "Rule_generation…") | `--type-caption` + `color: var(--green)` + `width: 94px; flex-shrink: 0` — green sans-serif, fixed-width column so all status labels align across rows. Sits inside the row's right group (`display: flex; align-items: center; gap: 64; flex-shrink: 0`) — **the 64px gap** between the status label and the running-time indicator (`child.time`, e.g. "1h 36min") gives the eye a clear separation between *what* the workload is doing and *how long* it's been doing it. Note: Figma exports may show line-height `15.95` / letter-spacing `-0.195` — that's noise; map to the canonical `--type-caption` (16 / -0.2). |
 | Workload child time ("1h 36min") | `--type-mono-small` |
 | Last Covered row name | `--type-body` |
 | Last Covered date | `--type-mono-small` |
@@ -85,7 +85,7 @@ Spelled out so future code lands on the right token without guessing:
 | Heatmap column header — category ("Reconnaissance") | `--type-body` w/ `--text-secondary` |
 | Heatmap column header — percentage ("72%") | `--type-body` w/ `--text-primary` |
 | Heatmap cell — technique id ("T1595") | `--type-body` w/ `--text-primary` (white for legibility on tier-tinted bg) |
-| Heatmap cell — technique name ("Active Scanning") | `--type-caption` w/ `--text-secondary` |
+| Heatmap cell — technique name ("Active Scanning") | `--type-caption` w/ `rgba(242,244,247,0.5)` (text-primary at 50% — quieter than `--text-secondary` so the technique name reads as a true subtitle next to its tier-tinted bg) |
 | Heatmap legend label ("100%", "75%"...) | `--type-caption` w/ `--text-secondary` |
 | WorkloadDistribution table header ("ID", "Rule Name"…) | `--type-body` w/ `--text-tertiary` |
 | WorkloadDistribution data cell text (id, rule name, technique, status…) | `--type-body` w/ `--text-primary`; selected row's ID column shifts to weight 600 |
@@ -235,12 +235,12 @@ Don't add `--severity-medium` / `--severity-low` aliases — they'd be hex-ident
 | `--shell-padding` | `12px` | Frame gutter around the whole app — applied as `padding: 0 12px` on the outer shell (horizontal), `marginY: 12` on the sidebar, and `paddingY: 12` inside `<main>` (vertical inside scroll). |
 | `--shell-gap` | `20px` | Gap between sidebar and main content area — internal separator, deliberately larger than the frame gutter. |
 | `--main-max-width` | `1400px` | MainContent max width (centered horizontally beside sidebar) |
-| `--sidebar-width` | `280px` | Left sidebar fixed width |
+| `--sidebar-width` | `232px` | Left sidebar fixed width |
 | `--statusbar-padding` | `16px 20px` | StatusBar internal padding (vertical horizontal). Was named `--topbar-min-padding` until the component was renamed to StatusBar. |
 | `--icon-btn-size` | `34px` | Icon button container (width + height) |
 | `--icon-btn-radius` | `100px` | Icon button border radius |
 | `--icon-size` | `16px` | Icon size inside button |
-| `--nav-item-height` | `30px` | Sidebar nav item height |
+| `--nav-item-height` | `32px` | Sidebar nav item height |
 | `--badge-radius` | `999px` | Badge / pill border radius |
 
 ---
@@ -275,10 +275,10 @@ Don't put `padding-y` or `padding-right` on the outer shell or on the wrapper �
 
 ```
 display: flex
-width: 280px
+width: 232px
 flex-direction: column
 align-items: flex-start
-gap: 4px
+gap: 24px                          /* between top-level sections (brand row, lists wrapper, spacer, bottom row) */
 flex-shrink: 0
 align-self: stretch                /* fills the shell's content height */
 margin-top: 12px                   /* vertical frame gutter — owned here, not on outer shell */
@@ -292,18 +292,25 @@ The sidebar is a floating card. Stays put while MainContent scrolls. Each direct
 
 Internal sections, top to bottom:
 1. **Brand row** — `min-height: 56px; padding: 8px 10px`. "joon" wordmark left, two icon buttons (Search, Plus) right at 34×34, `background: rgba(255,255,255,0.02)`, `border: 1px solid rgba(255,255,255,0.02)`, icons at 14×14.
-2. **Primary nav** — `padding: 0 8px; gap: 4px`. Nav items: `height: 30px; padding: 5px 8px; border-radius: 5px; gap: 10px`. Active item: `background: var(--bg-icon)` + text `var(--text-primary)`. Section nav rows use a 16×16 avatar circle on the left, holding a person's photo. Mapping: Detection → `/Avatar_Sean.png`, Investigation → `/Avatar_Helen.png`, Hunting → `/Avatar_Helen.png`, Validation → `/Avatar_Valery.png`. Pass via `avatarUrl` on `<NavRow>`. Avatar circle: `width: 16; height: 16; border-radius: 50%; background-color: #1a1c22 (fallback); background-image: url(...); background-size: cover; background-position: center`. If no avatar is available, fall back to `initials` (8px Inter Medium centered in the circle).
-3. **Workspace section** — `padding: 18px 8px 0`. Header row with "Workspace" label (Inter Medium 12px `var(--text-tertiary)`) + ChevronDown 10×10. Three nav items (Customer Profile / Memory / Settings) using Lucide icons.
-4. **Spacer** — `flex: 1; align-self: stretch`.
-5. **Bottom row** — `padding: 6px 8px 8px; gap: 6px`. Collapse icon button + version string `v0.43.2` (JetBrains Mono 10px `var(--text-disabled)`, `margin-left: auto`).
+2. **Lists wrapper** — `align-self: stretch; display: flex; flex-direction: column; align-items: flex-start; gap: 24`. A grouping wrapper that holds the two nav lists and gives them their canonical 24px separation. No padding lives here — each inner list owns its own `padding: 0 8`. Don't flatten the wrapper away in favor of putting both lists directly under the sidebar; keeping the lists grouped semantically is what lets future additions (a notifications card, a status card, etc.) slot between them or after them with consistent spacing.
+   - **Primary nav (no title)** — `padding: 0 8; gap: 4`. Nav items: `height: 32px; padding: 5px 8px; border-radius: 5px; gap: 10`. Active item: `background: var(--bg-icon)` + text `var(--text-primary)`. Section nav rows use a 16×16 avatar circle on the left, holding a person's photo. Mapping: Detection → `/Avatar_Sean.png`, Investigation → `/Avatar_Helen.png`, Hunting → `/Avatar_Helen.png`, Validation → `/Avatar_Valery.png`. Pass via `avatarUrl` on `<NavRow>`. Avatar circle: `width: 16; height: 16; border-radius: 50%; background-color: #1a1c22 (fallback); background-image: url(...); background-size: cover; background-position: center`. If no avatar is available, fall back to `initials` (8px Inter Medium centered in the circle).
+   - **Workspace section (with title)** — `padding: 0 8; gap: 4`. Header row with "Workspace" label (Inter Medium 14 / 20 `var(--text-tertiary)`) + ChevronDown 12×12. Three nav items (Customer Profile / Memory / Settings) using Lucide icons.
+3. **Spacer** — `flex: 1; align-self: stretch`. The sidebar's 24px gap on either side of the spacer is intentional — it leaves at least 48px of breathing room between the last list and the bottom row even when the viewport is tall enough that the spacer would otherwise collapse to zero.
+4. **Bottom row** — `padding: 6px 8px 8px; gap: 6`. Collapse icon button + version string `v0.43.2` (JetBrains Mono 10px `var(--text-disabled)`, `margin-left: auto`).
+
+**List inner gap: 4 across all sidebar lists.** Both the titled list (Workspace) and the untitled list (primary nav) use `gap: 4` between rows — keeping a single inner-row rhythm makes the rail read as one consistent navigation surface. Section-level separation lives entirely on the outer 24px gap between lists; don't widen the inner gap to "breathe out" untitled lists.
+
+**Nav row font: 14 / 20 (was 12 / 18).** The sidebar nav uses a one-step-larger size than the canonical `--type-body` (12 / 18) so the rail reads as primary navigation, not secondary metadata. The "Workspace" title and the items below it use the same 14 / 20 — keeping them at the same size lets the chevron + lighter color do the work of distinguishing the title from the items.
 
 ### MainContent (center column — scrolls)
+
+MainContent layout is **responsive at three viewport breakpoints** (800px and 1900px) and lives in [`src/app/detection/main-content.module.css`](src/app/detection/main-content.module.css). The same five top-row cards are laid out via a single CSS Grid; only the `grid-template-areas` swap between breakpoints. The DOM order stays the same (Health & Performance → Proposal Drivers → Active Workload Queue → Teamwork → Last Covered) — render once, position via grid areas. Mobile-first ordering — the smallest layout (stacked single column) is the default, and each larger breakpoint layers `min-width` overrides on top.
 
 ```
 /* Outer wrapper — extends the full 100vh so its scroll boundary is the viewport edge */
 flex: 1 0 0
 min-width: 0
-overflow-y: auto
+overflow: auto                 /* both axes — vertical for content, horizontal only if children overflow */
 display: flex
 justify-content: center
 /* NO vertical margin / padding here — that's what lets content scroll to the viewport edge */
@@ -312,34 +319,50 @@ justify-content: center
    AND the right-side content gutter (since the outer shell has no right padding). */
 display: flex
 width: 100%
-max-width: 1400px              /* canonical content width */
+min-width: 600px               /* floor — below 600px the wrapper horizontally scrolls instead of compressing the cards further (internal card layouts start clipping below this and the page reads as broken) */
 flex-direction: column
 align-items: flex-start
 gap: 12px                      /* canonical gap between top-level cards / row groups */
 padding-top: 12px              /* 12px breathing room before the first card at rest */
 padding-right: 12px            /* keeps cards 12px off the viewport's right edge while the wrapper's scrollbar stays flush at the edge */
 padding-bottom: 12px           /* same below the last card */
+
+/* ≥ 1900px viewport: cap the content width so very wide displays don't stretch the cards */
+@media (min-width: 1900px) { max-width: 1600px }
 ```
 
 The `padding-top` / `padding-bottom` on `<main>` is part of the **scroll content**, not the frame. At rest you see 12px of page bg above the first card; as the user scrolls down, that 12px scrolls away and the first card extends all the way to the viewport top before it gets clipped. Same on the bottom. (Earlier versions put `padding-y` on the outer shell — that inset the scroll container and chopped cards inside the gutter; don't reintroduce that.)
 
 The 12px gap applies to **every** card-to-card / row-to-row step inside MainContent — between the StatusBar, between cards, between row groups, between the two columns of a side-by-side row, and between cards stacked in a sub-column. **Any sub-card layout inside a top-level Card uses a smaller `8px` gap** — this includes the 2×2 stat tile grid inside Health & Performance *and* the body-level grid that splits the Total Rules Inner Card from the stat tile grid (i.e., the `gridTemplateColumns: "640px 1fr"` row). Treat 8px as the canonical inside-a-card gap; reach for 12px only at the MainContent (between top-level cards) level.
 
-Children that should fill the full 1400px need `align-self: stretch` (because of `align-items: flex-start`). **Per-card width caps:** ProposalDrivers and Teamwork cards each have `max-width: 600px` set on their `<Card>` style.
+Children that should fill main's full width need `align-self: stretch` (because of `align-items: flex-start`). The five top-row cards live inside `.cardsGrid` which is `align-self: stretch`, so they inherit the stretch behavior automatically. There are **no per-card `max-width` caps** — width is governed entirely by the grid template at each breakpoint.
 
 **MainContent card stack (top → bottom):**
 
 1. `<StatusBar />` — full-width
-2. **Row 1** — `gridTemplateColumns: "880px minmax(0, 1fr)"`, gap 12, **`height: 420` + `minHeight: 420`** — Health & Performance (left, 880px fixed) + Proposal Drivers (right, fills). The fixed 420 cascades down: Card stretches via grid `align-items: stretch` (default); H&P's body div has `flex: 1 0 0 + minHeight: 0` to fill the remaining height after CardHeader; the right-stack grid splits the resulting space 50/50.
+2. **`.cardsGrid` — single CSS Grid covering the next five cards.** `display: grid; gap: 12px; align-self: stretch`. Row 1 is always fixed 420px (so Health & Performance keeps its design height); the remaining rows are `auto` and grow with content.
+3. `<DetectionCoverageHeatmap />` — full-width
+4. `<WorkloadDistribution />` — full-width
 
-> **`height` + `minHeight` together** is mandatory for fixed-height rows that are flex items (i.e. inside `<main>`'s flex column). `height: 420` alone sets the flex basis, but `<main>`'s default `flex-shrink: 1` (which Tailwind v4's preflight allows to bypass content min-height) clamps the row down to its content min-size — observed in practice dropping from 420 to 228. Adding `minHeight: 420` enforces a hard floor the flex algorithm can't shrink below. Always pair the two for any fixed row height inside `<main>`.
-3. **Row 2** — `gridTemplateColumns: "880px minmax(0, 1fr)"`, gap 12 — Active Workload Queue (left, 880px fixed) + a flex column on the right (`gap: 12, minWidth: 0`) stacking Teamwork above Last Covered
-4. `<DetectionCoverageHeatmap />` — full-width
-5. `<WorkloadDistribution />` — full-width
+**`.cardsGrid` per-breakpoint templates:**
 
-The 880px is the canonical "primary card" width for two-column rows. Both rows use the same template so the left edges of Health & Performance and Active Workload Queue line up vertically.
+| Breakpoint | grid-template-columns | grid-template-rows | grid-template-areas |
+|---|---|---|---|
+| < 800px (stacked, default) | `minmax(0, 1fr)` | `420px auto auto auto auto` | `"hp"` / `"prop"` / `"wq"` / `"tw"` / `"lc"` |
+| ≥ 800px (small 2-col) | `minmax(0, 1fr) minmax(0, 1fr)` | `420px auto auto` | `"hp hp"` / `"wq prop"` / `"tw lc"` |
+| ≥ 1900px (big 2-col) | `minmax(0, 880fr) minmax(0, 496fr)` | `420px auto auto` | `"hp prop"` / `"wq tw"` / `"wq lc"` |
 
-`minmax(0, 1fr)` on the right column is mandatory — without the `0` lower bound, a card with wide intrinsic content (e.g. Proposal Drivers' max-width 600 lollipop rows) could blow past its allocation. Same rule we use on the bottom rows whenever a card with wide intrinsic content might force its column wider.
+The `880fr / 496fr` ratio on big screens preserves the prior 880:496 column split from the 1400-width design, so both columns grow proportionally as content widens up to 1600. On big screens AWQ spans rows 2+3 (its content height drives the combined row 2+3 height; Teamwork sits in row 2, Last Covered in row 3, both on the right). On the 800-1899 small layout, H&P promotes to a full-width row 1 spanning both columns; row 2 pairs AWQ (left) with Proposal Drivers (right); row 3 pairs Teamwork (left) with Last Covered (right). Below 800px every card collapses to its own full-width row, stacked top-to-bottom in DOM order. The design floors at **600px** via `min-width: 600px` on `<main>` — below a 600px viewport the wrapper horizontally scrolls instead of compressing further, so the cards' internal layouts (H&P's 640px-fixed left panel, heatmap, Workload Distribution table) don't start clipping.
+
+Each card is positioned via inline `style={{ gridArea: "..." }}` (also `minWidth: 0`) passed through the card function's `style` prop. The card functions all forward `style` into their root `<Card>`.
+
+> **`height` + `minHeight` together** was historically required for the old fixed-row pattern (`<div style={{ height: 420, minHeight: 420 }}>` row container as a flex item inside `<main>`). With the single-grid approach we now express row 1's fixed height via `grid-template-rows: 420px auto auto` on the grid container itself, and the cascading flex-shrink issue doesn't apply (grid rows are not flex items).
+
+`minmax(0, ...fr)` on the columns is mandatory — without the `0` lower bound, a card with wide intrinsic content (e.g. Proposal Drivers' lollipop rows) could blow past its column's allocation.
+
+> **`minmax(0, fr)` rule:** any grid row containing a card whose content can exceed the column's width (horizontal scroll, very long table, etc.) must use `minmax(0, ...fr)` instead of plain `1fr` / `Nfr`. CSS Grid's default `1fr` resolves to `minmax(auto, 1fr)`, where `auto` honors the item's min-content — and a horizontal-scroll card's min-content is its full unwrapped content. `minmax(0, ...)` overrides that. Pair with `min-width: 0` on the card itself (passed via the `style` prop) for defense in depth — the heatmap's `<Card>` does this. Without both, the inner `overflow-x: auto` never fires because the parent has already grown to fit.
+>
+> **The same rule applies to ROW splits (height).** When two cards need to split a parent's height 50/50 and they have different intrinsic min-heights, **don't** use `display: flex; flex-direction: column` with `flex: 1 0 0` on each — the flex algorithm starts each item from its min-content size and distributes only the FREE space, so the taller-content card eats more of the parent's height. Use `display: grid; gridTemplateRows: minmax(0, 1fr) minmax(0, 1fr)` instead — the `minmax(0, ...)` rows ignore content min-size and always split exactly evenly.
 
 > **`minmax(0, fr)` rule:** any grid row containing a card whose content can exceed the column's width (horizontal scroll, very long table, etc.) must use `minmax(0, ...fr)` instead of plain `1fr` / `Nfr`. CSS Grid's default `1fr` resolves to `minmax(auto, 1fr)`, where `auto` honors the item's min-content — and a horizontal-scroll card's min-content is its full unwrapped content. `minmax(0, ...)` overrides that. Pair with `min-width: 0` on the card itself (passed via the `style` prop) for defense in depth — the heatmap's `<Card>` does this. Without both, the inner `overflow-x: auto` never fires because the parent has already grown to fit.
 >
@@ -424,7 +447,7 @@ Implemented as `<FloatingStatusPills visible={…}>` in `src/app/detection/page.
 ```
 position: fixed
 top: 12                                /* matches the StatusBar's resting top inset */
-left: 312                              /* sidebar 280 + shell-padding-left 12 + shell-gap 20 */
+left: 264                              /* sidebar 232 + shell-padding-left 12 + shell-gap 20 */
 right: 0                               /* extends to the viewport's right edge */
 z-index: 50
 pointer-events: none                   /* MANDATORY — lets clicks pass through to cards underneath; pills re-enable pointer-events themselves */
@@ -435,13 +458,13 @@ transform: visible ? translateY(0) : translateY(-8px)
 transition: opacity 200ms ease, transform 200ms ease
 ```
 
-The 312px left inset is the only place outside the outer shell where sidebar geometry is hardcoded. If the sidebar collapses or its width changes, this value must follow.
+The 264px left inset is the only place outside the outer shell where sidebar geometry is hardcoded. If the sidebar collapses or its width changes, this value must follow.
 
 **Inner row** — mirrors MainContent's centered column so the pills align with the cards beneath them.
 
 ```
 width: 100%
-max-width: 1400                        /* same as MainContent */
+max-width: 1600                        /* same as `.main`'s ≥1900px max-width — the pills' left/right edges line up with the cards exactly at every viewport size */
 padding-right: 12                      /* same as <main> — keeps the right pill 12px off the viewport edge */
 display: flex
 justify-content: space-between
@@ -483,7 +506,7 @@ In tandem with the pills, a fixed gradient overlay softens content scrolling pas
 ```
 position: fixed
 top: 0
-left: 312                              /* matches the pills' left inset — sidebar 280 + shell-padding 12 + shell-gap 20 */
+left: 264                              /* matches the pills' left inset — sidebar 232 + shell-padding 12 + shell-gap 20 */
 right: 0
 height: 60
 pointer-events: none
@@ -654,12 +677,13 @@ The pill itself is a clean translucent green pill — no border:
 font: --type-caption
 position: relative                          /* anchor for the absolute ring overlay below */
 border-radius: 999px
-padding: 2px 6px
+height: 22px                                /* fixed pill height — the queue's accordion toggle row is 44px tall, so 22 keeps the badge at half-row height */
+padding: 2px 10px 2px 6px                   /* asymmetric: 6px left so the dot's halo (extends 2px outside) sits 4px in from the pill edge; 10px right gives the text room */
 background: rgba(3, 208, 125, 0.05)        /* var(--green-bg) */
 color: #03d07d                              /* var(--green) */
-display: inline-flex
+display: flex
 align-items: center
-gap: 8px
+gap: 4px                                    /* tight gap between dot and text — the dot's 2px halo eats 2px of this, leaving ~2px visible breathing room */
 ```
 
 The animated 1px stroke is a **separate absolute overlay** layered on top:
@@ -747,18 +771,19 @@ box-shadow: 0 0 0 2px rgba(3, 208, 125, 0.25)  /* var(--green-stroke) — same h
 flex-shrink: 0
 ```
 
-The `box-shadow` halo (not `border`) is mandatory — same reasoning as the StatusBar status dot. The `gap: 8` between dot and text is wider than the 4 used elsewhere because the halo extends 2px outward from the 6px dot, eating ~2px into a tight gap.
+The `box-shadow` halo (not `border`) is mandatory — same reasoning as the StatusBar status dot. With `gap: 4` between dot and text, the 2px halo eats ~2px of the gap, leaving ~2px of visible breathing room — the asymmetric `padding-left: 6` on the pill is sized so the halo stays clear of the pill's outer edge.
 
 **Don't strip the rotating border for a static one.** The motion is the point — it's the visual heartbeat that distinguishes a running group from a paused one in the queue. If a future variant needs a non-running state, drop the `animation` property and substitute a static stroke; don't reuse this badge as a generic green pill.
 
 ### Nav Items (sidebar)
 
 ```
-height: 30px
-padding: 0 8px
-font: --type-body                       /* Inter Regular 12px */
+height: 32px
+padding: 5px 8px
+gap: 10px
+font: Inter Regular 14 / 20             /* one step larger than --type-body so the rail reads as primary navigation */
 color: var(--text-secondary)
-border-radius: 0
+border-radius: 5px
 ```
 
 Active state:
@@ -957,11 +982,13 @@ Card (--bg-card #1a1c22, 16 radius, alignSelf: stretch)
             │   └── <DotGrid filled={98}/>
             └── Response time (Inner Card, flex: 1, minWidth: 0, flex-col, justify-content: space-between) — label pins to top, data block pins to bottom, the gap between them flexes to fill the card's height
                 ├── Label "Response time"
-                └── Data div (flex-col, gap: 8) — content-sized cluster with a fixed 8px gap between row + separator + row
+                └── Data div (`.response-time-data` — flex-col by default, **flex-row on viewports <1600px**) — see globals.css
                     ├── <ResponseTimeRow value="4.2" unit="h" caption="To fix"/>
-                    ├── 1px separator (alignSelf: stretch)
+                    ├── Separator (`.response-time-separator`) — 1px horizontal hairline by default, **vertical 1px line at <1600px** so it divides the row instead of stacking
                     └── <ResponseTimeRow value="18.5" unit="h" caption="To close gaps"/>
 ```
+
+**Responsive Response time** — the two stat lines stack vertically (4.2h above 18.5h) on wide viewports but flip to side-by-side ("data next to data") on viewports `<1600px` via a CSS media query in `globals.css`. The breakpoint is on the **viewport width**, not the card or container width — it's a pragmatic threshold for the small-laptop range where the right-stack column gets too narrow for a readable vertical-stack-with-flex-fill height. Caption stays below number inside each `<ResponseTimeRow>` regardless of orientation.
 
 #### `<StackedRulesBar>` — primitive
 
@@ -977,7 +1004,9 @@ The three segment colors are also the three breakdown-row dot colors (`#03d07d` 
 
 #### `<RulesBreakdownRow color label value>` — primitive
 
-Dot + label (left), value (right). Height 38, alignSelf: stretch. Dot is `10×10` rounded-999 in the segment color. Reusable for any "list with category color indicator" pattern.
+Dot + label (left), value (right). Height 38, alignSelf: stretch. Dot is `10×10` rounded-999 in the segment color. Accepts an optional `style?: React.CSSProperties` pass-through that's spread onto the row's outer div *after* the defaults, so call sites can override layout properties like `alignItems`. Reusable for any "list with category color indicator" pattern.
+
+**Last row override — `alignItems: flex-end`.** The breakdown list uses `justify-content: space-between` so the first row pins to the top of the panel and the last row pins to the bottom. With each row's default `alignItems: center`, the last row's text sits centered inside its 38px height, which leaves ~10px of empty space between the text and the panel's bottom edge. Pass `style={{ alignItems: "flex-end" }}` on the **last** `RulesBreakdownRow` ("In test") so its content hugs the bottom of the row — the visible text now sits at 0px from the panel bottom while the row's 38px height (and therefore the parent's even-distribution math for the separators) is preserved. Don't apply the same override to the first row; the canonical `gap: 24` between the StackedRulesBar and the list already handles the visual spacing at the top.
 
 #### `<RulesBreakdownSeparator>` — primitive
 
@@ -1066,7 +1095,7 @@ Spreads the canonical `INNER_CARD` style (8px radius) with the cell bg overridde
   {tier && (
     <>
       <span style={{ width: 2, alignSelf: "stretch", borderRadius: 100, background: HEATMAP_TIERS[tier].bar, flexShrink: 0 }} />
-      <div /* col w/ id (T_BODY #f2f4f7) + name (T_CAPTION #b4b9c2), both ellipsis */ />
+      <div /* col, no gap — id (T_BODY #f2f4f7) sits directly above name (T_CAPTION rgba(242,244,247,0.5)); both ellipsis. The vertical rhythm comes from each token's line-height alone, not a flex gap. */ />
     </>
   )}
 </div>
@@ -1268,14 +1297,16 @@ Each row in the Proposal Drivers card is a horizontal lollipop: a track line, a 
 | Element | Token | Notes |
 |---|---|---|
 | Label (left) | `--text-secondary` (`#b4b9c2`) | Inter Regular 12 — `T_BODY` |
-| Track (background line) | `--border` (`#23252a`) | 1px tall, full row width |
+| Track (background line) | `--bg-card` (`#1a1c22`) | 1px tall, full row width. Uses the outer Card bg (darker than the `#21232a` content card behind it) so the track reads as a recessed groove — `--border` (`#23252a`) was too close to `#21232a` to see. |
 | Fill (filled portion) | `--text-primary` (`#f2f4f7`) | 1.5px tall, width = `(value / max) * 100%`. **Neutral, not green** — green is reserved for status/success indicators (DeltaBadge, status dot, Deployed pill). |
 | Knob (value point) | `--text-primary` (`#f2f4f7`) | 8×8 circle, centered on the fill's right edge |
 | Value (right) | `--text-primary` (`#f2f4f7`) | Inter Semi Bold 12 — `T_BODY_SEMI`, right-aligned |
 
 The lollipop is a neutral data-vis primitive. Don't use `--green` for chart fills/knobs unless the chart is explicitly communicating a positive/success state.
 
-**Content area layout:** `display: flex; padding: 20px; flex-direction: column; justify-content: space-between; align-items: flex-start; flex: 1 0 0; align-self: stretch; border-radius: 8px; background: #21232a`. The wrapper is a card-shaped surface with its own background (`#21232a` — note: this is **not** the standard INNER_CARD color `#1e2026`, it's a one-off slightly-lighter tint scoped to this card) and 8px radius. Rows distribute via `space-between` across the full card height (no fixed `gap`), so the chart fills whatever vertical space the grid row gives it — first row pinned to top under the header, last row pinned to bottom, remaining rows evenly spaced. Because `align-items: flex-start` doesn't stretch children on the cross axis, each `ProposalRow` carries its own `align-self: stretch` to keep the lollipop bars full-width (same pattern as the Total Rules left panel).
+**Card body layout:** the Proposal Drivers card does **not** use the shared `<CardHeader>` because the design wants the header and the content card to share one padded frame. The Card holds a single body wrapper: `display: flex; padding: 24px 20px; flex-direction: column; align-items: flex-start; gap: 20px; flex: 1 0 0; align-self: stretch`. Inside it, two children: (1) an inlined header row (title + subtitle column on the left, IconBtn on the right, `align-self: stretch` so it spans the wrapper's full width); (2) the content card.
+
+**Content card layout:** `display: flex; padding: 20px; flex-direction: column; justify-content: space-between; align-items: flex-start; flex: 1 0 0; align-self: stretch; border-radius: 8px; background: #21232a`. The wrapper is a card-shaped surface with its own background (`#21232a` — note: this is **not** the standard INNER_CARD color `#1e2026`, it's a one-off slightly-lighter tint scoped to this card) and 8px radius. Rows distribute via `space-between` across the full card height (no fixed `gap`), so the chart fills whatever vertical space the grid row gives it — first row pinned to top under the header, last row pinned to bottom, remaining rows evenly spaced. Because `align-items: flex-start` doesn't stretch children on the cross axis, each `ProposalRow` carries its own `align-self: stretch` to keep the lollipop bars full-width (same pattern as the Total Rules left panel).
 
 ---
 
