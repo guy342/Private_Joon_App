@@ -538,7 +538,7 @@ function Sidebar() {
           gap: 24,
         }}
       >
-        {/* Main nav — list without title (8px gap between rows). */}
+        {/* Main nav — list without title (4px gap between rows). */}
         <nav
           style={{
             alignSelf: "stretch",
@@ -546,7 +546,7 @@ function Sidebar() {
             display: "flex",
             flexDirection: "column",
             alignItems: "flex-start",
-            gap: 8,
+            gap: 4,
           }}
         >
           <NavRow label="Activity" icon={Activity} />
@@ -743,8 +743,8 @@ function FloatingStatusPills({ visible }: { visible: boolean }) {
       style={{
         position: "fixed",
         top: 12,
-        // sidebar (280) + shell padding-left (12) + shell-gap (20) = 312
-        left: 312,
+        // sidebar (232) + shell padding-left (12) + shell-gap (20) = 264
+        left: 264,
         right: 0,
         zIndex: 50,
         pointerEvents: "none",
@@ -755,10 +755,14 @@ function FloatingStatusPills({ visible }: { visible: boolean }) {
         transition: "opacity 200ms ease, transform 200ms ease",
       }}
     >
+      {/* Inner mirrors `.main`'s geometry so the pills' left/right edges
+          line up with the MainContent cards exactly: same max-width: 1600,
+          same padding-right: 12, centered inside the fixed outer (which
+          spans from the sidebar's right edge to the viewport's right). */}
       <div
         style={{
           width: "100%",
-          maxWidth: 1400,
+          maxWidth: 1600,
           paddingRight: 12,
           display: "flex",
           justifyContent: "space-between",
@@ -2926,8 +2930,8 @@ function MainContent() {
         style={{
           position: "fixed",
           top: 0,
-          // sidebar (280) + shell padding-left (12) + shell-gap (20) = 312
-          left: 312,
+          // sidebar (232) + shell padding-left (12) + shell-gap (20) = 264
+          left: 264,
           right: 0,
           height: 60,
           pointerEvents: "none",
