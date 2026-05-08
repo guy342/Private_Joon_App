@@ -974,8 +974,8 @@ function RunningBadge({ text }: { text: string }) {
         gap: 8,
       }}
     >
-      {/* Animated 0.5px gradient ring. Sits as an absolute overlay over the
-          pill; the rotating conic-gradient is masked to the 0.5px outer ring
+      {/* Animated 1px gradient ring. Sits as an absolute overlay over the
+          pill; the rotating conic-gradient is masked to the 1px outer ring
           via two mask layers composited with `exclude` (border-box minus
           content-box). This keeps the gradient strictly on the border and
           leaves the pill's translucent green bg untouched — without the mask,
@@ -989,7 +989,7 @@ function RunningBadge({ text }: { text: string }) {
           position: "absolute",
           inset: 0,
           borderRadius: 999,
-          padding: "0.5px",
+          padding: 1,
           background:
             "conic-gradient(from var(--joon-rb-angle, 0deg), #B6E8D4, rgba(182,232,212,0.25), #B6E8D4, rgba(182,232,212,0.25), #B6E8D4)",
           WebkitMask:
@@ -2074,6 +2074,7 @@ function LastCovered() {
               style={{
                 ...T_BODY,
                 color: "#f2f4f7",
+                flex: 1,
                 minWidth: 0,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -2094,7 +2095,7 @@ function LastCovered() {
             >
               Deployed
             </span>
-            <span style={{ ...T_MONO_SMALL, color: "#858a94", flexShrink: 0 }}>
+            <span style={{ ...T_MONO_SMALL, color: "#858a94", flexShrink: 0, width: 48 }}>
               {row.date}
             </span>
           </div>
