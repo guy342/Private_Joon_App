@@ -1647,7 +1647,7 @@ function ActiveWorkloadQueue() {
                       {group.label}
                     </span>
                   </div>
-                  {isOpen && group.runningBadge ? (
+                  {group.runningBadge ? (
                     <RunningBadge text={group.runningBadge} />
                   ) : (
                     <NeutralBadge text={group.count} />
@@ -2086,7 +2086,15 @@ function LastCovered() {
             >
               Deployed
             </span>
-            <span style={{ ...T_MONO_SMALL, color: "#858a94", flexShrink: 0, width: 48 }}>
+            <span
+              style={{
+                ...T_MONO_SMALL,
+                color: "#858a94",
+                flexShrink: 0,
+                width: 48,
+                textAlign: "right",
+              }}
+            >
               {row.date}
             </span>
           </div>
