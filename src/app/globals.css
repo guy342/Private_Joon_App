@@ -83,6 +83,13 @@ body {
   flex: 1 0 0;
   align-self: stretch;
 }
+.response-time-row {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+  align-self: stretch;
+}
 .response-time-separator {
   align-self: stretch;
   flex-shrink: 0;
@@ -92,11 +99,16 @@ body {
 @media (max-width: 1599.99px) {
   .response-time-data {
     flex-direction: row;
+    justify-content: space-between;
     align-items: stretch;
   }
+  .response-time-row {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+  }
   .response-time-separator {
-    height: auto;
-    width: 1px;
+    display: none;
   }
 }
 

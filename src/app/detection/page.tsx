@@ -887,12 +887,15 @@ function FloatingStatusPills({ visible }: { visible: boolean }) {
 function Card({
   children,
   style,
+  className,
 }: {
   children: React.ReactNode;
   style?: React.CSSProperties;
+  className?: string;
 }) {
   return (
     <div
+      className={className}
       style={{
         background: "#1a1c22",
         borderRadius: 16,
@@ -1375,16 +1378,11 @@ function ResponseTimeRow({
   unit: string;
   caption: string;
 }) {
+  // Layout flips between row (default, ≥1600px viewport — number left, caption
+  // right, baseline-aligned) and column (<1600px — number on top, caption
+  // below) via the .response-time-row class — see globals.css.
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "flex-end",
-        alignItems: "flex-start",
-        alignSelf: "stretch",
-      }}
-    >
+    <div className="response-time-row">
       <span style={{ ...T_STAT_UNIT, lineHeight: "normal" }}>
         {value}
         <span style={{ ...T_BODY_SEMI, fontWeight: 700 }}>{unit}</span>
@@ -1416,21 +1414,13 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
           </IconBtn>
         }
       />
-      <div
-        style={{
-          padding: 20,
-          display: "flex",
-          gap: 8,
-          alignItems: "stretch",
-          minWidth: 0,
-          // flex: 1 0 0 + minHeight: 0 lets this body fill the remaining card
-          // height after the CardHeader. Required for the H&P card to honor
-          // the row-level height: 420 — without it the body is content-sized
-          // and the card has empty space below.
-          flex: "1 0 0",
-          minHeight: 0,
-        }}
-      >
+      {/* Body layout — see `.hpBody` in main-content.module.css. Defaults to
+          flex-direction: column at <600px so Total Rules stacks above the
+          Telemetry stack; switches to flex-direction: row at ≥600px (the
+          standard side-by-side layout). flex: 1 0 0 + min-height: 0 are
+          carried by the class so the body fills the remaining card height
+          after the CardHeader (required for the 420px row to be honored). */}
+      <div className={mainContentStyles.hpBody}>
         {/* LEFT: Total Rules — flex-1 splits evenly with the right stack at
             880px outer. Was fixed 516 in the previous full-width design,
             but at 880 outer that leaves only ~316 for the right stack which
@@ -1500,19 +1490,13 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
           </div>
         </div>
 
-        {/* RIGHT: Telemetry stack — CSS Grid. Top row is pinned to 144px
-            (Telemetry uptime); bottom row takes the remaining height. */}
-        <div
-          style={{
-            flex: "1 0 0",
-            display: "grid",
-            gridTemplateRows: "144px minmax(0, 1fr)",
-            gridTemplateColumns: "minmax(0, 1fr)",
-            gap: 8,
-            minWidth: 0,
-            minHeight: 0,
-          }}
-        >
+        {/* RIGHT: Telemetry stack — CSS Grid. At ≥600px: top row pinned to
+            144px (Telemetry uptime), bottom row takes the remaining height.
+            At <600px: both rows go `auto` because the H&P body is now a
+            content-sized column flex; a `1fr` row in a content-sized parent
+            would collapse to 0 and hide the Telemetry completeness +
+            Response time row. See `.hpTelemetryStack` in main-content.module.css. */}
+        <div className={mainContentStyles.hpTelemetryStack}>
           {/* Top: Telemetry uptime — big stat + sparkline, fixed 144px tall. */}
           <div
             style={{
@@ -1985,9 +1969,15 @@ function ProposalRow({ label, value, max }: { label: string; value: number; max:
   );
 }
 
-function ProposalDrivers({ style }: { style?: React.CSSProperties }) {
+function ProposalDrivers({
+  style,
+  className,
+}: {
+  style?: React.CSSProperties;
+  className?: string;
+}) {
   return (
-    <Card style={style}>
+    <Card style={style} className={className}>
       {/* Body wrapper — padded frame holding the header + content card.
           CardHeader isn't used here because its own padding ("20px 20px 0")
           doesn't fit this card's frame: the design wants the header to live
@@ -2899,7 +2889,10 @@ function MainContent() {
             the same; only the grid-template-areas reassign positions. */}
         <div className={mainContentStyles.cardsGrid}>
           <HealthAndPerformance style={{ gridArea: "hp", minWidth: 0 }} />
-          <ProposalDrivers style={{ gridArea: "prop", minWidth: 0 }} />
+          <ProposalDrivers
+            style={{ gridArea: "prop", minWidth: 0 }}
+            className={mainContentStyles.propCard}
+          />
           <ActiveWorkloadQueue style={{ gridArea: "wq", minWidth: 0 }} />
           <Teamwork style={{ gridArea: "tw", minWidth: 0 }} />
           <LastCovered style={{ gridArea: "lc", minWidth: 0 }} />
