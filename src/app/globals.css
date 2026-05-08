@@ -37,3 +37,14 @@ body {
 /* Animation keyframes (joon-shimmer, joon-dot-1, joon-dot-2, joon-dot-3) live inline in
    src/app/detection/page.tsx — keeping them with the component avoids a hot-reload
    bug where globals.css wasn't picking up keyframe changes without a full restart. */
+
+/* Hide native scrollbars on elements that drive a custom scroll UI (e.g. the
+   Detection Coverage Heatmap inner scroll, where a custom slider visualizes the
+   scroll position). The element still scrolls; only its visible scrollbar is
+   suppressed. */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}

@@ -73,9 +73,14 @@ Spelled out so future code lands on the right token without guessing:
 | Last Covered row name | `--type-body` |
 | Last Covered date | `--type-mono-small` |
 | Last Covered "Deployed" pill | `--type-caption-medium` |
-| Heatmap tooltip "93%" | `--type-stat-unit` |
-| Heatmap tooltip technique id (T1190) | `--type-mono-medium` |
-| Heatmap tooltip technique name | `--type-caption` |
+| Heatmap column header — category ("Reconnaissance") | `--type-body` w/ `--text-secondary` |
+| Heatmap column header — percentage ("72%") | `--type-body` w/ `--text-primary` |
+| Heatmap cell — technique id ("T1595") | `--type-body` w/ `--text-primary` (white for legibility on tier-tinted bg) |
+| Heatmap cell — technique name ("Active Scanning") | `--type-caption` w/ `--text-secondary` |
+| Heatmap legend label ("100%", "75%"...) | `--type-caption` w/ `--text-secondary` |
+| ~~Heatmap tooltip "93%"~~ | _retired — replaced by the column-header + cell layout_ |
+| ~~Heatmap tooltip technique id (T1190)~~ | _retired_ |
+| ~~Heatmap tooltip technique name~~ | _retired_ |
 
 ### Known exceptions (allowed, don't expand)
 
@@ -142,6 +147,21 @@ These are the *only* places where text breaks the type scale. New code must not 
 | `--heatmap-25` | `#07d582` at 25% | Heatmap — low |
 | `--heatmap-10` | `#07d582` at 10% | Heatmap — minimal |
 | `--green-deep` | `#154a3a` | Deployed badge background |
+
+#### Heatmap tiers — DetectionCoverageHeatmap
+
+Each tier pairs a cell background with a 2px accent-bar color. Add a new tier by extending **both** `tokens.css` and the `HEATMAP_TIERS` map in `src/app/detection/page.tsx`.
+
+| Tier | `--heatmap-tier-*-bg` | `--heatmap-tier-*-bar` |
+|---|---|---|
+| `100` | `#163931` | `#03d07d` |
+| `75`  | `#17322d` | `#0aa467` |
+| `50`  | `#182a29` | `#117852` |
+| `25`  | `#192326` | `#174c3c` |
+| `0`   | `#11181a` | `#0c261e` |
+| empty (no detection) | `--heatmap-empty` `#17191f` | — (no bar rendered) |
+
+~~`--heatmap-100` `#07d582` / `--heatmap-50` rgba(7,213,130,0.50) / `--heatmap-25` rgba(...0.25) / `--heatmap-10` rgba(...0.10)~~ _retired 2026-05-08_ — single-hue opacity scale used by the previous flat-tile heatmap. Tokens still exist in `tokens.css` for back-compat but are not referenced; remove on the next pass.
 
 ### Accent — Blue
 
@@ -499,7 +519,8 @@ In code, spread the `INNER_CARD` style fragment defined at the top of `src/app/d
 | Active Workload Queue **expanded children section** | `16px 14px 12px 38px` | **Not an Inner Card** — sits on the parent Card's bg (`var(--bg-card)`). The 38px left padding indents children under the toggle's chevron. **`16px` padding-top** is the spacing between the toggle Inner Card above and the first sub-item. `display: flex; flex-direction: column; gap: 12px` between sub-items so each row has its own breathing room (matches the canonical 12 we use elsewhere). **The `12px` padding-bottom is intentional** — it adds breathing room between the last sub-item and the next group's toggle (on top of the queue list's `gap: 6px`, total ~18px). Without it, the next group feels glued to the last child. **Tree connectors** (vertical line + L-curves) sit absolutely-positioned at `left: 20; top: 0` of this section — see "Workload Tree Connectors" below. |
 | Last Covered row | `12px 16px` | `display: flex; align-items: center; gap: 12px; align-self: stretch`. Height is content-driven (no fixed height). **Three flat children** — name (with `flex: 1`), Deployed pill, date — not name + a wrapper div around pill+date. The single 12px gap applies between every pair, and `flex: 1` on the name pushes the rest to the right (no `justify-content: space-between` needed). **The date span has a fixed `width: 48px`** so the Deployed pill's right edge aligns to a consistent vertical line across all rows — without it, the pill drifts as date width changes ("Mar 1" vs "Mar 15"). 48px fits up to ~7 mono chars at 10px; widen if longer dates appear. |
 | Teamwork row | `12px 14px` | Avatar group + identity column. Avatars: two overlapping 30×30 circles (left at `x=0`, right at `x=21` — 9px overlap). Each pip uses `background-image: url('/Avatar_<Name>.png')` with `background-color: #1a1c22` as fallback, and a `2px solid #1e2026` ring (matches the Inner Card surface behind them) so the overlap reads cleanly. Pass `fromAvatar` / `toAvatar` URLs from the row data. Update the `meta` text to match the avatars assigned. |
-| Heatmap tooltip | `12px` all | Floating tooltip overlaying the grid |
+| Heatmap cell (DetectionCoverageHeatmap tile) | `12px` all | `height: 52`. Spreads `INNER_CARD` and overrides `background` per coverage tier (`HEATMAP_TIERS[tier].bg` or `HEATMAP_EMPTY_BG`). Bar (2px) + text stack inside, both with `flexShrink: 0`. |
+| ~~Heatmap tooltip~~ | ~~`12px` all~~ | _retired 2026-05-08 with the heatmap rewrite — cells now carry the technique id + name directly_ |
 
 Padding varies by content; background and radius are invariant.
 
@@ -773,6 +794,97 @@ Height: `12px`. **Asymmetric edge pattern:**
 | Last (right edge) | TL/BL `2px`, TR/BR `6px` — 2px inner (left), rounded outer (right) |
 
 Outer ends use a `6px` corner (half the bar's 12px height — gives a clean half-circle without clamping); inner ends use a tighter `2px` corner. **Use per-corner properties** (`borderTopLeftRadius`, `borderBottomLeftRadius`, etc.) rather than the four-value shorthand — explicit per-corner is unambiguous in React inline styles and matches Figma's per-corner notation.
+
+### Detection Coverage Heatmap
+
+Card with a horizontally scrollable grid of tactic columns. Each column is a fixed-width vertical stack of Inner-Card-shaped tiles colored by coverage tier. Lives in `src/app/detection/page.tsx` as four reusable primitives — `<HeatmapCell>`, `<HeatmapColumn>`, `<HeatmapLegend>`, `<HeatmapSlider>` — plus the composed `<DetectionCoverageHeatmap>`.
+
+**Why split into primitives**: each piece is reusable on its own — `<HeatmapSlider>` works against any horizontally-scrolling element via its `scrollRef` prop (not heatmap-specific); `<HeatmapCell>` is just an Inner Card with a tier override and could anchor any future tier-colored grid; `<HeatmapLegend>` reads its swatches from `HEATMAP_TIERS` so it stays in sync if the palette changes. Add a new tier by editing **two** places only — `tokens.css` and `HEATMAP_TIERS`.
+
+#### Layout
+
+```
+Card (--bg-card #1a1c22, 16 radius)
+├── CardHeader (20 sides + top, 0 bottom — title "Detection Coverage Heatmap" + subtitle "Covered by Dawn" + right=IconBtn maximize-2)
+└── Body (padding: 20, gap: 28, flex column, min-width: 0)
+    ├── Scroll container (display: flex, gap: 8, overflow-x: auto, .no-scrollbar)
+    │   └── HeatmapColumn × N (each 145px wide, flexShrink: 0)
+    │       ├── Column header (padding: 0 12px — category over percent)
+    │       └── HeatmapCell × N (gap: 8 between cells)
+    └── Footer (flex, gap: 16, align: center)
+        ├── HeatmapLegend (5 dots + labels — gap: 12)
+        └── HeatmapSlider (custom scroll indicator — flex: 1, max-width: 320, min-width: 120, marginLeft: auto)
+```
+
+The 28px body gap brackets the column grid and footer (matches Figma). Title-to-grid gap is the canonical 20 (CardHeader pb=0 + body pt=20).
+
+#### `<HeatmapCell>` — primitive tile
+
+Spreads the canonical `INNER_CARD` style (8px radius) with the cell bg overridden by tier:
+
+```tsx
+<div style={{
+  ...INNER_CARD,
+  background: tier ? HEATMAP_TIERS[tier].bg : HEATMAP_EMPTY_BG,
+  height: 52,
+  padding: 12,
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  flexShrink: 0,
+}}>
+  {tier && (
+    <>
+      <span style={{ width: 2, alignSelf: "stretch", borderRadius: 100, background: HEATMAP_TIERS[tier].bar, flexShrink: 0 }} />
+      <div /* col w/ id (T_BODY #f2f4f7) + name (T_CAPTION #b4b9c2), both ellipsis */ />
+    </>
+  )}
+</div>
+```
+
+When `tier === null` the cell renders **only the bg** (no bar, no text) — that's the "no detection at this technique" placeholder. Use `flexShrink: 0` on the cell so the column never collapses inside the scroll container.
+
+#### `<HeatmapColumn>` — primitive column
+
+Fixed `width: 145`, flex-column with `gap: 8`. Header (category + %) sits in `padding: 0 12px` so its text aligns with the cell content's text (which has 12px left padding via the cell's `padding: 12`). `flexShrink: 0` so columns keep their width when the row would otherwise collapse to fit.
+
+#### `<HeatmapLegend>` — primitive
+
+Reads from `HEATMAP_TIERS` so the palette stays the single source of truth. Five rows in a flex with `gap: 12`, each: `8×8` circular dot (`borderRadius: 999`) using the tier's `bar` color + `T_CAPTION` label.
+
+Don't hardcode a separate legend color list — if you ever change a tier color, the legend should follow without a code change.
+
+#### `<HeatmapSlider>` — reusable scroll indicator
+
+Custom horizontal scroll handle. Tracks the scroll position of any element via a `scrollRef` prop and renders a draggable thumb whose width = `(visible / total)` of the track and position = `scrollLeft / (total − visible)`. Hides itself (`opacity: 0`) when content fits without overflow.
+
+Specs:
+- Track: `flex: 1 0 0`, `height: 4`, `border-radius: 100`, `background: rgba(255,255,255,0.05)` (white-5), `min-width: 120`, `max-width: 320`, `margin-left: auto`
+- Thumb: `height: 8`, `top: -2` (overhang both sides of the 4px track), `border-radius: 100`, `background: var(--green) #03d07d`, `cursor: grab`, `touch-action: none`
+- Sync via `ResizeObserver` on both the scroll element AND the track (so thumb width updates on either resize)
+- Drag via `pointer-events` with `setPointerCapture` — works for mouse, touch, and pen
+
+**It is not heatmap-specific.** Drop it next to any other horizontal scroll surface — pass that surface's ref and it works.
+
+#### `.no-scrollbar` utility class
+
+Lives in `globals.css`. Hides the native scrollbar (`scrollbar-width: none` + `::-webkit-scrollbar { display: none }`) without disabling scroll itself. Apply to the scroll container of any element that drives a custom slider UI. The element still scrolls — only the visible scrollbar is suppressed.
+
+#### Data shape
+
+```ts
+type HeatmapTier = "100" | "75" | "50" | "25" | "0";
+type HeatmapCellData = { tier: HeatmapTier | null; id: string; name: string };
+type HeatmapColumnData = { category: string; percent: number; cells: HeatmapCellData[] };
+```
+
+`HEATMAP_TACTICS: HeatmapColumnData[]` is the demo data (14 MITRE ATT&CK enterprise tactics). When wiring real data, hand the same shape — the components don't care where the data comes from.
+
+#### Legacy heatmap (retired 2026-05-08)
+
+The previous heatmap was a 7×14 `number[][]` of percentages rendered as 24px-tall opacity-tinted squares plus a floating tooltip card showing "93% / T1190 / Initial Access / 81%". Replaced wholesale; the `HEATMAP` const and `heatColor()` helper were removed. The four `--heatmap-100/50/25/10` tokens are still in `tokens.css` for one cycle in case anything else accidentally references them — remove on a follow-up cleanup.
+
+---
 
 ### Lollipop Row (Proposal Drivers chart)
 

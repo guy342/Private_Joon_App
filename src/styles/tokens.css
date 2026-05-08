@@ -38,7 +38,23 @@
   --green-stroke:      rgba(3, 208, 125, 0.25);
   --green-deep:        #154a3a;
 
-  /* Heatmap scale */
+  /* Heatmap tiers — each tier is a paired (cell bg + accent bar) — used by
+     DetectionCoverageHeatmap. Cell bg sits as the tile surface; accent bar
+     is the 2px-wide pill on the cell's left edge. */
+  --heatmap-tier-100-bg:  #163931;
+  --heatmap-tier-100-bar: #03d07d;
+  --heatmap-tier-75-bg:   #17322d;
+  --heatmap-tier-75-bar:  #0aa467;
+  --heatmap-tier-50-bg:   #182a29;
+  --heatmap-tier-50-bar:  #117852;
+  --heatmap-tier-25-bg:   #192326;
+  --heatmap-tier-25-bar:  #174c3c;
+  --heatmap-tier-0-bg:    #11181a;
+  --heatmap-tier-0-bar:   #0c261e;
+  --heatmap-empty:        #17191f;  /* cell with no detection — no bar, no text */
+
+  /* Heatmap scale (RETIRED 2026-05-08) — replaced by --heatmap-tier-* above.
+     Kept here briefly for back-compat; do not reference in new code. */
   --heatmap-100:       #07d582;
   --heatmap-50:        rgba(7, 213, 130, 0.50);
   --heatmap-25:        rgba(7, 213, 130, 0.25);

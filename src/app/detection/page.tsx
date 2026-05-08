@@ -154,23 +154,142 @@ const LAST_COVERED = [
   { name: "MFA Fatigue Attack Detection",       date: "Mar 15" },
 ];
 
-const HEATMAP: number[][] = [
-  [100, 100,  50,  25, 100, 100,  25,  50, 100,  25, 100,  50,  25,  10],
-  [100,  50, 100,  50,  25, 100,  25, 100,  25,  50, 100, 100,  50, 100],
-  [ 50,  25, 100, 100, 100,  25, 100,  50,  25, 100,  25,  50, 100,  25],
-  [ 25, 100,  50, 100,  25, 100,  50,  25, 100,  50, 100,  25, 100,  50],
-  [100,  25, 100,  25,  50, 100,  25, 100,  50,  25, 100,  50, 100,  25],
-  [ 50, 100,  25, 100,  50,  25, 100,  50, 100,  25,  50, 100,  25, 100],
-  [100,  50, 100,  50, 100,  50,  25, 100,  50, 100,  25,  50, 100,  50],
-];
+// ─── Heatmap data + tier map ──────────────────────────────────────────────────
+// Used by DetectionCoverageHeatmap. Each tier pairs a cell background with an
+// accent-bar color; "empty" cells (no detection at all) carry tier: null and
+// render as a flat dark tile with no bar and no text. Adding a new tier means
+// adding to BOTH this map AND tokens.css (--heatmap-tier-*).
 
-function heatColor(pct: number): string {
-  if (pct >= 90) return "#07d582";
-  if (pct >= 50) return "rgba(7,213,130,0.5)";
-  if (pct >= 25) return "rgba(7,213,130,0.25)";
-  if (pct > 0)   return "rgba(7,213,130,0.10)";
-  return "#1e2026";
-}
+type HeatmapTier = "100" | "75" | "50" | "25" | "0";
+
+const HEATMAP_TIERS: Record<HeatmapTier, { bg: string; bar: string }> = {
+  "100": { bg: "#163931", bar: "#03d07d" },
+  "75":  { bg: "#17322d", bar: "#0aa467" },
+  "50":  { bg: "#182a29", bar: "#117852" },
+  "25":  { bg: "#192326", bar: "#174c3c" },
+  "0":   { bg: "#11181a", bar: "#0c261e" },
+};
+const HEATMAP_EMPTY_BG = "#17191f";
+
+const HEATMAP_COLUMN_WIDTH = 145;
+const HEATMAP_CELL_HEIGHT = 52;
+const HEATMAP_CELL_GAP = 8;
+const HEATMAP_COLUMN_GAP = 8;
+
+type HeatmapCellData = {
+  tier: HeatmapTier | null;
+  id: string;
+  name: string;
+};
+
+type HeatmapColumnData = {
+  category: string;
+  percent: number;
+  cells: HeatmapCellData[];
+};
+
+const e: HeatmapCellData = { tier: null, id: "", name: "" };
+
+const HEATMAP_TACTICS: HeatmapColumnData[] = [
+  { category: "Reconnaissance", percent: 72, cells: [
+    { tier: "100", id: "T1595", name: "Active Scanning" },
+    { tier: "100", id: "T1595", name: "Active Scanning" },
+    { tier: "25",  id: "T1589", name: "Gather Victim Identity Information" },
+    { tier: "25",  id: "T1589", name: "Gather Victim Identity Information" },
+    e, e, e, e,
+  ]},
+  { category: "Resource Development", percent: 65, cells: [
+    { tier: "100", id: "T1583", name: "Acquire Infrastructure" },
+    { tier: "75",  id: "T1583", name: "Acquire Infrastructure" },
+    { tier: "50",  id: "T1584", name: "Compromise Infrastructure" },
+    e, e, e, e, e,
+  ]},
+  { category: "Initial Access", percent: 81, cells: [
+    { tier: "100", id: "T1190", name: "Exploit Public-Facing App" },
+    { tier: "75",  id: "T1133", name: "External Remote Services" },
+    { tier: "75",  id: "T1566", name: "Phishing" },
+    { tier: "25",  id: "T1078", name: "Valid Accounts" },
+    e, e, e, e,
+  ]},
+  { category: "Execution", percent: 68, cells: [
+    { tier: "75",  id: "T1059", name: "Command and Scripting Interpreter" },
+    { tier: "75",  id: "T1059", name: "Command and Scripting Interpreter" },
+    { tier: "50",  id: "T1106", name: "Native API" },
+    { tier: "25",  id: "T1204", name: "User Execution" },
+    e, e, e, e,
+  ]},
+  { category: "Persistence", percent: 74, cells: [
+    { tier: "100", id: "T1547", name: "Boot or Logon Autostart" },
+    { tier: "100", id: "T1547", name: "Boot or Logon Autostart" },
+    { tier: "75",  id: "T1136", name: "Create Account" },
+    { tier: "75",  id: "T1136", name: "Create Account" },
+    { tier: "25",  id: "T1098", name: "Account Manipulation" },
+    { tier: "25",  id: "T1098", name: "Account Manipulation" },
+    e, e,
+  ]},
+  { category: "Privilege Escalation", percent: 71, cells: [
+    { tier: "100", id: "T1068", name: "Exploitation for Privilege Esc" },
+    { tier: "75",  id: "T1055", name: "Process Injection" },
+    { tier: "50",  id: "T1078", name: "Valid Accounts" },
+    e, e, e, e, e,
+  ]},
+  { category: "Defense Evasion", percent: 63, cells: [
+    { tier: "100", id: "T1562", name: "Impair Defenses" },
+    { tier: "75",  id: "T1070", name: "Indicator Removal" },
+    { tier: "75",  id: "T1027", name: "Obfuscated Files" },
+    { tier: "50",  id: "T1140", name: "Deobfuscate Files" },
+    { tier: "0",   id: "T1112", name: "Modify Registry" },
+    e, e, e,
+  ]},
+  { category: "Credential Access", percent: 58, cells: [
+    { tier: "100", id: "T1110", name: "Brute Force" },
+    { tier: "75",  id: "T1003", name: "OS Credential Dumping" },
+    { tier: "0",   id: "T1555", name: "Credentials from Stores" },
+    { tier: "0",   id: "T1555", name: "Credentials from Stores" },
+    e, e, e, e,
+  ]},
+  { category: "Discovery", percent: 79, cells: [
+    { tier: "100", id: "T1087", name: "Account Discovery" },
+    { tier: "100", id: "T1083", name: "File and Directory Discovery" },
+    { tier: "75",  id: "T1135", name: "Network Share Discovery" },
+    { tier: "50",  id: "T1057", name: "Process Discovery" },
+    { tier: "50",  id: "T1018", name: "Remote System Discovery" },
+    e, e, e,
+  ]},
+  { category: "Lateral Movement", percent: 67, cells: [
+    { tier: "75",  id: "T1021", name: "Remote Services" },
+    { tier: "75",  id: "T1021", name: "Remote Services" },
+    { tier: "50",  id: "T1570", name: "Lateral Tool Transfer" },
+    { tier: "25",  id: "T1534", name: "Internal Spearphishing" },
+    e, e, e, e,
+  ]},
+  { category: "Collection", percent: 60, cells: [
+    { tier: "75",  id: "T1560", name: "Archive Collected Data" },
+    { tier: "50",  id: "T1119", name: "Automated Collection" },
+    { tier: "0",   id: "T1213", name: "Data from Information Repositories" },
+    e, e, e, e, e,
+  ]},
+  { category: "Command and Control", percent: 73, cells: [
+    { tier: "100", id: "T1071", name: "Application Layer Protocol" },
+    { tier: "75",  id: "T1573", name: "Encrypted Channel" },
+    { tier: "75",  id: "T1090", name: "Proxy" },
+    { tier: "25",  id: "T1105", name: "Ingress Tool Transfer" },
+    e, e, e, e,
+  ]},
+  { category: "Exfiltration", percent: 55, cells: [
+    { tier: "75",  id: "T1041", name: "Exfil Over C2 Channel" },
+    { tier: "50",  id: "T1048", name: "Exfil Over Alt Protocol" },
+    { tier: "0",   id: "T1567", name: "Exfil Over Web Service" },
+    e, e, e, e, e,
+  ]},
+  { category: "Impact", percent: 70, cells: [
+    { tier: "100", id: "T1486", name: "Data Encrypted for Impact" },
+    { tier: "75",  id: "T1485", name: "Data Destruction" },
+    { tier: "50",  id: "T1490", name: "Inhibit System Recovery" },
+    { tier: "25",  id: "T1489", name: "Service Stop" },
+    e, e, e, e,
+  ]},
+];
 
 // ─── Shared style fragments ───────────────────────────────────────────────────
 
@@ -1669,14 +1788,261 @@ function LastCovered() {
 
 // ─── Detection Coverage Heatmap ───────────────────────────────────────────────
 
+// ─── HeatmapCell ──────────────────────────────────────────────────────────────
+// One tile in the heatmap grid. Wraps the canonical INNER_CARD shape (8px
+// radius, fixed 52px height) and overrides the bg per coverage tier. An "empty"
+// cell (tier === null) renders as a flat dark tile with no accent bar and no
+// text — matches Figma's no-detection placeholder.
+
+function HeatmapCell({ cell }: { cell: HeatmapCellData }) {
+  const tier = cell.tier ? HEATMAP_TIERS[cell.tier] : null;
+  return (
+    <div
+      style={{
+        ...INNER_CARD,
+        background: tier?.bg ?? HEATMAP_EMPTY_BG,
+        height: HEATMAP_CELL_HEIGHT,
+        padding: 12,
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        flexShrink: 0,
+      }}
+    >
+      {tier && (
+        <>
+          <span
+            style={{
+              width: 2,
+              alignSelf: "stretch",
+              borderRadius: 100,
+              background: tier.bar,
+              flexShrink: 0,
+            }}
+          />
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+              minWidth: 0,
+              flex: "1 0 0",
+            }}
+          >
+            <span
+              style={{
+                ...T_BODY,
+                color: "#f2f4f7",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {cell.id}
+            </span>
+            <span
+              style={{
+                ...T_CAPTION,
+                color: "#b4b9c2",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {cell.name}
+            </span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── HeatmapColumn ────────────────────────────────────────────────────────────
+// Vertical stack: one tactic header (category + aggregate %) over a stack of
+// HeatmapCells. Width is fixed (HEATMAP_COLUMN_WIDTH) and flexShrink: 0 so the
+// column never collapses inside the horizontal scroll container.
+
+function HeatmapColumn({ column }: { column: HeatmapColumnData }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: HEATMAP_CELL_GAP,
+        width: HEATMAP_COLUMN_WIDTH,
+        flexShrink: 0,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          padding: "0 12px",
+          minWidth: 0,
+        }}
+      >
+        <span
+          style={{
+            ...T_BODY,
+            color: "#b4b9c2",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {column.category}
+        </span>
+        <span style={{ ...T_BODY, color: "#f2f4f7" }}>
+          {column.percent}%
+        </span>
+      </div>
+      {column.cells.map((cell, i) => (
+        <HeatmapCell key={i} cell={cell} />
+      ))}
+    </div>
+  );
+}
+
+// ─── HeatmapLegend ────────────────────────────────────────────────────────────
+// Five-tier swatch row. Reads colors from HEATMAP_TIERS so legend stays in sync
+// if the tier palette ever shifts.
+
+function HeatmapLegend() {
+  const tiers: HeatmapTier[] = ["100", "75", "50", "25", "0"];
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+      {tiers.map((tier) => (
+        <div key={tier} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: 999,
+              background: HEATMAP_TIERS[tier].bar,
+              flexShrink: 0,
+            }}
+          />
+          <span style={{ ...T_CAPTION, color: "#b4b9c2" }}>{tier}%</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── HeatmapSlider ────────────────────────────────────────────────────────────
+// Custom horizontal-scroll indicator + drag handle for any scrollable element.
+// Tracks scrollLeft / scrollWidth via a ResizeObserver-backed listener; thumb
+// width = (visible / total) of the track so the proportions read correctly.
+// Hides itself (opacity 0) when content fits without scroll.
+//
+// Reusable: pass any RefObject<HTMLDivElement | null> whose target is the
+// scrollable container. Drop the slider anywhere; it stays in sync.
+
+function HeatmapSlider({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement | null> }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [thumb, setThumb] = useState({ left: 0, width: 40, visible: false });
+  const dragRef = useRef({ active: false, startThumbLeft: 0, startPointer: 0 });
+
+  useEffect(() => {
+    const scroll = scrollRef.current;
+    const track = trackRef.current;
+    if (!scroll || !track) return;
+
+    const update = () => {
+      const trackW = track.clientWidth;
+      const totalW = scroll.scrollWidth;
+      const visW = scroll.clientWidth;
+      if (totalW <= visW + 1 || trackW === 0) {
+        setThumb({ left: 0, width: trackW, visible: false });
+        return;
+      }
+      const ratio = visW / totalW;
+      const thumbW = Math.max(40, Math.round(trackW * ratio));
+      const maxThumbLeft = trackW - thumbW;
+      const maxScroll = totalW - visW;
+      const left = Math.round((scroll.scrollLeft / maxScroll) * maxThumbLeft);
+      setThumb({ left, width: thumbW, visible: true });
+    };
+
+    update();
+    scroll.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(scroll);
+    ro.observe(track);
+    return () => {
+      scroll.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, [scrollRef]);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragRef.current = { active: true, startThumbLeft: thumb.left, startPointer: e.clientX };
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!dragRef.current.active) return;
+    const scroll = scrollRef.current;
+    const track = trackRef.current;
+    if (!scroll || !track) return;
+    const dx = e.clientX - dragRef.current.startPointer;
+    const maxThumbLeft = track.clientWidth - thumb.width;
+    if (maxThumbLeft <= 0) return;
+    const newLeft = Math.max(0, Math.min(maxThumbLeft, dragRef.current.startThumbLeft + dx));
+    const ratio = newLeft / maxThumbLeft;
+    const maxScroll = scroll.scrollWidth - scroll.clientWidth;
+    scroll.scrollLeft = ratio * maxScroll;
+  };
+  const onPointerUp = (e: React.PointerEvent) => {
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    dragRef.current.active = false;
+  };
+
+  return (
+    <div
+      ref={trackRef}
+      style={{
+        flex: "1 0 0",
+        height: 4,
+        borderRadius: 100,
+        background: "rgba(255,255,255,0.05)",
+        position: "relative",
+        opacity: thumb.visible ? 1 : 0,
+        transition: "opacity 200ms ease",
+        minWidth: 120,
+        maxWidth: 320,
+        marginLeft: "auto",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          left: thumb.left,
+          top: -2,
+          width: thumb.width,
+          height: 8,
+          borderRadius: 100,
+          background: "#03d07d",
+          cursor: "grab",
+          touchAction: "none",
+        }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+      />
+    </div>
+  );
+}
+
+// ─── DetectionCoverageHeatmap ─────────────────────────────────────────────────
+// Card with a horizontally-scrollable grid of HeatmapColumns. Footer = legend
+// + slider (the slider mirrors the column scroll position). Card width is
+// driven by its parent grid column, columns inside scroll horizontally when
+// content exceeds the visible width.
+
 function DetectionCoverageHeatmap() {
-  const legend = [
-    { label: "100%", bg: "#07d582" },
-    { label: "75%",  bg: "rgba(7,213,130,0.5)" },
-    { label: "50%",  bg: "rgba(7,213,130,0.25)" },
-    { label: "25%",  bg: "rgba(7,213,130,0.10)" },
-    { label: "0%",   bg: "#1e2026" },
-  ];
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   return (
     <Card>
@@ -1694,99 +2060,30 @@ function DetectionCoverageHeatmap() {
           padding: 20,
           display: "flex",
           flexDirection: "column",
-          gap: 16,
+          gap: 28,
+          minWidth: 0,
         }}
       >
-        <div style={{ position: "relative" }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(14, 1fr)",
-              gap: 6,
-            }}
-          >
-            {HEATMAP.flatMap((row, r) =>
-              row.map((pct, c) => (
-                <span
-                  key={`${r}-${c}`}
-                  style={{
-                    height: 24,
-                    borderRadius: 4,
-                    background: heatColor(pct),
-                  }}
-                />
-              ))
-            )}
-          </div>
-
-          <div
-            style={{
-              position: "absolute",
-              top: 4,
-              right: 0,
-              width: 164,
-              background: "#1e2026",
-              borderRadius: 8,
-              padding: 12,
-              display: "flex",
-              flexDirection: "column",
-              gap: 10,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
-            }}
-          >
-            <span style={T_STAT_UNIT}>93%</span>
-            <div style={{ display: "flex", gap: 8 }}>
-              <span
-                style={{
-                  width: 2,
-                  borderRadius: 4,
-                  background: "#03d07d",
-                  flexShrink: 0,
-                }}
-              />
-              <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
-                <span style={{ ...T_MONO_MED, color: "#f2f4f7" }}>T1190</span>
-                <span style={{ ...T_CAPTION, color: "#858a94" }}>Valid Accounts</span>
-              </div>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                paddingTop: 8,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span
-                  style={{
-                    width: 8,
-                    height: 6,
-                    background: "#07d582",
-                    borderRadius: 1,
-                  }}
-                />
-                <span style={{ ...T_CAPTION, color: "#b4b9c2" }}>Initial Access</span>
-              </div>
-              <span style={{ ...T_CAPTION_MED, color: "#f2f4f7" }}>81%</span>
-            </div>
-          </div>
+        {/* Horizontal scroll container — native scrollbar hidden via .no-scrollbar */}
+        <div
+          ref={scrollRef}
+          className="no-scrollbar"
+          style={{
+            display: "flex",
+            gap: HEATMAP_COLUMN_GAP,
+            overflowX: "auto",
+            minWidth: 0,
+          }}
+        >
+          {HEATMAP_TACTICS.map((column, i) => (
+            <HeatmapColumn key={i} column={column} />
+          ))}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          {legend.map(({ label, bg }) => (
-            <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 2,
-                  background: bg,
-                }}
-              />
-              <span style={{ ...T_CAPTION, color: "#b4b9c2" }}>{label}</span>
-            </div>
-          ))}
+        {/* Footer: legend (left) + slider (right) */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0 }}>
+          <HeatmapLegend />
+          <HeatmapSlider scrollRef={scrollRef} />
         </div>
       </div>
     </Card>
