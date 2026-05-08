@@ -808,17 +808,24 @@ Card with a horizontally scrollable grid of tactic columns. Each column is a fix
 ```
 Card (--bg-card #1a1c22, 16 radius)
 ├── CardHeader (20 sides + top, 0 bottom — title "Detection Coverage Heatmap" + subtitle "Covered by Dawn" + right=IconBtn maximize-2)
-└── Body (padding: 20, gap: 28, flex column, min-width: 0)
-    ├── Scroll container (display: flex, gap: 8, overflow-x: auto, .no-scrollbar)
+└── Body (paddingY: 20, no horizontal padding, gap: 28, flex column, min-width: 0)
+    ├── Scroll container (display: flex, gap: 8, overflow-x: auto, .no-scrollbar, paddingLeft: 20, paddingRight: 20)
     │   └── HeatmapColumn × N (each 145px wide, flexShrink: 0)
     │       ├── Column header (padding: 0 12px — category over percent)
     │       └── HeatmapCell × N (gap: 8 between cells)
-    └── Footer (flex, justify: space-between, align: center, alignSelf: stretch)
+    └── Footer (flex, justify: space-between, align: center, alignSelf: stretch, paddingLeft: 20, paddingRight: 20)
         ├── HeatmapLegend (5 dots + labels — gap: 16, paddingRight: 86, flexShrink: 0)
         └── HeatmapSlider (custom scroll indicator — flex: 1 0 0, min-width: 160)
 ```
 
 The 28px body gap brackets the column grid and footer (matches Figma). Title-to-grid gap is the canonical 20 (CardHeader pb=0 + body pt=20).
+
+**Edge-to-edge scroll bleed:** horizontal padding lives on the **scroll container itself** (`paddingLeft/Right: 20`), not on the body wrapper. The padding becomes part of the scroll content, so:
+- At rest (`scrollLeft = 0`): the 20px left padding is visible, columns sit 20px off the card's left edge.
+- Mid-scroll: the padding scrolls off and columns reach the card's actual left/right edges — the heatmap content bleeds edge-to-edge as the user pans.
+- At max scroll: the 20px right padding is visible after the last column, mirroring the rest position on the other side.
+
+The footer keeps its horizontal padding fixed at 20px (legend and slider are anchored relative to the card edges, independent of scroll position).
 
 #### `<HeatmapCell>` — primitive tile
 

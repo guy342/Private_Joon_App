@@ -2088,16 +2088,24 @@ function DetectionCoverageHeatmap() {
           </IconBtn>
         }
       />
+      {/* Body: vertical-only padding on the wrapper. Horizontal padding lives
+          INSIDE the scroll container (so it scrolls with content) and INSIDE
+          the footer (so the legend+slider stay 20px off the card edges). The
+          column grid bleeds edge-to-edge while scrolling. */}
       <div
         style={{
-          padding: 20,
+          paddingTop: 20,
+          paddingBottom: 20,
           display: "flex",
           flexDirection: "column",
           gap: 28,
           minWidth: 0,
         }}
       >
-        {/* Horizontal scroll container — native scrollbar hidden via .no-scrollbar */}
+        {/* Horizontal scroll container — native scrollbar hidden via .no-scrollbar.
+            paddingLeft/paddingRight are part of the scroll content, so they give
+            20px breathing room AT REST and scroll away as the user pans, letting
+            columns reach the card's actual left/right edges mid-scroll. */}
         <div
           ref={scrollRef}
           className="no-scrollbar"
@@ -2106,6 +2114,8 @@ function DetectionCoverageHeatmap() {
             gap: HEATMAP_COLUMN_GAP,
             overflowX: "auto",
             minWidth: 0,
+            paddingLeft: 20,
+            paddingRight: 20,
           }}
         >
           {HEATMAP_TACTICS.map((column, i) => (
@@ -2114,9 +2124,9 @@ function DetectionCoverageHeatmap() {
         </div>
 
         {/* Footer: legend (left) + slider (right). space-between + alignSelf:
-            stretch is the canonical body-footer layout. The legend's own
-            paddingRight enforces a minimum 86px gap between its last dot and
-            the slider regardless of available width. */}
+            stretch is the canonical body-footer layout. Horizontal padding is
+            on the footer itself so it's anchored 20px off the card edges
+            regardless of the scroll container's edge-to-edge bleed above. */}
         <div
           style={{
             display: "flex",
@@ -2124,6 +2134,8 @@ function DetectionCoverageHeatmap() {
             alignItems: "center",
             alignSelf: "stretch",
             minWidth: 0,
+            paddingLeft: 20,
+            paddingRight: 20,
           }}
         >
           <HeatmapLegend />
