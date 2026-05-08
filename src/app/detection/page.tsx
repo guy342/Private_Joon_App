@@ -8,7 +8,6 @@ import {
   ChevronDown,
   ChevronRight,
   Database,
-  HeartPulse,
   ListFilter,
   Maximize2,
   PanelLeftClose,
@@ -16,9 +15,6 @@ import {
   RefreshCw,
   Search,
   Settings,
-  ShieldCheck,
-  Signal,
-  Timer,
   User,
 } from "lucide-react";
 
@@ -1070,75 +1066,225 @@ function ConnectorChip({
 }
 
 // ─── Health & Performance ─────────────────────────────────────────────────────
+//
+// Card structure:
+//   ┌────────────────────────────────────────────────────────────────────┐
+//   │ Header: title + subtitle  ····················  Jira IconBtn        │
+//   ├──────────────────────────┬─────────────────────────────────────────┤
+//   │                          │ Telemetry uptime  ··········  ↑ 1.6%    │
+//   │     Total rules          │ 98%  ─────────────────  sparkline       │
+//   │     730 / 1,250          ├──────────────┬──────────────────────────┤
+//   │     [stacked bar]        │ Telemetry    │ Response time            │
+//   │     ● Deployed   210     │ completeness │ 4.2h  To fix             │
+//   │     ● Proposals  95      │ 98%          ├──────────────────────────┤
+//   │     ● In test    72      │ [dot grid]   │ 18.5h  To close gaps     │
+//   │                          │              │                          │
+//   └──────────────────────────┴──────────────┴──────────────────────────┘
+//
+// Helpers used: <StackedRulesBar>, <RulesBreakdownRow>, <Sparkline>, <DotGrid>.
 
-function StatTile({
-  icon: Icon,
-  stat,
-  unit,
-  caption,
-  delta,
+// Stacked progress bar — three segments matching the Figma: gradient deep→
+// brand green (Deployed), light green (Proposals), ice white sliver (In test).
+// Asymmetric corner radii so the outer edges round off and inner edges stay
+// crisp. Reusable: pass any 3-segment data; for now widths are visual-fixed
+// per design.
+function StackedRulesBar() {
+  return (
+    <div style={{ alignSelf: "stretch", display: "flex", gap: 4, height: 16 }}>
+      <span
+        style={{
+          flex: "1 0 0",
+          background: "linear-gradient(to right, #026a40, #03d07d)",
+          borderTopLeftRadius: 100,
+          borderBottomLeftRadius: 100,
+          borderTopRightRadius: 2,
+          borderBottomRightRadius: 2,
+        }}
+      />
+      <span
+        style={{
+          width: 75,
+          background: "#6af0ba",
+          borderRadius: 2,
+          flexShrink: 0,
+        }}
+      />
+      <span
+        style={{
+          width: 6,
+          background: "#e8fff6",
+          borderTopLeftRadius: 2,
+          borderBottomLeftRadius: 2,
+          borderTopRightRadius: 100,
+          borderBottomRightRadius: 100,
+          flexShrink: 0,
+        }}
+      />
+    </div>
+  );
+}
+
+// Breakdown row — colored dot + label (left), value (right), 1px separator
+// below unless it's the last row. Reusable: any "list with dot indicator"
+// pattern can use this primitive.
+function RulesBreakdownRow({
+  color,
+  label,
+  value,
+  isLast,
 }: {
-  icon: IconComponent;
-  stat: string;
-  unit: string;
-  caption: string;
-  delta: string;
+  color: string;
+  label: string;
+  value: string;
+  isLast: boolean;
 }) {
   return (
-    <div
-      style={{
-        background: "#1e2026",
-        borderRadius: 8,
-        padding: 16,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        minHeight: 120,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: 100,
-            background: "#292b31",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#b4b9c2",
-            flexShrink: 0,
-          }}
-        >
-          <Icon size={16} strokeWidth={1.75} />
-        </span>
-        <DeltaBadge text={delta} />
-      </div>
-      <div>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
-          <span style={T_STAT_NUM}>{stat}</span>
-          <span style={T_STAT_UNIT}>{unit}</span>
+    <div style={{ alignSelf: "stretch" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          height: 38,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 999,
+              background: color,
+              flexShrink: 0,
+            }}
+          />
+          <span style={{ ...T_BODY, color: "#b4b9c2" }}>{label}</span>
         </div>
-        <span style={{ ...T_BODY, color: "#858a94" }}>{caption}</span>
+        <span style={{ ...T_BODY_SEMI, color: "#f2f4f7" }}>{value}</span>
       </div>
+      {!isLast && <div style={{ height: 1, background: "#23252a" }} />}
+    </div>
+  );
+}
+
+// Sparkline — smooth-ish polyline over normalized data. Reusable: pass any
+// `data: number[]` and the curve scales to the SVG height. Stroke uses brand
+// green by default. Uses viewBox + preserveAspectRatio="none" so the curve
+// stretches horizontally to fit any container width.
+function Sparkline({
+  data,
+  height = 52,
+  color = "#03d07d",
+  strokeWidth = 1.5,
+}: {
+  data: number[];
+  height?: number;
+  color?: string;
+  strokeWidth?: number;
+}) {
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const w = 300; // viewBox width — actual rendered width controlled by parent
+  const points = data
+    .map((v, i) => {
+      const x = (i / (data.length - 1)) * w;
+      const y = height - ((v - min) / range) * (height - strokeWidth) - strokeWidth / 2;
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  return (
+    <svg
+      width={w}
+      height={height}
+      viewBox={`0 0 ${w} ${height}`}
+      preserveAspectRatio="none"
+      style={{ display: "block", flexShrink: 0 }}
+    >
+      <polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  );
+}
+
+// Dot grid — N×M grid of 4×4 dots, with `filled` count rendered in brand
+// green and the remainder dimmed. Reusable for any "out of 100" visualization.
+function DotGrid({
+  filled,
+  total = 100,
+  columns = 25,
+  dotSize = 4,
+  gap = 4,
+}: {
+  filled: number;
+  total?: number;
+  columns?: number;
+  dotSize?: number;
+  gap?: number;
+}) {
+  const rows = Math.ceil(total / columns);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap }}>
+      {Array.from({ length: rows }).map((_, r) => (
+        <div key={r} style={{ display: "flex", gap }}>
+          {Array.from({ length: columns }).map((_, c) => {
+            const idx = r * columns + c;
+            if (idx >= total) return null;
+            const isFilled = idx < filled;
+            return (
+              <span
+                key={c}
+                style={{
+                  width: dotSize,
+                  height: dotSize,
+                  borderRadius: 999,
+                  background: isFilled ? "#03d07d" : "rgba(3,208,125,0.20)",
+                  flexShrink: 0,
+                }}
+              />
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Stat row (number + unit + caption) used twice inside Response time. Local
+// helper, not promoted to the design system because the spacing/sizing here
+// is tuned for this specific cell.
+function ResponseTimeRow({
+  value,
+  unit,
+  caption,
+}: {
+  value: string;
+  unit: string;
+  caption: string;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+      <span style={{ ...T_STAT_UNIT, lineHeight: "normal" }}>
+        {value}
+        <span style={{ ...T_BODY_SEMI, fontWeight: 700 }}>{unit}</span>
+      </span>
+      <span style={{ ...T_BODY, color: "#b4b9c2" }}>{caption}</span>
     </div>
   );
 }
 
 function HealthAndPerformance() {
-  const breakdown = [
-    { label: "Deployed",  value: "210", color: "#07d582" },
-    { label: "Drafts",    value: "210", color: "#4a90e2" },
-    { label: "Proposals", value: "95",  color: "#6993be" },
-    { label: "In test",   value: "72",  color: "#b4b9c2" },
-  ];
-
-  const stats = [
-    { icon: Signal,      stat: "98",   unit: "%", caption: "Telemetry completeness", delta: "↑ 1.6%" },
-    { icon: HeartPulse,  stat: "100",  unit: "%", caption: "Telemetry uptime",        delta: "↑ 0.1%" },
-    { icon: Timer,       stat: "98",   unit: "%", caption: "Avg. time to fix",         delta: "↑ 0.1%" },
-    { icon: ShieldCheck, stat: "18.5", unit: "h", caption: "Avg. time to close gap",  delta: "↑ 1.6%" },
-  ];
+  // Sample sparkline data — gentle upward trend matching the Figma reference.
+  // Replace with real time-series data when wiring up.
+  const sparklineData = [55, 58, 56, 60, 64, 67, 70, 72, 71, 75, 80, 84, 87, 92, 95, 98];
 
   return (
     <Card style={{ alignSelf: "stretch" }}>
@@ -1159,107 +1305,162 @@ function HealthAndPerformance() {
       />
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "640px 1fr",
-          gap: 8,
           padding: 20,
+          display: "flex",
+          gap: 8,
+          alignItems: "stretch",
+          minWidth: 0,
         }}
       >
+        {/* LEFT: Total Rules — fixed 516px Inner Card */}
         <div
           style={{
             ...INNER_CARD,
+            width: 516,
+            padding: "20px 24px 24px",
             display: "flex",
-            width: 640,
-            padding: "16px 24px",
             flexDirection: "column",
             alignItems: "flex-start",
-            gap: 12,
-            alignSelf: "stretch",
+            gap: 16,
+            flexShrink: 0,
           }}
         >
-          <span style={{ ...T_BODY, color: "#858a94" }}>Total rules</span>
+          <div
+            style={{
+              alignSelf: "stretch",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <span style={{ ...T_BODY, color: "#b4b9c2" }}>Total rules</span>
+            <DeltaBadge text="↑ 1.6%" />
+          </div>
+
+          <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+            <span style={T_DISPLAY}>730</span>
+            <span style={{ ...T_BODY, color: "#858a94" }}>/ 1,250</span>
+          </div>
+
+          <StackedRulesBar />
 
           <div
             style={{
               alignSelf: "stretch",
-              display: "inline-flex",
-              justifyContent: "space-between",
-              alignItems: "flex-end",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
-            <span style={T_DISPLAY}>730</span>
-            <DeltaBadge text="↑ +7%" />
-          </div>
-
-          <div style={{ alignSelf: "stretch", display: "flex", gap: 4, height: 12 }}>
-            <span
-              style={{
-                flex: 71,
-                background: "#07d582",
-                borderTopLeftRadius: 6,
-                borderBottomLeftRadius: 6,
-                borderTopRightRadius: 2,
-                borderBottomRightRadius: 2,
-              }}
-            />
-            <span style={{ flex: 17, background: "#4a90e2", borderRadius: 2 }} />
-            <span style={{ flex: 11, background: "#6993be", borderRadius: 2 }} />
-            <span
-              style={{
-                flex: 1,
-                background: "#b4b9c2",
-                borderTopLeftRadius: 2,
-                borderBottomLeftRadius: 2,
-                borderTopRightRadius: 6,
-                borderBottomRightRadius: 6,
-              }}
-            />
-          </div>
-
-          <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column" }}>
-            {breakdown.map((row, i) => (
-              <div key={row.label}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    height: 38,
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span
-                      style={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: 999,
-                        background: row.color,
-                        flexShrink: 0,
-                      }}
-                    />
-                    <span style={{ ...T_BODY, color: "#b4b9c2" }}>{row.label}</span>
-                  </div>
-                  <span style={{ ...T_BODY_SEMI, color: "#f2f4f7" }}>{row.value}</span>
-                </div>
-                {i < breakdown.length - 1 && (
-                  <div style={{ height: 1, background: "#23252a" }} />
-                )}
-              </div>
-            ))}
+            <RulesBreakdownRow color="#03d07d" label="Deployed"  value="210" isLast={false} />
+            <RulesBreakdownRow color="#6af0ba" label="Proposals" value="95"  isLast={false} />
+            <RulesBreakdownRow color="#e8fff6" label="In test"   value="72"  isLast={true} />
           </div>
         </div>
 
+        {/* RIGHT: Telemetry stack */}
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gridTemplateRows: "1fr 1fr",
+            flex: "1 0 0",
+            display: "flex",
+            flexDirection: "column",
             gap: 8,
+            minWidth: 0,
           }}
         >
-          {stats.map((s) => (
-            <StatTile key={s.caption} {...s} />
-          ))}
+          {/* Top: Telemetry uptime — big stat + sparkline */}
+          <div
+            style={{
+              ...INNER_CARD,
+              padding: 20,
+              height: 144,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              overflow: "clip",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <span style={{ ...T_BODY, color: "#b4b9c2" }}>Telemetry uptime</span>
+              <DeltaBadge text="↑ 1.6%" />
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-end",
+                justifyContent: "space-between",
+                gap: 16,
+                minWidth: 0,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "baseline", flexShrink: 0 }}>
+                <span style={{ ...T_STAT_NUM, lineHeight: "normal" }}>98</span>
+                <span style={{ ...T_STAT_UNIT, lineHeight: "normal" }}>%</span>
+              </div>
+              <Sparkline data={sparklineData} />
+            </div>
+          </div>
+
+          {/* Bottom: Telemetry completeness + Response time */}
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              flex: "1 0 0",
+              minHeight: 0,
+              minWidth: 0,
+            }}
+          >
+            {/* Telemetry completeness — content-sized */}
+            <div
+              style={{
+                ...INNER_CARD,
+                padding: 20,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                overflow: "clip",
+                flexShrink: 0,
+              }}
+            >
+              <span style={{ ...T_BODY, color: "#b4b9c2" }}>
+                Telemetry completeness
+              </span>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <span style={{ ...T_STAT_UNIT, lineHeight: "normal" }}>
+                  98
+                  <span style={{ ...T_BODY_SEMI, fontWeight: 700 }}>%</span>
+                </span>
+                <DotGrid filled={98} />
+              </div>
+            </div>
+
+            {/* Response time — fills remaining space */}
+            <div
+              style={{
+                ...INNER_CARD,
+                padding: 20,
+                flex: "1 0 0",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                overflow: "clip",
+                minWidth: 0,
+              }}
+            >
+              <span style={{ ...T_BODY, color: "#b4b9c2" }}>Response time</span>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <ResponseTimeRow value="4.2"  unit="h" caption="To fix" />
+                <div style={{ height: 1, background: "#23252a" }} />
+                <ResponseTimeRow value="18.5" unit="h" caption="To close gaps" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </Card>

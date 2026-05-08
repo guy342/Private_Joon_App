@@ -60,9 +60,18 @@ Spelled out so future code lands on the right token without guessing:
 | Sidebar `v0.43.2` version | `--type-mono-small` |
 | Card title | `--type-heading` |
 | Card subtitle | `--type-body` |
-| Stat tile number ("98") | `--type-stat-num` |
-| Stat tile unit ("%", "h") | `--type-stat-unit` |
-| Stat tile caption | `--type-body` |
+| ~~Stat tile number ("98")~~ | _retired with Health & Performance redesign — there are no more stat tiles_ |
+| ~~Stat tile unit ("%", "h")~~ | _retired_ |
+| ~~Stat tile caption~~ | _retired_ |
+| Health & Performance "Total rules" label | `--type-body` w/ `--text-secondary` |
+| Health & Performance "730" hero number | `--type-display` |
+| Health & Performance "/ 1,250" total | `--type-body` w/ `--text-tertiary` |
+| Health & Performance breakdown row label ("Deployed", "Proposals", "In test") | `--type-body` w/ `--text-secondary` |
+| Health & Performance breakdown row value | `--type-body-semibold` w/ `--text-primary` |
+| Telemetry uptime "98%" | `--type-stat-num` (98) + `--type-stat-unit` (%) |
+| Telemetry completeness "98%" | `--type-stat-unit` (98) + bolded `--type-body-semibold` (%) |
+| Response time "4.2 / 18.5" | `--type-stat-unit` + bolded `--type-body-semibold` (h) |
+| Response time caption ("To fix", "To close gaps") | `--type-body` w/ `--text-secondary` |
 | Hero display number ("730") | `--type-display` |
 | Delta badge ("↑ +7%") | `--type-caption` |
 | Workload group label | `--type-body-medium` |
@@ -817,6 +826,85 @@ Height: `12px`. **Asymmetric edge pattern:**
 | Last (right edge) | TL/BL `2px`, TR/BR `6px` — 2px inner (left), rounded outer (right) |
 
 Outer ends use a `6px` corner (half the bar's 12px height — gives a clean half-circle without clamping); inner ends use a tighter `2px` corner. **Use per-corner properties** (`borderTopLeftRadius`, `borderBottomLeftRadius`, etc.) rather than the four-value shorthand — explicit per-corner is unambiguous in React inline styles and matches Figma's per-corner notation.
+
+### Health & Performance
+
+Top-of-page card. Three-zone layout: Total Rules panel on the left (fixed 516px), and a vertical right column with Telemetry uptime above and a row of Telemetry completeness + Response time below. Lives in `src/app/detection/page.tsx`. Built on four reusable primitives — `<StackedRulesBar>`, `<RulesBreakdownRow>`, `<Sparkline>`, `<DotGrid>` — plus the existing `<Card>` / `<CardHeader>` / `<IconBtn>` / `<DeltaBadge>` / `INNER_CARD`.
+
+#### Layout
+
+```
+Card (--bg-card #1a1c22, 16 radius, alignSelf: stretch)
+├── CardHeader (title + subtitle + Jira IconBtn)
+└── Body (padding: 20, flex row, gap: 8, alignItems: stretch)
+    ├── Total Rules panel (Inner Card, width: 516, padding: 20 24 24, gap: 16, flexShrink: 0)
+    │   ├── Header row (label + DeltaBadge ↑ 1.6%)
+    │   ├── Big stat (T_DISPLAY "730" + T_BODY "/ 1,250")
+    │   ├── <StackedRulesBar/>
+    │   └── 3 × <RulesBreakdownRow/> (Deployed / Proposals / In test)
+    └── Right stack (flex: 1, flex column, gap: 8, minWidth: 0)
+        ├── Telemetry uptime (Inner Card, height: 144)
+        │   ├── Header row (label + DeltaBadge)
+        │   └── Bottom row: T_STAT_NUM/UNIT "98%" + <Sparkline/>
+        └── Bottom row (flex row, gap: 8, flex: 1, minWidth: 0)
+            ├── Telemetry completeness (Inner Card, content-sized, flexShrink: 0)
+            │   ├── Label + small stat "98%"
+            │   └── <DotGrid filled={98}/>
+            └── Response time (Inner Card, flex: 1, minWidth: 0)
+                ├── Label
+                ├── <ResponseTimeRow value="4.2" unit="h" caption="To fix"/>
+                ├── 1px separator
+                └── <ResponseTimeRow value="18.5" unit="h" caption="To close gaps"/>
+```
+
+#### `<StackedRulesBar>` — primitive
+
+Three-segment progress bar (16px tall, gap 4) representing rule status distribution. Asymmetric corner radii so the outer ends are rounded pills and the inner ends stay subtly squared. Segment widths are visual-fixed per the design (Deployed grows to fill; Proposals 75px; In test 6px sliver) — wire to data-proportional widths when integrating real data.
+
+| Segment | Background | Width | Corners (TL TR BR BL) |
+|---|---|---|---|
+| Deployed | `linear-gradient(to right, #026a40, #03d07d)` | `flex: 1 0 0` | 100/2/2/100 |
+| Proposals | `#6af0ba` | `75px` | 2/2/2/2 |
+| In test | `#e8fff6` | `6px` | 2/100/100/2 |
+
+The three segment colors are also the three breakdown-row dot colors (`#03d07d` → Deployed, `#6af0ba` → Proposals, `#e8fff6` → In test). Same palette across the bar and dots — single source of truth visually. These are inlined raw hex (not tokens) because they're scoped to this single visualization; promote to tokens if reused elsewhere.
+
+#### `<RulesBreakdownRow color label value isLast>` — primitive
+
+Dot + label (left), value (right), 1px separator below unless last row. Dot is `10×10` rounded-999 in the segment color. Reusable for any "list with category color indicator" pattern.
+
+#### `<Sparkline data height color strokeWidth>` — primitive
+
+SVG `<polyline>` over normalized data. Uses `viewBox` + `preserveAspectRatio="none"` so the curve **stretches horizontally** to fit any container width without distorting the stroke (`vector-effect="non-scaling-stroke"` keeps the line at the requested px width regardless of horizontal scale). Default color `#03d07d` (brand green).
+
+Reusable: pass any `data: number[]` — the polyline normalizes to fit the box vertically. Default height 52, stroke 1.5.
+
+#### `<DotGrid filled total columns dotSize gap>` — primitive
+
+N×M grid of small dots representing percentages. `filled` dots use `--green` (`#03d07d`); the remainder use `rgba(3,208,125,0.20)` (dimmed green). Defaults: 100 total, 25 columns × 4 rows, dot size 4, gap 4. Reusable for any "out of N" progress visualization.
+
+#### Type token mapping (Figma → design system)
+
+The Figma uses several font sizes that don't exist in the canonical 12-token scale. They're mapped to the closest existing token rather than introducing one-off sizes:
+
+| Element | Figma | Mapped to |
+|---|---|---|
+| Total rules "730" | Inter Bold 64 / 46 | `T_DISPLAY` (Inter Bold 46/46) |
+| Telemetry uptime "98%" | Inter Bold 44 + 24 | `T_STAT_NUM` (30) + `T_STAT_UNIT` (18) |
+| Telemetry completeness "98%" | Inter Bold 20 + 12 | `T_STAT_UNIT` (18) + bolded `T_BODY_SEMI` (12) |
+| Response time "4.2 / 18.5" | Inter Bold 20 + 12 | `T_STAT_UNIT` (18) + bolded `T_BODY_SEMI` (12) |
+| Breakdown row values "210 / 95 / 72" | Geist Semi Bold 14 / 16 | `T_BODY_SEMI` (Inter SemiBold 12/18) — Geist isn't in the project per Fonts rule |
+
+If the visual hierarchy ever feels too compressed, the right move is **adding canonical tokens** (e.g. `T_STAT_LG` 44/normal, `T_STAT_MID` 20/22) — not inlining `fontSize` overrides at call sites. None added in this iteration; revisit if multiple components want the larger scale.
+
+#### Retired patterns
+
+The previous Health & Performance had a 4-tile 2×2 grid on the right (`<StatTile icon stat unit caption delta>` with Lucide icon-circle + delta badge per tile) and a 4-segment stacked bar (Deployed / Drafts / Proposals / In test). Both retired with this redesign:
+- `<StatTile>` is gone — its right-column slot is replaced by Telemetry uptime + Telemetry completeness + Response time as separately-shaped Inner Cards.
+- "Drafts" is no longer a tracked breakdown category — only Deployed / Proposals / In test remain.
+- The lucide icons that were exclusive to StatTile (`HeartPulse`, `ShieldCheck`, `Signal`, `Timer`) are removed from the imports.
+
+---
 
 ### Detection Coverage Heatmap
 
