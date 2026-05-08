@@ -1043,14 +1043,19 @@ Reads from `SEVERITY_COLORS` (in `page.tsx`) so the palette is the single source
 
 The existing NeutralBadge gained a `size` prop. `sm` (default) keeps its prior `padding: 2px 6px` for small labels like "+2" / "3". `md` uses `padding: 2px 10px` and is what the WorkloadDistribution **Category** chips use. Same bg/color either way (`rgba(255,255,255,0.05)` / `--text-tertiary`).
 
-#### Selected-row interaction
+#### Row hover treatment
 
-`useState<number | null>(2)` defaults to the 3rd row to match the Figma. Click a row to select; click the same row again to clear. When selected:
-- Row bg: `transparent` → `--bg-elevated` (#1e2026)
-- ID column font-weight: `400` → `600` (Inter Semi Bold)
-- Action column: empty → `<ArrowUpRight size=14 color=--text-secondary>` icon
+The row "selected" visual is **purely a hover state** — no click handler, no React state. Implemented entirely in CSS via three classes on the row's children:
 
-The selected row is independent from URL/route state — lift to a parent or a route param if multi-component coordination is ever needed.
+| Class on cell | What hover does |
+|---|---|
+| `.workload-cell` (every cell) | bg `transparent` → `--bg-elevated` (#1e2026) on `.workload-row:hover` |
+| `.workload-cell-id` (ID cell only) | font-weight `400` → `600` (Inter Semi Bold) on `.workload-row:hover` |
+| `.workload-cell-action-icon` (the ArrowUpRight `<svg>`) | `opacity: 0` at rest → `1` on `.workload-row:hover`. Icon is always rendered; only its alpha animates. |
+
+The row wrapper has `display: contents` so the grid still sees a flat sequence of cells — but `:hover` still fires on the wrapper when the cursor is over any descendant, and the cascade reaches all the cells in one rule. 120ms ease transition on the bg + opacity.
+
+Don't reintroduce a `useState`-driven hover/selected pattern: pure CSS is faster (no React re-render on every mouseenter) and the row treatment never needs to outlive the cursor's presence over it.
 
 ---
 

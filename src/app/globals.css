@@ -66,3 +66,26 @@ body {
     0 2px 2px 0 rgba(0, 0, 0, 0.10),
     0 0 0 4px rgba(255, 255, 255, 0.10);
 }
+
+/* WorkloadDistribution row hover — see <WorkloadDistribution> in
+   src/app/detection/page.tsx. The row wrapper uses `display: contents`
+   (so the grid sees a flat sequence of cells) but :hover still fires when
+   the cursor is over any descendant, propagating to the cell-bg, the ID
+   weight bump, and the action-column icon reveal in a single CSS rule.
+   No React state involved — hover is purely browser-native. */
+.workload-row .workload-cell {
+  transition: background-color 120ms ease;
+}
+.workload-row:hover .workload-cell {
+  background-color: var(--bg-elevated);
+}
+.workload-row:hover .workload-cell-id {
+  font-weight: 600;
+}
+.workload-row .workload-cell-action-icon {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.workload-row:hover .workload-cell-action-icon {
+  opacity: 1;
+}

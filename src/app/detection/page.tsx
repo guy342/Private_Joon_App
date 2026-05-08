@@ -2314,10 +2314,6 @@ function SeverityBadge({ severity }: { severity: WorkloadSeverity }) {
 }
 
 function WorkloadDistribution() {
-  // Default the 3rd row to selected so the design reads exactly as in Figma
-  // out of the box. Click any row to change selection; click again to clear.
-  const [selectedIdx, setSelectedIdx] = useState<number | null>(2);
-
   const COLS =
     "100px 267px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 44px";
   const HEADERS = ["ID", "Rule Name", "Category", "Technique", "Severity", "Status", "Hits (7d)", "FP Rate", "Source", ""];
@@ -2335,13 +2331,6 @@ function WorkloadDistribution() {
     color: "#858a94",
     borderBottom: "1px solid #23252a",
   };
-  const dataCellBase = (selected: boolean): React.CSSProperties => ({
-    ...cellBase,
-    color: "#f2f4f7",
-    borderBottom: "1px solid #23252a",
-    background: selected ? "#1e2026" : "transparent",
-    cursor: "pointer",
-  });
 
   return (
     <Card style={{ alignSelf: "stretch", minWidth: 0 }}>
@@ -2366,47 +2355,52 @@ function WorkloadDistribution() {
             <div key={`h-${i}`} style={headerCellBase}>{h}</div>
           ))}
 
-          {/* Data rows */}
+          {/* Data rows. Each row is a `display: contents` wrapper (.workload-row)
+              so the grid sees a flat sequence of cells. CSS hover on the wrapper
+              propagates to all descendants — see .workload-row rules in
+              globals.css for bg, ID weight, and action-icon reveal. */}
           {WORKLOAD_ROWS.map((row, i) => {
-            const selected = selectedIdx === i;
             const isLast = i === WORKLOAD_ROWS.length - 1;
             const cell = (extra?: React.CSSProperties): React.CSSProperties => ({
-              ...dataCellBase(selected),
-              ...(isLast ? { borderBottom: "none" } : {}),
+              ...cellBase,
+              color: "#f2f4f7",
+              borderBottom: isLast ? "none" : "1px solid #23252a",
               ...extra,
             });
-            const onSelect = () => setSelectedIdx(selected ? null : i);
 
             return (
-              <div key={`r-${i}`} style={{ display: "contents" }}>
-                <div style={cell({ fontWeight: selected ? 600 : 400 })} onClick={onSelect}>
+              <div key={`r-${i}`} className="workload-row" style={{ display: "contents" }}>
+                <div className="workload-cell workload-cell-id" style={cell()}>
                   {row.id}
                 </div>
                 <div
+                  className="workload-cell"
                   style={cell({
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
                   })}
-                  onClick={onSelect}
                 >
                   {row.ruleName}
                 </div>
-                <div style={cell()} onClick={onSelect}>
+                <div className="workload-cell" style={cell()}>
                   <NeutralBadge text={row.category} size="md" />
                 </div>
-                <div style={cell()} onClick={onSelect}>{row.technique}</div>
-                <div style={cell()} onClick={onSelect}>
+                <div className="workload-cell" style={cell()}>{row.technique}</div>
+                <div className="workload-cell" style={cell()}>
                   <SeverityBadge severity={row.severity} />
                 </div>
-                <div style={cell()} onClick={onSelect}>{row.status}</div>
-                <div style={cell()} onClick={onSelect}>{row.hits}</div>
-                <div style={cell()} onClick={onSelect}>{row.fpRate}</div>
-                <div style={cell()} onClick={onSelect}>{row.source}</div>
-                <div style={cell({ justifyContent: "center" })} onClick={onSelect}>
-                  {selected && (
-                    <ArrowUpRight size={14} strokeWidth={1.75} color="#b4b9c2" />
-                  )}
+                <div className="workload-cell" style={cell()}>{row.status}</div>
+                <div className="workload-cell" style={cell()}>{row.hits}</div>
+                <div className="workload-cell" style={cell()}>{row.fpRate}</div>
+                <div className="workload-cell" style={cell()}>{row.source}</div>
+                <div className="workload-cell" style={cell({ justifyContent: "center" })}>
+                  <ArrowUpRight
+                    className="workload-cell-action-icon"
+                    size={14}
+                    strokeWidth={1.75}
+                    color="#b4b9c2"
+                  />
                 </div>
               </div>
             );
