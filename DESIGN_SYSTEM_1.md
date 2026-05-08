@@ -965,13 +965,13 @@ Card (--bg-card #1a1c22, 16 radius, alignSelf: stretch)
 
 #### `<StackedRulesBar>` — primitive
 
-Three-segment progress bar (16px tall, gap 4) representing rule status distribution. Asymmetric corner radii so the outer ends are rounded pills and the inner ends stay subtly squared. Segment widths are visual-fixed per the design (Deployed grows to fill; Proposals 75px; In test 6px sliver) — wire to data-proportional widths when integrating real data.
+Three-segment progress bar (16px tall, gap 4) representing rule status distribution. Asymmetric corner radii so the outer ends round off at 8px and the inner ends stay crisp at 2px. Segment widths are visual-fixed per the design (Deployed grows to fill; Proposals 75px; In test 6px sliver) — wire to data-proportional widths when integrating real data.
 
 | Segment | Background | Width | Corners (TL TR BR BL) |
 |---|---|---|---|
-| Deployed | `linear-gradient(to right, #026a40, #03d07d)` | `flex: 1 0 0` | 100/2/2/100 |
+| Deployed | `linear-gradient(to right, #026a40, #03d07d)` | `flex: 1 0 0` | 8/2/2/8 |
 | Proposals | `#6af0ba` | `75px` | 2/2/2/2 |
-| In test | `#e8fff6` | `6px` | 2/100/100/2 |
+| In test | `#e8fff6` | `6px` | 2/8/8/2 |
 
 The three segment colors are also the three breakdown-row dot colors (`#03d07d` → Deployed, `#6af0ba` → Proposals, `#e8fff6` → In test). Same palette across the bar and dots — single source of truth visually. These are inlined raw hex (not tokens) because they're scoped to this single visualization; promote to tokens if reused elsewhere.
 
@@ -1275,7 +1275,7 @@ Each row in the Proposal Drivers card is a horizontal lollipop: a track line, a 
 
 The lollipop is a neutral data-vis primitive. Don't use `--green` for chart fills/knobs unless the chart is explicitly communicating a positive/success state.
 
-**Content area layout:** `display: flex; padding: 20px; flex-direction: column; justify-content: space-between; align-items: flex-start; flex: 1 0 0; align-self: stretch`. Rows distribute via `space-between` across the full card height (no fixed `gap`), so the chart fills whatever vertical space the grid row gives it — first row pinned to top under the header, last row pinned to bottom, remaining rows evenly spaced. Because `align-items: flex-start` doesn't stretch children on the cross axis, each `ProposalRow` carries its own `align-self: stretch` to keep the lollipop bars full-width (same pattern as the Total Rules left panel).
+**Content area layout:** `display: flex; padding: 20px; flex-direction: column; justify-content: space-between; align-items: flex-start; flex: 1 0 0; align-self: stretch; border-radius: 8px; background: #21232a`. The wrapper is a card-shaped surface with its own background (`#21232a` — note: this is **not** the standard INNER_CARD color `#1e2026`, it's a one-off slightly-lighter tint scoped to this card) and 8px radius. Rows distribute via `space-between` across the full card height (no fixed `gap`), so the chart fills whatever vertical space the grid row gives it — first row pinned to top under the header, last row pinned to bottom, remaining rows evenly spaced. Because `align-items: flex-start` doesn't stretch children on the cross axis, each `ProposalRow` carries its own `align-self: stretch` to keep the lollipop bars full-width (same pattern as the Total Rules left panel).
 
 ---
 

@@ -1144,9 +1144,9 @@ function ConnectorChip({
 
 // Stacked progress bar — three segments matching the Figma: gradient deep→
 // brand green (Deployed), light green (Proposals), ice white sliver (In test).
-// Asymmetric corner radii so the outer edges round off and inner edges stay
-// crisp. Reusable: pass any 3-segment data; for now widths are visual-fixed
-// per design.
+// Asymmetric corner radii so the outer edges round off (8px) and inner edges
+// stay crisp (2px). Reusable: pass any 3-segment data; for now widths are
+// visual-fixed per design.
 function StackedRulesBar() {
   return (
     <div style={{ alignSelf: "stretch", display: "flex", gap: 4, height: 16 }}>
@@ -1154,8 +1154,8 @@ function StackedRulesBar() {
         style={{
           flex: "1 0 0",
           background: "linear-gradient(to right, #026a40, #03d07d)",
-          borderTopLeftRadius: 100,
-          borderBottomLeftRadius: 100,
+          borderTopLeftRadius: 8,
+          borderBottomLeftRadius: 8,
           borderTopRightRadius: 2,
           borderBottomRightRadius: 2,
         }}
@@ -1174,8 +1174,8 @@ function StackedRulesBar() {
           background: "#e8fff6",
           borderTopLeftRadius: 2,
           borderBottomLeftRadius: 2,
-          borderTopRightRadius: 100,
-          borderBottomRightRadius: 100,
+          borderTopRightRadius: 8,
+          borderBottomRightRadius: 8,
           flexShrink: 0,
         }}
       />
