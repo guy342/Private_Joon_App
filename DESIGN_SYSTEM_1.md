@@ -302,9 +302,40 @@ Internal sections, top to bottom:
 
 **Nav row font: 14 / 20 (was 12 / 18).** The sidebar nav uses a one-step-larger size than the canonical `--type-body` (12 / 18) so the rail reads as primary navigation, not secondary metadata. The "Workspace" title and the items below it use the same 14 / 20 — keeping them at the same size lets the chevron + lighter color do the work of distinguishing the title from the items.
 
+#### Collapsed sidebar (icon rail)
+
+The sidebar can be collapsed to an icon-only rail via the `PanelLeftClose` button in the bottom row. State lives in `<Sidebar>` itself (`useState<boolean>`); toggling it swaps the entire rendered tree between `<ExpandedSidebar>` (the layout above) and `<CollapsedSidebar>`. The `PanelLeftOpen` icon at the bottom of the collapsed rail flips it back. No animated transition — instant swap; the two layouts are different enough (changing widths, item shapes, brand mark) that a CSS width-tween wouldn't carry the content cleanly.
+
+```
+display: flex
+width: 44px                        /* matches the inner item width (44 logo/search slots, 44 nav buttons) — items fill the rail edge to edge */
+flex-direction: column
+align-items: center                /* every child centers horizontally */
+/* no gap between sections — items stack flush; vertical rhythm comes from each section's own min-height / item heights */
+flex-shrink: 0
+align-self: stretch
+margin-top: 12px
+margin-bottom: 12px
+background: var(--bg-base)         /* #1e2026 — same as expanded */
+border-radius: 100px               /* pill ends — the thin column reads as a capsule, not a rectangle */
+overflow: clip                     /* belt-and-suspenders: the header / nav wrappers carry Figma-spec px-10 / px-8 padding which the 44-wide children overflow with `flex-shrink: 0` — the clip keeps any sub-pixel overflow from leaking past the pill */
+```
+
+Internal sections, top to bottom:
+
+1. **Brand + Search** — `align-self: stretch; min-height: 56px; padding: 0 10px; flex-direction: column; align-items: center`. Two 44×44 slots stacked. The first slot has its own `padding: 12px` (so the inner area is 20×20) and holds the `<JoonMark>` SVG, which uses `flex: 1 0 0; min-width: 1; aspect-ratio: 16.13429069519043 / 15.831598281860352` to fill the inner area and preserve the Figma asset's proportions; the visible donut renders at ~20×19.625. The second slot holds the same 34×34 `<SidebarIconBtn icon={Search} />` from the expanded brand row, centered. Each slot keeps the 44×44 vertical rhythm regardless of inner size, so the logo and search button line up cleanly even though one is much smaller than the other. The expanded rail's `Plus` button is dropped — there's no second action slot in the collapsed brand row.
+2. **Primary nav** — `align-self: stretch; padding: 0 8; flex-direction: column; align-items: center`. Five `<CollapsedNavBtn>`s (Activity, Detection, Investigation, Hunting, Validation). Each button is `width: 44; height: 38; padding: 0` — the click area is fixed-size (not full-width). Inside, a 28×28 inner pill carries the active highlight: `background: #292b31` when active, `transparent` otherwise, `border-radius: 5`. Icon (Lucide at `size={20}`) or **20×20** avatar circle sits centered in the pill. Same icon/avatar mapping as expanded.
+3. **Workspace items** — `align-self: stretch; flex-direction: column; align-items: center` (no padding, no margin override). Three `<CollapsedNavBtn>`s: Customer Profile (User), Memory (Database), Settings (Settings). No "Workspace" title (hidden in collapsed). Sections sit flush — the parent has no gap, and item heights drive the vertical rhythm.
+4. **Spacer** — `flex: 1; align-self: stretch`.
+5. **Bottom toggle** — `align-self: stretch; height: 44; align-items: center; justify-content: center`. Single 34×34 `<SidebarIconBtn icon={PanelLeftOpen} />` centered. No version string (no horizontal room for it).
+
+**Why no per-row clicks yet?** The collapsed `<CollapsedNavBtn>` doesn't take an `onClick` prop because route navigation isn't wired up anywhere on the sidebar yet (the expanded rail's `<NavRow>`s are also static). When routing lands, both components need to thread the same handler, since they represent the same nav model.
+
+**`<JoonMark>`** — single-path SVG, white fill, donut shape via even-odd. Reuses one of the "O" outlines from the full wordmark. No props — the SVG carries fixed `flex: 1 0 0; min-width: 1; aspect-ratio: 16.13429069519043 / 15.831598281860352` styles so it fills its parent flex slot at the Figma-spec proportions. Living next to `<Sidebar>` keeps the brand assets in one place; promote to `/public` if a second surface needs the same mark.
+
 ### MainContent (center column — scrolls)
 
-MainContent layout is **responsive at three viewport breakpoints** (800px and 1900px) and lives in [`src/app/detection/main-content.module.css`](src/app/detection/main-content.module.css). The same five top-row cards are laid out via a single CSS Grid; only the `grid-template-areas` swap between breakpoints. The DOM order stays the same (Health & Performance → Proposal Drivers → Active Workload Queue → Teamwork → Last Covered) — render once, position via grid areas. Mobile-first ordering — the smallest layout (stacked single column) is the default, and each larger breakpoint layers `min-width` overrides on top.
+MainContent layout is **responsive at four viewport breakpoints** (400px, 800px, 1200px) and lives in [`src/app/detection/main-content.module.css`](src/app/detection/main-content.module.css). The same five top-row cards are laid out via a single CSS Grid; only the `grid-template-areas` swap between breakpoints (plus `.hpBody` flips display mode at 800). The DOM order stays the same (Health & Performance → Proposal Drivers → Active Workload Queue → Teamwork → Last Covered) — render once, position via grid areas. Mobile-first ordering — the smallest layout (stacked single column, vertical H&P) is the default, and each larger breakpoint layers `min-width` overrides on top.
 
 ```
 /* Outer wrapper — extends the full 100vh so its scroll boundary is the viewport edge */
@@ -319,7 +350,7 @@ justify-content: center
    AND the right-side content gutter (since the outer shell has no right padding). */
 display: flex
 width: 100%
-min-width: 600px               /* floor — below 600px the wrapper horizontally scrolls instead of compressing the cards further (internal card layouts start clipping below this and the page reads as broken) */
+min-width: 300px               /* floor — below 300px the wrapper horizontally scrolls instead of compressing further (300 is the practical lower bound: heatmap's 145px column + gap pair needs ~310 to render two columns, Workload Distribution's fixed ID/Rule columns set a similar floor — below 300 the page reads as broken regardless) */
 flex-direction: column
 align-items: flex-start
 gap: 12px                      /* canonical gap between top-level cards / row groups */
@@ -328,7 +359,7 @@ padding-right: 12px            /* keeps cards 12px off the viewport's right edge
 padding-bottom: 12px           /* same below the last card */
 
 /* ≥ 1900px viewport: cap the content width so very wide displays don't stretch the cards */
-@media (min-width: 1900px) { max-width: 1600px }
+@media (min-width: 1200px) { max-width: 1600px }
 ```
 
 The `padding-top` / `padding-bottom` on `<main>` is part of the **scroll content**, not the frame. At rest you see 12px of page bg above the first card; as the user scrolls down, that 12px scrolls away and the first card extends all the way to the viewport top before it gets clipped. Same on the bottom. (Earlier versions put `padding-y` on the outer shell — that inset the scroll container and chopped cards inside the gutter; don't reintroduce that.)
@@ -348,13 +379,29 @@ Children that should fill main's full width need `align-self: stretch` (because 
 
 | Breakpoint | grid-template-columns | grid-template-rows | grid-template-areas |
 |---|---|---|---|
-| < 800px (stacked, default) | `minmax(0, 1fr)` | `420px auto auto auto auto` | `"hp"` / `"prop"` / `"wq"` / `"tw"` / `"lc"` |
-| ≥ 800px (small 2-col) | `minmax(0, 1fr) minmax(0, 1fr)` | `420px auto auto` | `"hp hp"` / `"wq prop"` / `"tw lc"` |
-| ≥ 1900px (big 2-col) | `minmax(0, 880fr) minmax(0, 496fr)` | `420px auto auto` | `"hp prop"` / `"wq tw"` / `"wq lc"` |
+| < 400px (stacked, default — vertical H&P) | `minmax(0, 1fr)` | `800px auto auto auto auto` | `"hp"` / `"prop"` / `"wq"` / `"tw"` / `"lc"` |
+| ≥ 400px (small 2-col — vertical H&P) | `minmax(0, 1fr) minmax(0, 1fr)` | `800px auto auto` | `"hp hp"` / `"wq prop"` / `"tw lc"` |
+| ≥ 800px (small 2-col — horizontal H&P) | _inherits_ `minmax(0, 1fr) minmax(0, 1fr)` | `420px auto auto` | _inherits_ `"hp hp"` / `"wq prop"` / `"tw lc"` |
+| ≥ 1200px (big 2-col — horizontal H&P) | `minmax(0, 880fr) minmax(0, 496fr)` | _inherits_ `420px auto auto` | `"hp prop"` / `"wq tw"` / `"wq lc"` |
 
-The `880fr / 496fr` ratio on big screens preserves the prior 880:496 column split from the 1400-width design, so both columns grow proportionally as content widens up to 1600. On big screens AWQ spans rows 2+3 (its content height drives the combined row 2+3 height; Teamwork sits in row 2, Last Covered in row 3, both on the right). On the 800-1899 small layout, H&P promotes to a full-width row 1 spanning both columns; row 2 pairs AWQ (left) with Proposal Drivers (right); row 3 pairs Teamwork (left) with Last Covered (right). Below 800px every card collapses to its own full-width row, stacked top-to-bottom in DOM order. The design floors at **600px** via `min-width: 600px` on `<main>` — below a 600px viewport the wrapper horizontally scrolls instead of compressing further, so the cards' internal layouts (H&P's 640px-fixed left panel, heatmap, Workload Distribution table) don't start clipping.
+The `880fr / 496fr` ratio on big screens preserves the prior 880:496 column split from the 1400-width design, so both columns grow proportionally as content widens up to 1600. On big screens AWQ spans rows 2+3 (its content height drives the combined row 2+3 height; Teamwork sits in row 2, Last Covered in row 3, both on the right). On the 400-799 small layout, H&P promotes to a full-width row 1 spanning both columns; row 2 pairs AWQ (left) with Proposal Drivers (right); row 3 pairs Teamwork (left) with Last Covered (right). At 800-1199 the column template stays the same but H&P's body flips from vertical to horizontal (and the row shrinks back to its 420 design height). Below 400 every card collapses to its own full-width row, stacked top-to-bottom in DOM order. The page floor is `min-width: 300px` on `<main>`; below a 300px viewport the wrapper horizontally scrolls instead of compressing the cards further.
 
-Each card is positioned via inline `style={{ gridArea: "..." }}` (also `minWidth: 0`) passed through the card function's `style` prop. The card functions all forward `style` into their root `<Card>`.
+**H&P body — `.hpBody` + `.hpTelemetryStack` (800px breakpoint).** The Health & Performance card body is the only card whose internal layout has a viewport-tied breakpoint, because its design splits evenly between two equally-important blocks (Total Rules + Telemetry stack) that must each have enough horizontal room to read. The classes live in `main-content.module.css` and use the same mobile-first pattern as `.cardsGrid`:
+
+| Selector | <800px (default) | ≥800px |
+|---|---|---|
+| `.hpBody` | `display: flex; flex-direction: column` (Total Rules **above** Telemetry stack) | `display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr)` — Total Rules **left**, Telemetry stack **right**, hard 50:50 split |
+| `.hpTelemetryStack` | `grid-template-rows: 144px minmax(0, 1fr)` + `flex: 1 0 0` (uniform across breakpoints) | _same_ |
+
+**Why grid (not `flex-direction: row`) at ≥800px.** Earlier the body switched to flex-row with `flex: 1 0 0` + `min-width: 0` on each side. That should split 50:50 — but in practice the Telemetry stack's intrinsic min-content (DotGrid + sparkline + the bottom row's Response-time math) was different from Total Rules' min-content, and one side ended up wider than its share. Switching to a 2-column grid with `minmax(0, 1fr)` columns ignores content min-size entirely and forces an exact 50:50 split regardless of what's inside either side. The single `minmax(0, 1fr)` row replicates flex's `align-items: stretch` so both sides still fill the body vertically; `flex: 1 0 0` from `.hpTelemetryStack` and `flex: 1 0 0` inline on Total Rules become no-ops as grid items but stay in place because they're still the right behavior at <800 (where the body IS a flex column).
+
+**Why a fixed 800px H&P row at <800px viewport (instead of `auto`).** Total Rules' inner layout uses an inline `flex: 1 0 0` chain three levels deep: the sub-card panel grows to fill the body, the bar+list wrapper grows to fill the panel, and the breakdown list grows to fill the wrapper (with `justify-content: space-between` to distribute its 3 rows + 2 separators). That chain only resolves when *some* ancestor has a definite height — at ≥800px viewport that ancestor is the `.cardsGrid` row (420px); at <800px viewport the same chain runs vertically, so the row needs to be tall enough to seat both sub-cards stacked. An `auto` row would let every flex-grow level collapse to its `flex-basis: 0` and Total Rules would vanish. A fixed 800 gives each sub-card ~370px of vertical space — slightly more than the ~348 each needs at minimum (Telemetry uptime 144 + 8 + bottom row ~196), with small breathing room for the breakdown list's space-between distribution. If Total Rules' breakdown grows or shrinks, recompute this floor and update both the row height and this rationale together.
+
+**Why `.hpTelemetryStack` is uniform across breakpoints (no per-breakpoint override).** Earlier iterations switched the stack's grid to `auto auto` at the small breakpoint to keep the bottom row from collapsing inside an `auto` `.cardsGrid` row. With the row now fixed at `800px` (vertical) or `420px` (horizontal), the `1fr` row resolves cleanly at every breakpoint and the workaround is unnecessary — keep the stack's grid template constant. The breakpoint logic lives entirely on `.hpBody`'s display mode and `.cardsGrid`'s row height; don't sprinkle it into the stack.
+
+**Proposal Drivers card — `.propCard` (`min-height: 420px`).** ProposalDrivers' inner content card uses `flex: 1 0 0` + `justify-content: space-between` to distribute the lollipop rows across the card height. That requires a defined height context — without one, the body wrapper (which carries `flex: 1 0 0` + `min-height: 0`) collapses and the lollipops visually overflow into the row below. In big and small-2-col layouts the surrounding grid row supplies the height (a fixed 420 row 1 in big, the AWQ-driven row 2 in small-2-col); but in the <400 stacked layout ProposalDrivers sits alone in its row and the row's `auto` sizing has nothing to push back. Pin a 420px floor on the Card itself via `.propCard` so the card always has space for the distribution, in every layout. Wire it through MainContent: `<ProposalDrivers className={mainContentStyles.propCard} ... />`.
+
+Each card is positioned via inline `style={{ gridArea: "..." }}` (also `minWidth: 0`) passed through the card function's `style` prop. The card functions all forward `style` into their root `<Card>`. `<Card>` also accepts an optional `className` prop forwarded straight to the outer div, used by `.propCard` (and any future per-card responsive class) to layer CSS-module styles on top of the inline base.
 
 > **`height` + `minHeight` together** was historically required for the old fixed-row pattern (`<div style={{ height: 420, minHeight: 420 }}>` row container as a flex item inside `<main>`). With the single-grid approach we now express row 1's fixed height via `grid-template-rows: 420px auto auto` on the grid container itself, and the cascading flex-shrink issue doesn't apply (grid rows are not flex items).
 
@@ -982,13 +1029,13 @@ Card (--bg-card #1a1c22, 16 radius, alignSelf: stretch)
             │   └── <DotGrid filled={98}/>
             └── Response time (Inner Card, flex: 1, minWidth: 0, flex-col, justify-content: space-between) — label pins to top, data block pins to bottom, the gap between them flexes to fill the card's height
                 ├── Label "Response time"
-                └── Data div (`.response-time-data` — flex-col by default, **flex-row on viewports <1600px**) — see globals.css
-                    ├── <ResponseTimeRow value="4.2" unit="h" caption="To fix"/>
-                    ├── Separator (`.response-time-separator`) — 1px horizontal hairline by default, **vertical 1px line at <1600px** so it divides the row instead of stacking
+                └── Data div (`.response-time-data` — flex-col, gap 12, justify-content: flex-end, flex: 1 0 0, align-self: stretch) — see globals.css
+                    ├── <ResponseTimeRow value="4.2" unit="h" caption="To fix"/> — `.response-time-row` (flex-row, baseline-aligned, gap 8 — number/unit on the left, caption to the right on the same line)
+                    ├── Separator (`.response-time-separator`) — 1px horizontal hairline at `#23252a`, align-self: stretch
                     └── <ResponseTimeRow value="18.5" unit="h" caption="To close gaps"/>
 ```
 
-**Responsive Response time** — the two stat lines stack vertically (4.2h above 18.5h) on wide viewports but flip to side-by-side ("data next to data") on viewports `<1600px` via a CSS media query in `globals.css`. The breakpoint is on the **viewport width**, not the card or container width — it's a pragmatic threshold for the small-laptop range where the right-stack column gets too narrow for a readable vertical-stack-with-flex-fill height. Caption stays below number inside each `<ResponseTimeRow>` regardless of orientation.
+**Response time has no responsive variant.** An earlier iteration flipped the data div to `flex-direction: row` at `<1600px` viewports (two side-by-side tiles with no separator), but that broke the design at 1440 — the most common laptop screen — and the side-by-side treatment didn't read as a single coherent stat panel. The vertical stack (number+caption rows with a 1px hairline between them) is now the canonical layout at every viewport width. Don't reintroduce a horizontal variant unless the Response time card gets noticeably wider at some breakpoint; at the current widths the vertical layout is always legible.
 
 #### `<StackedRulesBar>` — primitive
 
