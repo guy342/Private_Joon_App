@@ -864,9 +864,9 @@ Custom horizontal scroll handle. Tracks the scroll position of any element via a
 
 ```
 flex: 1 0 0
-height: 6                                            /* tall enough that a 3px corner radius reads visibly */
+height: 3                                            /* matches Figma; box-sizing border-box means content area is 1px (3 − 2 × 1px border), gradient renders in that strip */
 position: relative
-border-radius: 3                                     /* equals half-height — same pill effect as 999 (clamped to 3) but explicit */
+border-radius: 3                                     /* explicit — clamps to 1.5 (half-height) */
 border: 1px solid rgba(255,255,255,0.05)             /* very faint outline so the bar reads against the card bg */
 background: linear-gradient(90deg,
   #07D582 0%,                                        /* bright green, full --green tier */
@@ -875,10 +875,14 @@ background: linear-gradient(90deg,
   #137B54 50%,
   #1E2026 100%                                       /* fades into card-elevated tone at the right */
 )
+background-clip: padding-box                         /* gradient stops at the border's inner edge — without this the gradient bleeds through the translucent border at the corners and produces a faint stray-pixel artifact on the right end */
+box-sizing: border-box                               /* keeps the 3px height inclusive of border */
 min-width: 160
 opacity: visible ? 1 : 0
 transition: opacity 200ms ease
 ```
+
+**Single-layer rule**: the bar must be ONE div with `border`, `border-radius`, and `background` all set on the same element. Don't introduce a wrapper just for the border or another for the gradient — splitting causes the corner clip and the border stroke to render against different bounding boxes, which produces stray pixels at the rounded ends. The thumb is the only descendant; everything else lives on the track div itself.
 
 The gradient is **decorative and fixed** — it does NOT track the scroll progress. It paints a "heat" feel along the bar regardless of position. Don't try to animate the gradient stops in response to scroll; that's not what's being communicated here.
 
@@ -910,7 +914,8 @@ With `box-sizing: border-box`, the 20×20 outer footprint is preserved and the w
 - v1 (2026-05-08, retired same day): proportional pill thumb (`width = visible/total × trackWidth`) on a flat `rgba(255,255,255,0.05)` track. Visually too utilitarian — read as a generic scrollbar, not a designed component.
 - v2 (2026-05-08, retired same day): fixed 20×20 white knob with halo on a 3px gradient track + `border-radius: 12`. Track was too thin — the radius got clamped to 1.5px (half-height) and the pill ends weren't visibly rounded.
 - v3 (2026-05-08, retired same day): same knob, track bumped to 6px tall + `border-radius: 999`.
-- v4 (current, 2026-05-08): same dimensions, `border-radius: 3` instead of `999` — explicit value (equal to half-height, so visually identical to a clamped pill but signals intent at the call site).
+- v4 (2026-05-08, retired same day): same dimensions, `border-radius: 3`. Designer flagged a stray green pixel at the right end — turned out to be the gradient bleeding through the translucent border at the rounded corner.
+- v5 (current, 2026-05-08): track back to **3px height** + `border-radius: 3`, with `background-clip: padding-box` and `box-sizing: border-box` added so the gradient terminates cleanly at the border's inner edge. Single-div structure for the bar (border + radius + bg all on one element).
 
 #### `.no-scrollbar` utility class
 

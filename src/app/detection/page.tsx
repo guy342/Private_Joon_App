@@ -2008,11 +2008,17 @@ function HeatmapSlider({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElemen
   };
 
   return (
+    // Bar = ONE clean div: gradient bg, 1px border, 3px radius — all properties
+    // applied to the same element so the rounded-rect clip wraps both the
+    // background and the border together. boxSizing: border-box keeps the 3px
+    // height inclusive of the border. backgroundClip: padding-box stops the
+    // gradient at the border's inner edge so the translucent border isn't
+    // tinted by the gradient bleeding through it.
     <div
       ref={trackRef}
       style={{
         flex: "1 0 0",
-        height: 6,
+        height: 3,
         position: "relative",
         opacity: thumb.visible ? 1 : 0,
         transition: "opacity 200ms ease",
@@ -2021,6 +2027,8 @@ function HeatmapSlider({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElemen
         border: "1px solid rgba(255,255,255,0.05)",
         background:
           "linear-gradient(90deg, #07D582 0%, #0ABE77 12.5%, #0DA86B 25%, #137B54 50%, #1E2026 100%)",
+        backgroundClip: "padding-box",
+        boxSizing: "border-box",
       }}
     >
       <div
