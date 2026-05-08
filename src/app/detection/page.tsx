@@ -1932,16 +1932,19 @@ function HeatmapLegend() {
 
 // ─── HeatmapSlider ────────────────────────────────────────────────────────────
 // Custom horizontal-scroll indicator + drag handle for any scrollable element.
-// Tracks scrollLeft / scrollWidth via a ResizeObserver-backed listener; thumb
-// width = (visible / total) of the track so the proportions read correctly.
-// Hides itself (opacity 0) when content fits without scroll.
+// Track is a 3px gradient bar (bright green → dark — decorative, fixed); knob
+// is a fixed-size 20×20 white square with a translucent halo and slides along
+// the track based on scroll position. Hides itself (opacity 0) when content
+// fits without scroll.
 //
 // Reusable: pass any RefObject<HTMLDivElement | null> whose target is the
 // scrollable container. Drop the slider anywhere; it stays in sync.
 
+const HEATMAP_SLIDER_THUMB_SIZE = 20;
+
 function HeatmapSlider({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement | null> }) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const [thumb, setThumb] = useState({ left: 0, width: 40, visible: false });
+  const [thumb, setThumb] = useState({ left: 0, visible: false });
   const dragRef = useRef({ active: false, startThumbLeft: 0, startPointer: 0 });
 
   useEffect(() => {
@@ -1954,15 +1957,13 @@ function HeatmapSlider({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElemen
       const totalW = scroll.scrollWidth;
       const visW = scroll.clientWidth;
       if (totalW <= visW + 1 || trackW === 0) {
-        setThumb({ left: 0, width: trackW, visible: false });
+        setThumb({ left: 0, visible: false });
         return;
       }
-      const ratio = visW / totalW;
-      const thumbW = Math.max(40, Math.round(trackW * ratio));
-      const maxThumbLeft = trackW - thumbW;
       const maxScroll = totalW - visW;
+      const maxThumbLeft = Math.max(0, trackW - HEATMAP_SLIDER_THUMB_SIZE);
       const left = Math.round((scroll.scrollLeft / maxScroll) * maxThumbLeft);
-      setThumb({ left, width: thumbW, visible: true });
+      setThumb({ left, visible: true });
     };
 
     update();
@@ -1986,7 +1987,7 @@ function HeatmapSlider({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElemen
     const track = trackRef.current;
     if (!scroll || !track) return;
     const dx = e.clientX - dragRef.current.startPointer;
-    const maxThumbLeft = track.clientWidth - thumb.width;
+    const maxThumbLeft = Math.max(0, track.clientWidth - HEATMAP_SLIDER_THUMB_SIZE);
     if (maxThumbLeft <= 0) return;
     const newLeft = Math.max(0, Math.min(maxThumbLeft, dragRef.current.startThumbLeft + dx));
     const ratio = newLeft / maxThumbLeft;
@@ -2003,28 +2004,33 @@ function HeatmapSlider({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElemen
       ref={trackRef}
       style={{
         flex: "1 0 0",
-        height: 4,
-        borderRadius: 100,
-        background: "rgba(255,255,255,0.05)",
+        height: 3,
         position: "relative",
         opacity: thumb.visible ? 1 : 0,
         transition: "opacity 200ms ease",
-        minWidth: 120,
-        maxWidth: 320,
+        minWidth: 160,
         marginLeft: "auto",
+        borderRadius: 12,
+        border: "1px solid rgba(255,255,255,0.05)",
+        background:
+          "linear-gradient(90deg, #07D582 0%, #0ABE77 12.5%, #0DA86B 25%, #137B54 50%, #1E2026 100%)",
       }}
     >
       <div
         style={{
           position: "absolute",
           left: thumb.left,
-          top: -2,
-          width: thumb.width,
-          height: 8,
-          borderRadius: 100,
-          background: "#03d07d",
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: HEATMAP_SLIDER_THUMB_SIZE,
+          height: HEATMAP_SLIDER_THUMB_SIZE,
+          borderRadius: 8,
+          border: "4px solid rgba(255,255,255,0.10)",
+          background: "#fff",
+          boxShadow: "0 2px 2px 0 rgba(0,0,0,0.10)",
           cursor: "grab",
           touchAction: "none",
+          boxSizing: "border-box",
         }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}

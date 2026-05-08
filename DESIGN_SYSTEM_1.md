@@ -858,15 +858,58 @@ Don't hardcode a separate legend color list — if you ever change a tier color,
 
 #### `<HeatmapSlider>` — reusable scroll indicator
 
-Custom horizontal scroll handle. Tracks the scroll position of any element via a `scrollRef` prop and renders a draggable thumb whose width = `(visible / total)` of the track and position = `scrollLeft / (total − visible)`. Hides itself (`opacity: 0`) when content fits without overflow.
+Custom horizontal scroll handle. Tracks the scroll position of any element via a `scrollRef` prop and renders a draggable knob that slides along a thin gradient track. Knob is **fixed size** (20×20) — its position (not its width) reflects scroll progress. Hides itself (`opacity: 0`) when content fits without overflow.
 
-Specs:
-- Track: `flex: 1 0 0`, `height: 4`, `border-radius: 100`, `background: rgba(255,255,255,0.05)` (white-5), `min-width: 120`, `max-width: 320`, `margin-left: auto`
-- Thumb: `height: 8`, `top: -2` (overhang both sides of the 4px track), `border-radius: 100`, `background: var(--green) #03d07d`, `cursor: grab`, `touch-action: none`
-- Sync via `ResizeObserver` on both the scroll element AND the track (so thumb width updates on either resize)
-- Drag via `pointer-events` with `setPointerCapture` — works for mouse, touch, and pen
+**Track:**
 
-**It is not heatmap-specific.** Drop it next to any other horizontal scroll surface — pass that surface's ref and it works.
+```
+flex: 1 0 0
+height: 3
+position: relative
+border-radius: 12
+border: 1px solid rgba(255,255,255,0.05)             /* very faint outline so the bar reads against the card bg */
+background: linear-gradient(90deg,
+  #07D582 0%,                                        /* bright green, full --green tier */
+  #0ABE77 12.5%,
+  #0DA86B 25%,
+  #137B54 50%,
+  #1E2026 100%                                       /* fades into card-elevated tone at the right */
+)
+min-width: 160
+margin-left: auto                                    /* pushes slider to the right edge of its flex parent */
+opacity: visible ? 1 : 0
+transition: opacity 200ms ease
+```
+
+The gradient is **decorative and fixed** — it does NOT track the scroll progress. It paints a "heat" feel along the bar regardless of position. Don't try to animate the gradient stops in response to scroll; that's not what's being communicated here.
+
+**Knob (thumb):**
+
+```
+position: absolute
+left: <computed>                                     /* scrollRatio × (trackWidth − 20) */
+top: 50%
+transform: translateY(-50%)                          /* vertically center on the 3px track */
+width: 20
+height: 20
+border-radius: 8
+border: 4px solid rgba(255,255,255,0.10)             /* translucent halo ring */
+background: #fff
+box-shadow: 0 2px 2px 0 rgba(0,0,0,0.10)
+cursor: grab
+touch-action: none
+box-sizing: border-box                               /* MANDATORY — without it, the 4px border adds 8 to the box and the knob renders 28×28 */
+```
+
+With `box-sizing: border-box`, the 20×20 outer footprint is preserved and the white inner area is 12×12 (= 20 − 4 × 2). The translucent border becomes the visible "halo" around a small white square. Don't redesign this with a `box-shadow` instead — `box-shadow` can't be hit-tested for the drag pointer events, and the halo needs to be part of the draggable target.
+
+**Sync mechanism:** `ResizeObserver` on both the scroll element AND the track (so the knob position recalculates on either resize) + a passive `scroll` listener. Drag via `pointer-events` with `setPointerCapture` — works for mouse, touch, and pen.
+
+**It is not heatmap-specific.** Drop it next to any other horizontal scroll surface — pass that surface's ref and it works. The 20×20 knob and 3px gradient track are the canonical "scroll handle" pattern in this app.
+
+**Iteration history:**
+- v1 (2026-05-08, retired same day): proportional pill thumb (`width = visible/total × trackWidth`) on a flat `rgba(255,255,255,0.05)` track. Visually too utilitarian — read as a generic scrollbar, not a designed component.
+- v2 (current, 2026-05-08): fixed 20×20 white knob with halo on a gradient track. Position-only progress indicator.
 
 #### `.no-scrollbar` utility class
 
