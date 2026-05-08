@@ -49,14 +49,20 @@ body {
   display: none; /* Chrome, Safari, Edge */
 }
 
-/* HeatmapSlider thumb hover halo — see <HeatmapSlider> in
-   src/app/detection/page.tsx. The 4px border slot is reserved at all times
-   (transparent by default) so the thumb's inner 12×12 white square stays
-   the same size in both states; only the border color animates. */
+/* HeatmapSlider thumb — drop shadow always, halo ring on hover. Halo is a
+   second box-shadow that extends OUTSIDE the 20×20 knob (a `border` would have
+   sat inside the box and shrunk the white center). Halo is declared at all
+   times with 0% alpha so the transition interpolates the alpha smoothly into
+   visibility on :hover, with no layout jump. See <HeatmapSlider> in
+   src/app/detection/page.tsx. */
 .heatmap-slider-thumb {
-  border: 4px solid transparent;
-  transition: border-color 150ms ease;
+  box-shadow:
+    0 2px 2px 0 rgba(0, 0, 0, 0.10),
+    0 0 0 4px rgba(255, 255, 255, 0);
+  transition: box-shadow 150ms ease;
 }
 .heatmap-slider-thumb:hover {
-  border-color: rgba(255, 255, 255, 0.10);
+  box-shadow:
+    0 2px 2px 0 rgba(0, 0, 0, 0.10),
+    0 0 0 4px rgba(255, 255, 255, 0.10);
 }

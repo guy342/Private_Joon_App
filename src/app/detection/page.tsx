@@ -2036,10 +2036,11 @@ function HeatmapSlider({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElemen
       }}
     >
       <div
-        // Border is managed by the .heatmap-slider-thumb class — transparent
-        // by default, rgba(255,255,255,0.10) on hover, transitioned via CSS.
-        // The 4px slot is always reserved (border-box + transparent fallback)
-        // so the inner 12×12 white square doesn't shift when the halo appears.
+        // Drop shadow + hover halo are both managed by the .heatmap-slider-thumb
+        // class via stacked box-shadows. Halo lives OUTSIDE the 20×20 box
+        // (`0 0 0 4px <color>` spread shadow), so the white center stays a
+        // full 20×20 in both states. Don't add `box-shadow` inline — it would
+        // override the class declaration and break the hover transition.
         className="heatmap-slider-thumb"
         style={{
           position: "absolute",
@@ -2050,10 +2051,8 @@ function HeatmapSlider({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElemen
           height: HEATMAP_SLIDER_THUMB_SIZE,
           borderRadius: 8,
           background: "#fff",
-          boxShadow: "0 2px 2px 0 rgba(0,0,0,0.10)",
           cursor: "grab",
           touchAction: "none",
-          boxSizing: "border-box",
         }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
