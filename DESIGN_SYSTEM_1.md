@@ -646,6 +646,8 @@ font: --type-caption                    /* Inter Regular 10px */
 
 Used on Active Workload groups when at least one detection is in progress (e.g. "3 Running"). Same pill shape as DeltaBadge, but with a leading dot that mirrors the StatusBar's "Active" status indicator **and an animated gradient border** that telegraphs the live-running state.
 
+**Shown on every group row, expanded or collapsed** — the running state is a property of the group itself, not of the open/closed UI state, so the badge is rendered whenever `group.runningBadge` is set regardless of `isOpen`. The previous behavior (badge only on the open row, "3 items" count badge on collapsed rows) was wrong: a closed group can still be running, and hiding the badge there made the queue look idle at a glance. The "X items" `NeutralBadge` survives only as a fallback for groups without a `runningBadge`.
+
 The pill itself is a clean translucent green pill — no border:
 
 ```
@@ -704,6 +706,35 @@ The mask approach paints the conic gradient on a **separate absolute overlay** a
 ```
 
 Without `@property`, a CSS variable in a gradient is treated as a string and the keyframe transition can't interpolate it — the gradient would jump 0° → 360° on the next frame instead of smoothly rotating. Registering the property as `<angle>` makes the browser interpolate it as a real angle. The keyframes + @property pair lives in the inline `<style>` block at the bottom of the detection page (alongside `joon-shimmer` / `joon-dot-*`).
+
+### QueueSpinner — Active Workload Queue indicator
+
+Standalone 16×16 ring rendered in the Active Workload Queue's CardHeader, just before the "N Active detections" subtitle text. **Reuses the same `--joon-rb-angle` registered @property + `joon-rb-spin` keyframes** as the RunningBadge, so spin cadence stays consistent across the indicator family — change one, change both.
+
+```
+width: 16
+height: 16
+flex-shrink: 0
+border-radius: 999
+padding: 2                                  /* defines the 2px ring thickness via the mask */
+background: conic-gradient(from var(--joon-rb-angle, 0deg),
+  #03d07d, rgba(3,208,125,0.15),
+  #03d07d, rgba(3,208,125,0.15),
+  #03d07d
+)
+mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)
+mask-composite: exclude                     /* (border-box minus content-box) — same trick as RunningBadge */
+animation: joon-rb-spin 3s linear infinite
+pointer-events: none
+aria-hidden                                 /* purely decorative motion */
+```
+
+**Differences vs RunningBadge:**
+- Sized 16×16 instead of being a 1px overlay on a pill — it's the whole indicator, not an outline around something else.
+- Stroke is 2px (via `padding: 2`) instead of 1px, so it reads as a circle outline at this size.
+- Color stops are `--green` / `rgba(--green, 0.15)` instead of mint (#B6E8D4) — directly tied to the brand green so the spinner reads as "active workload".
+
+**CardHeader gets `subtitle: React.ReactNode`** — was previously typed as `string` since every card passed plain text. Widened so AWQ can pass a flex span containing the spinner + text. Backwards compatible — string is a valid ReactNode. Other cards still pass plain strings unchanged.
 
 The leading dot:
 
@@ -924,11 +955,12 @@ Card (--bg-card #1a1c22, 16 radius, alignSelf: stretch)
             ├── Telemetry completeness (Inner Card, content-sized, flexShrink: 0)
             │   ├── Label + small stat "98%"
             │   └── <DotGrid filled={98}/>
-            └── Response time (Inner Card, flex: 1, minWidth: 0, flex-col, justify-content: space-between) — label + both rows + 1px separator are flat siblings; the three gaps (label→row1, row1→separator, separator→row2) all flex equally to fill the card's height (same sibling-divider pattern as `<RulesBreakdownSeparator>`, scaled up to include the label as the first stop)
+            └── Response time (Inner Card, flex: 1, minWidth: 0, flex-col, justify-content: space-between) — label pins to top, data block pins to bottom, the gap between them flexes to fill the card's height
                 ├── Label "Response time"
-                ├── <ResponseTimeRow value="4.2" unit="h" caption="To fix"/>
-                ├── 1px separator (alignSelf: stretch)
-                └── <ResponseTimeRow value="18.5" unit="h" caption="To close gaps"/>
+                └── Data div (flex-col, gap: 8) — content-sized cluster with a fixed 8px gap between row + separator + row
+                    ├── <ResponseTimeRow value="4.2" unit="h" caption="To fix"/>
+                    ├── 1px separator (alignSelf: stretch)
+                    └── <ResponseTimeRow value="18.5" unit="h" caption="To close gaps"/>
 ```
 
 #### `<StackedRulesBar>` — primitive
