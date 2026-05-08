@@ -2096,64 +2096,106 @@ function LastCovered() {
 
 function HeatmapCell({ cell }: { cell: HeatmapCellData }) {
   const tier = cell.tier ? HEATMAP_TIERS[cell.tier] : null;
+  const ref = useRef<HTMLDivElement>(null);
+  const [hovering, setHovering] = useState(false);
+
+  if (!tier) {
+    return (
+      <div
+        style={{
+          ...INNER_CARD,
+          background: HEATMAP_EMPTY_BG,
+          height: HEATMAP_CELL_HEIGHT,
+          padding: 12,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          flexShrink: 0,
+        }}
+      />
+    );
+  }
+
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    el.style.setProperty("--spot-x", `${e.clientX - rect.left}px`);
+    el.style.setProperty("--spot-y", `${e.clientY - rect.top}px`);
+  };
+
   return (
     <div
+      ref={ref}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+      onMouseMove={handleMove}
       style={{
         ...INNER_CARD,
-        background: tier?.bg ?? HEATMAP_EMPTY_BG,
+        background: tier.bg,
         height: HEATMAP_CELL_HEIGHT,
         padding: 12,
         display: "flex",
         alignItems: "center",
         gap: 8,
         flexShrink: 0,
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-      {tier && (
-        <>
-          <span
-            style={{
-              width: 2,
-              alignSelf: "stretch",
-              borderRadius: 100,
-              background: tier.bar,
-              flexShrink: 0,
-            }}
-          />
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 4,
-              minWidth: 0,
-              flex: "1 0 0",
-            }}
-          >
-            <span
-              style={{
-                ...T_BODY,
-                color: "#f2f4f7",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {cell.id}
-            </span>
-            <span
-              style={{
-                ...T_CAPTION,
-                color: "#b4b9c2",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {cell.name}
-            </span>
-          </div>
-        </>
-      )}
+      <span
+        style={{
+          width: 2,
+          alignSelf: "stretch",
+          borderRadius: 100,
+          background: tier.bar,
+          flexShrink: 0,
+        }}
+      />
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+          minWidth: 0,
+          flex: "1 0 0",
+        }}
+      >
+        <span
+          style={{
+            ...T_BODY,
+            color: "#f2f4f7",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {cell.id}
+        </span>
+        <span
+          style={{
+            ...T_CAPTION,
+            color: "#b4b9c2",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {cell.name}
+        </span>
+      </div>
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          mixBlendMode: "plus-lighter",
+          opacity: hovering ? 1 : 0,
+          transition: "opacity 180ms ease-out",
+          background: `radial-gradient(140px circle at var(--spot-x, 50%) var(--spot-y, 50%), color-mix(in oklab, ${tier.bar} 28%, transparent), transparent 65%)`,
+        }}
+      />
     </div>
   );
 }
