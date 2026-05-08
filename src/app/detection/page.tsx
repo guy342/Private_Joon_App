@@ -11,6 +11,7 @@ import {
   ListFilter,
   Maximize2,
   PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   RefreshCw,
   Search,
@@ -359,11 +360,20 @@ const STATUS_PILL_GLASS: React.CSSProperties = {
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
-function SidebarIconBtn({ icon: Icon, label }: { icon: IconComponent; label: string }) {
+function SidebarIconBtn({
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  icon: IconComponent;
+  label: string;
+  onClick?: () => void;
+}) {
   return (
     <button
       type="button"
       aria-label={label}
+      onClick={onClick}
       style={{
         width: 34,
         height: 34,
@@ -461,7 +471,227 @@ function NavRow({
   );
 }
 
-function Sidebar() {
+// Single round monogram — the Joon "O" mark. Sized via the inline styles
+// below to match the Figma's logo slot: it lives inside a 44×44 padded
+// container in the collapsed sidebar; with `flex: 1 0 0` it fills the
+// inner ~20px width, and the explicit `aspect-ratio` keeps its proportions
+// matching the original asset.
+function JoonMark() {
+  return (
+    <svg
+      style={{
+        flex: "1 0 0",
+        minWidth: 1,
+        aspectRatio: "16.13429069519043 / 15.831598281860352",
+      }}
+      viewBox="0 0 23 23"
+      fill="none"
+      role="img"
+      aria-label="Joon"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M11.5 0C17.8513 0 23 5.14873 23 11.5C23 17.8513 17.8513 23 11.5 23C5.14873 23 0 17.8513 0 11.5C0 5.14873 5.14873 0 11.5 0ZM11.5 4.59996C7.69138 4.59996 4.59996 7.69138 4.59996 11.5C4.59996 15.3086 7.69138 18.4 11.5 18.4C15.3086 18.4 18.4 15.3086 18.4 11.5C18.4 7.69138 15.3086 4.59996 11.5 4.59996Z"
+        fill="white"
+      />
+    </svg>
+  );
+}
+
+// Nav button used in the collapsed sidebar. Fixed 44×38 click area; the active
+// highlight is drawn as a 28×28 inner pill so the bg sits behind the icon
+// without filling the full button — matches the Figma's contained pill.
+function CollapsedNavBtn({
+  icon: Icon,
+  avatarUrl,
+  label,
+  active,
+}: {
+  icon?: IconComponent;
+  avatarUrl?: string;
+  label: string;
+  active?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      style={{
+        width: 44,
+        height: 38,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "transparent",
+        border: "none",
+        cursor: "pointer",
+        color: active ? "#f2f4f7" : "#b4b9c2",
+        flexShrink: 0,
+        padding: 0,
+      }}
+    >
+      <span
+        style={{
+          width: 28,
+          height: 28,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: 5,
+          background: active ? "#292b31" : "transparent",
+        }}
+      >
+        {avatarUrl ? (
+          <span
+            role="img"
+            aria-label={`${label} avatar`}
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: "50%",
+              backgroundColor: "#1a1c22",
+              backgroundImage: `url('${avatarUrl}')`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              flexShrink: 0,
+            }}
+          />
+        ) : Icon ? (
+          <Icon size={20} strokeWidth={1.75} />
+        ) : null}
+      </span>
+    </button>
+  );
+}
+
+function CollapsedSidebar({ onExpand }: { onExpand: () => void }) {
+  return (
+    <aside
+      style={{
+        display: "flex",
+        width: 44,
+        flexDirection: "column",
+        alignItems: "center",
+        flexShrink: 0,
+        alignSelf: "stretch",
+        marginTop: 12,
+        marginBottom: 12,
+        background: "#1e2026",
+        borderRadius: 100,
+        overflow: "clip",
+      }}
+    >
+      {/* Header — two 44×44 slots stacked (logo + search). The logo slot
+          carries 12px padding so the 20×19.62 inner SVG sits visually
+          balanced (Figma asset spec). The search slot is the same 34×34
+          SidebarIconBtn from the expanded rail centered in its slot. Each
+          slot keeps a 44×44 vertical rhythm regardless of inner size. */}
+      <div
+        style={{
+          alignSelf: "stretch",
+          minHeight: 56,
+          padding: "0 10px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            width: 44,
+            height: 44,
+            padding: 12,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <JoonMark />
+        </div>
+        <div
+          style={{
+            width: 44,
+            height: 44,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <SidebarIconBtn icon={Search} label="Search" />
+        </div>
+      </div>
+
+      {/* Main nav */}
+      <nav
+        style={{
+          alignSelf: "stretch",
+          padding: "0 8px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <CollapsedNavBtn label="Activity" icon={Activity} />
+        <CollapsedNavBtn label="Detection" avatarUrl="/Avatar_Sean.png" active />
+        <CollapsedNavBtn label="Investigation" avatarUrl="/Avatar_Helen.png" />
+        <CollapsedNavBtn label="Hunting" avatarUrl="/Avatar_Helen.png" />
+        <CollapsedNavBtn label="Validation" avatarUrl="/Avatar_Valery.png" />
+      </nav>
+
+      {/* Workspace items — no title in collapsed mode, no padding/margin
+          override either; sections sit flush, the parent has no gap. */}
+      <div
+        style={{
+          alignSelf: "stretch",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <CollapsedNavBtn label="Customer Profile" icon={User} />
+        <CollapsedNavBtn label="Memory" icon={Database} />
+        <CollapsedNavBtn label="Settings" icon={Settings} />
+      </div>
+
+      <div style={{ flex: 1, alignSelf: "stretch" }} />
+
+      {/* Bottom: PanelLeftOpen toggle (click to expand) */}
+      <div
+        style={{
+          alignSelf: "stretch",
+          height: 44,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <SidebarIconBtn
+          icon={PanelLeftOpen}
+          label="Expand sidebar"
+          onClick={onExpand}
+        />
+      </div>
+    </aside>
+  );
+}
+
+// Sidebar is now a controlled component — collapsed state is owned by
+// DetectionPage so other UI (FloatingStatusPills' fixed left position) can
+// react to it. The toggle button still wires to the same onToggle callback.
+function Sidebar({
+  collapsed,
+  onToggle,
+}: {
+  collapsed: boolean;
+  onToggle: () => void;
+}) {
+  const toggle = onToggle;
+
+  if (collapsed) {
+    return <CollapsedSidebar onExpand={toggle} />;
+  }
+
   return (
     <aside
       style={{
@@ -608,7 +838,11 @@ function Sidebar() {
           gap: 6,
         }}
       >
-        <SidebarIconBtn icon={PanelLeftClose} label="Collapse sidebar" />
+        <SidebarIconBtn
+          icon={PanelLeftClose}
+          label="Collapse sidebar"
+          onClick={toggle}
+        />
         <span
           style={{
             marginLeft: "auto",
@@ -736,23 +970,37 @@ function StatusBar() {
 // outer overlay is `pointer-events: none` so cards beneath stay interactive;
 // each pill turns pointer-events back on while visible.
 
-function FloatingStatusPills({ visible }: { visible: boolean }) {
+function FloatingStatusPills({
+  visible,
+  sidebarCollapsed,
+}: {
+  visible: boolean;
+  sidebarCollapsed: boolean;
+}) {
+  // Tracks the sidebar's actual rendered width:
+  //   expanded  → 232 + 12 (shell padding-left) + 20 (shell-gap) = 264
+  //   collapsed → 44  + 12 + 20 = 76
+  // Without this the pills stay anchored to the wide-sidebar position
+  // even after the user collapses the rail, leaving a 188px gap on the left.
+  const left = sidebarCollapsed ? 76 : 264;
   return (
     <div
       aria-hidden={!visible}
       style={{
         position: "fixed",
         top: 12,
-        // sidebar (232) + shell padding-left (12) + shell-gap (20) = 264
-        left: 264,
+        left,
         right: 0,
+        // 200ms ease on `left` so the pills slide along with the sidebar's
+        // collapse/expand animation instead of jumping.
+        transition:
+          "opacity 200ms ease, transform 200ms ease, left 200ms ease",
         zIndex: 50,
         pointerEvents: "none",
         display: "flex",
         justifyContent: "center",
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(-8px)",
-        transition: "opacity 200ms ease, transform 200ms ease",
       }}
     >
       {/* Inner mirrors `.main`'s geometry so the pills' left/right edges
@@ -1378,9 +1626,8 @@ function ResponseTimeRow({
   unit: string;
   caption: string;
 }) {
-  // Layout flips between row (default, ≥1600px viewport — number left, caption
-  // right, baseline-aligned) and column (<1600px — number on top, caption
-  // below) via the .response-time-row class — see globals.css.
+  // Number left + caption right, baseline-aligned, at every viewport size —
+  // no responsive variant. See `.response-time-row` in globals.css.
   return (
     <div className="response-time-row">
       <span style={{ ...T_STAT_UNIT, lineHeight: "normal" }}>
@@ -1589,8 +1836,9 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
               }}
             >
               <span style={{ ...T_BODY, color: "#b4b9c2" }}>Response time</span>
-              {/* Layout flips between column (default) and row (<1600px viewport)
-                  via the .response-time-data class — see globals.css. */}
+              {/* Vertical stack — number+caption rows with a 1px separator
+                  between them, at every viewport size. See
+                  `.response-time-data` in globals.css. */}
               <div className="response-time-data">
                 <ResponseTimeRow value="4.2" unit="h" caption="To fix" />
                 <div className="response-time-separator" aria-hidden />
@@ -2851,7 +3099,11 @@ function WorkloadDistribution() {
 
 // ─── MainContent ──────────────────────────────────────────────────────────────
 
-function MainContent() {
+function MainContent({
+  sidebarCollapsed,
+}: {
+  sidebarCollapsed: boolean;
+}) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showPills, setShowPills] = useState(false);
@@ -2973,7 +3225,10 @@ function MainContent() {
         />
       </div>
 
-      <FloatingStatusPills visible={showPills} />
+      <FloatingStatusPills
+        visible={showPills}
+        sidebarCollapsed={sidebarCollapsed}
+      />
     </div>
   );
 }
@@ -2981,6 +3236,12 @@ function MainContent() {
 // ─── Page root ────────────────────────────────────────────────────────────────
 
 export default function DetectionPage() {
+  // Sidebar collapsed state lives here so other layout pieces (currently
+  // <FloatingStatusPills>'s fixed `left`) can react to it. Sidebar is now
+  // a controlled component fed by these props.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const toggleSidebar = () => setSidebarCollapsed((c) => !c);
+
   return (
     <div
       style={{
@@ -3025,8 +3286,8 @@ export default function DetectionPage() {
           `,
         }}
       />
-      <Sidebar />
-      <MainContent />
+      <Sidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+      <MainContent sidebarCollapsed={sidebarCollapsed} />
     </div>
   );
 }
