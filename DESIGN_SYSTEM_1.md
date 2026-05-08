@@ -864,9 +864,9 @@ Custom horizontal scroll handle. Tracks the scroll position of any element via a
 
 ```
 flex: 1 0 0
-height: 3
+height: 6                                            /* tall enough that the 999px radius reads as a pill — at 3px the clamped 1.5px rounding was effectively invisible */
 position: relative
-border-radius: 12
+border-radius: 999                                   /* clamps to half-height (3px) — fully rounded pill ends */
 border: 1px solid rgba(255,255,255,0.05)             /* very faint outline so the bar reads against the card bg */
 background: linear-gradient(90deg,
   #07D582 0%,                                        /* bright green, full --green tier */
@@ -908,7 +908,8 @@ With `box-sizing: border-box`, the 20×20 outer footprint is preserved and the w
 
 **Iteration history:**
 - v1 (2026-05-08, retired same day): proportional pill thumb (`width = visible/total × trackWidth`) on a flat `rgba(255,255,255,0.05)` track. Visually too utilitarian — read as a generic scrollbar, not a designed component.
-- v2 (current, 2026-05-08): fixed 20×20 white knob with halo on a gradient track. Position-only progress indicator.
+- v2 (2026-05-08, retired same day): fixed 20×20 white knob with halo on a 3px gradient track + `border-radius: 12`. Track was too thin — the radius got clamped to 1.5px (half-height) and the pill ends weren't visibly rounded.
+- v3 (current, 2026-05-08): same knob, track bumped to 6px tall + `border-radius: 999` for clearly rounded pill ends.
 
 #### `.no-scrollbar` utility class
 

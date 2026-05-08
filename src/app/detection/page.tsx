@@ -2012,12 +2012,12 @@ function HeatmapSlider({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElemen
       ref={trackRef}
       style={{
         flex: "1 0 0",
-        height: 3,
+        height: 6,
         position: "relative",
         opacity: thumb.visible ? 1 : 0,
         transition: "opacity 200ms ease",
         minWidth: 160,
-        borderRadius: 12,
+        borderRadius: 999,
         border: "1px solid rgba(255,255,255,0.05)",
         background:
           "linear-gradient(90deg, #07D582 0%, #0ABE77 12.5%, #0DA86B 25%, #137B54 50%, #1E2026 100%)",
