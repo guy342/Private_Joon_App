@@ -193,27 +193,27 @@ const HEATMAP_TACTICS: HeatmapColumnData[] = [
     { tier: "100", id: "T1595", name: "Active Scanning" },
     { tier: "25",  id: "T1589", name: "Gather Victim Identity Information" },
     { tier: "25",  id: "T1589", name: "Gather Victim Identity Information" },
-    e, e, e, e,
+    e, e, e,
   ]},
   { category: "Resource Development", percent: 65, cells: [
     { tier: "100", id: "T1583", name: "Acquire Infrastructure" },
     { tier: "75",  id: "T1583", name: "Acquire Infrastructure" },
     { tier: "50",  id: "T1584", name: "Compromise Infrastructure" },
-    e, e, e, e, e,
+    e, e, e, e,
   ]},
   { category: "Initial Access", percent: 81, cells: [
     { tier: "100", id: "T1190", name: "Exploit Public-Facing App" },
     { tier: "75",  id: "T1133", name: "External Remote Services" },
     { tier: "75",  id: "T1566", name: "Phishing" },
     { tier: "25",  id: "T1078", name: "Valid Accounts" },
-    e, e, e, e,
+    e, e, e,
   ]},
   { category: "Execution", percent: 68, cells: [
     { tier: "75",  id: "T1059", name: "Command and Scripting Interpreter" },
     { tier: "75",  id: "T1059", name: "Command and Scripting Interpreter" },
     { tier: "50",  id: "T1106", name: "Native API" },
     { tier: "25",  id: "T1204", name: "User Execution" },
-    e, e, e, e,
+    e, e, e,
   ]},
   { category: "Persistence", percent: 74, cells: [
     { tier: "100", id: "T1547", name: "Boot or Logon Autostart" },
@@ -222,13 +222,13 @@ const HEATMAP_TACTICS: HeatmapColumnData[] = [
     { tier: "75",  id: "T1136", name: "Create Account" },
     { tier: "25",  id: "T1098", name: "Account Manipulation" },
     { tier: "25",  id: "T1098", name: "Account Manipulation" },
-    e, e,
+    e,
   ]},
   { category: "Privilege Escalation", percent: 71, cells: [
     { tier: "100", id: "T1068", name: "Exploitation for Privilege Esc" },
     { tier: "75",  id: "T1055", name: "Process Injection" },
     { tier: "50",  id: "T1078", name: "Valid Accounts" },
-    e, e, e, e, e,
+    e, e, e, e,
   ]},
   { category: "Defense Evasion", percent: 63, cells: [
     { tier: "100", id: "T1562", name: "Impair Defenses" },
@@ -236,14 +236,14 @@ const HEATMAP_TACTICS: HeatmapColumnData[] = [
     { tier: "75",  id: "T1027", name: "Obfuscated Files" },
     { tier: "50",  id: "T1140", name: "Deobfuscate Files" },
     { tier: "0",   id: "T1112", name: "Modify Registry" },
-    e, e, e,
+    e, e,
   ]},
   { category: "Credential Access", percent: 58, cells: [
     { tier: "100", id: "T1110", name: "Brute Force" },
     { tier: "75",  id: "T1003", name: "OS Credential Dumping" },
     { tier: "0",   id: "T1555", name: "Credentials from Stores" },
     { tier: "0",   id: "T1555", name: "Credentials from Stores" },
-    e, e, e, e,
+    e, e, e,
   ]},
   { category: "Discovery", percent: 79, cells: [
     { tier: "100", id: "T1087", name: "Account Discovery" },
@@ -251,40 +251,40 @@ const HEATMAP_TACTICS: HeatmapColumnData[] = [
     { tier: "75",  id: "T1135", name: "Network Share Discovery" },
     { tier: "50",  id: "T1057", name: "Process Discovery" },
     { tier: "50",  id: "T1018", name: "Remote System Discovery" },
-    e, e, e,
+    e, e,
   ]},
   { category: "Lateral Movement", percent: 67, cells: [
     { tier: "75",  id: "T1021", name: "Remote Services" },
     { tier: "75",  id: "T1021", name: "Remote Services" },
     { tier: "50",  id: "T1570", name: "Lateral Tool Transfer" },
     { tier: "25",  id: "T1534", name: "Internal Spearphishing" },
-    e, e, e, e,
+    e, e, e,
   ]},
   { category: "Collection", percent: 60, cells: [
     { tier: "75",  id: "T1560", name: "Archive Collected Data" },
     { tier: "50",  id: "T1119", name: "Automated Collection" },
     { tier: "0",   id: "T1213", name: "Data from Information Repositories" },
-    e, e, e, e, e,
+    e, e, e, e,
   ]},
   { category: "Command and Control", percent: 73, cells: [
     { tier: "100", id: "T1071", name: "Application Layer Protocol" },
     { tier: "75",  id: "T1573", name: "Encrypted Channel" },
     { tier: "75",  id: "T1090", name: "Proxy" },
     { tier: "25",  id: "T1105", name: "Ingress Tool Transfer" },
-    e, e, e, e,
+    e, e, e,
   ]},
   { category: "Exfiltration", percent: 55, cells: [
     { tier: "75",  id: "T1041", name: "Exfil Over C2 Channel" },
     { tier: "50",  id: "T1048", name: "Exfil Over Alt Protocol" },
     { tier: "0",   id: "T1567", name: "Exfil Over Web Service" },
-    e, e, e, e, e,
+    e, e, e, e,
   ]},
   { category: "Impact", percent: 70, cells: [
     { tier: "100", id: "T1486", name: "Data Encrypted for Impact" },
     { tier: "75",  id: "T1485", name: "Data Destruction" },
     { tier: "50",  id: "T1490", name: "Inhibit System Recovery" },
     { tier: "25",  id: "T1489", name: "Service Stop" },
-    e, e, e, e,
+    e, e, e,
   ]},
 ];
 
@@ -1509,10 +1509,11 @@ function HealthAndPerformance() {
               </div>
             </div>
 
-            {/* Response time — fills remaining width. Inner data div
-                flex-grows and uses justify-content: space-between so the
-                top row pins to the top, the bottom row pins to the bottom,
-                and the separator lands at the midpoint between them. */}
+            {/* Response time — fills remaining width. Outer card uses
+                justify-content: space-between so the label pins to the top
+                and the data block pins to the bottom; the gap between them
+                grows to fill the card's available height. The data block
+                itself is content-sized with a 12px gap between rows. */}
             <div
               style={{
                 ...INNER_CARD,
@@ -1520,6 +1521,7 @@ function HealthAndPerformance() {
                 flex: "1 0 0",
                 display: "flex",
                 flexDirection: "column",
+                justifyContent: "space-between",
                 overflow: "clip",
                 minWidth: 0,
                 gap: 12,
@@ -1530,10 +1532,7 @@ function HealthAndPerformance() {
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  flex: "1 0 0",
-                  alignSelf: "stretch",
+                  gap: 12,
                 }}
               >
                 <ResponseTimeRow value="4.2" unit="h" caption="To fix" />
@@ -2071,8 +2070,8 @@ function LastCovered() {
                 ...T_CAPTION_MED,
                 borderRadius: 999,
                 padding: "2px 8px",
-                background: "#154a3a",
-                color: "#03d07d",
+                background: "var(--green-bg)",
+                color: "var(--green)",
                 flexShrink: 0,
               }}
             >
