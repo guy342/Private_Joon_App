@@ -813,9 +813,9 @@ Card (--bg-card #1a1c22, 16 radius)
     │   └── HeatmapColumn × N (each 145px wide, flexShrink: 0)
     │       ├── Column header (padding: 0 12px — category over percent)
     │       └── HeatmapCell × N (gap: 8 between cells)
-    └── Footer (flex, gap: 16, align: center)
-        ├── HeatmapLegend (5 dots + labels — gap: 12)
-        └── HeatmapSlider (custom scroll indicator — flex: 1, max-width: 320, min-width: 120, marginLeft: auto)
+    └── Footer (flex, justify: space-between, align: center, alignSelf: stretch)
+        ├── HeatmapLegend (5 dots + labels — gap: 16, paddingRight: 86, flexShrink: 0)
+        └── HeatmapSlider (custom scroll indicator — flex: 1 0 0, min-width: 160)
 ```
 
 The 28px body gap brackets the column grid and footer (matches Figma). Title-to-grid gap is the canonical 20 (CardHeader pb=0 + body pt=20).
@@ -852,7 +852,7 @@ Fixed `width: 145`, flex-column with `gap: 8`. Header (category + %) sits in `pa
 
 #### `<HeatmapLegend>` — primitive
 
-Reads from `HEATMAP_TIERS` so the palette stays the single source of truth. Five rows in a flex with `gap: 12`, each: `8×8` circular dot (`borderRadius: 999`) using the tier's `bar` color + `T_CAPTION` label.
+Reads from `HEATMAP_TIERS` so the palette stays the single source of truth. Five rows in a flex with `gap: 16`, each: `8×8` circular dot (`borderRadius: 999`) using the tier's `bar` color + `T_CAPTION` label. `paddingRight: 86` on the legend reserves a guaranteed 86px gap between its last dot and the slider that follows it in the footer (the gap holds even when the footer is narrow).
 
 Don't hardcode a separate legend color list — if you ever change a tier color, the legend should follow without a code change.
 
@@ -876,7 +876,6 @@ background: linear-gradient(90deg,
   #1E2026 100%                                       /* fades into card-elevated tone at the right */
 )
 min-width: 160
-margin-left: auto                                    /* pushes slider to the right edge of its flex parent */
 opacity: visible ? 1 : 0
 transition: opacity 200ms ease
 ```

@@ -1911,7 +1911,15 @@ function HeatmapColumn({ column }: { column: HeatmapColumnData }) {
 function HeatmapLegend() {
   const tiers: HeatmapTier[] = ["100", "75", "50", "25", "0"];
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 16,
+        paddingRight: 86,
+        flexShrink: 0,
+      }}
+    >
       {tiers.map((tier) => (
         <div key={tier} style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span
@@ -2009,7 +2017,6 @@ function HeatmapSlider({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElemen
         opacity: thumb.visible ? 1 : 0,
         transition: "opacity 200ms ease",
         minWidth: 160,
-        marginLeft: "auto",
         borderRadius: 12,
         border: "1px solid rgba(255,255,255,0.05)",
         background:
@@ -2091,8 +2098,19 @@ function DetectionCoverageHeatmap() {
           ))}
         </div>
 
-        {/* Footer: legend (left) + slider (right) */}
-        <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0 }}>
+        {/* Footer: legend (left) + slider (right). space-between + alignSelf:
+            stretch is the canonical body-footer layout. The legend's own
+            paddingRight enforces a minimum 86px gap between its last dot and
+            the slider regardless of available width. */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            alignSelf: "stretch",
+            minWidth: 0,
+          }}
+        >
           <HeatmapLegend />
           <HeatmapSlider scrollRef={scrollRef} />
         </div>
