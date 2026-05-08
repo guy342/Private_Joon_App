@@ -888,7 +888,7 @@ function CardHeader({
   right,
 }: {
   title: string;
-  subtitle?: string;
+  subtitle?: React.ReactNode;
   right?: React.ReactNode;
 }) {
   return (
@@ -1013,6 +1013,37 @@ function RunningBadge({ text }: { text: string }) {
       />
       {text}
     </span>
+  );
+}
+
+// QueueSpinner — 16×16 ring with no fill, only a 2px gradient stroke that
+// rotates. Reuses the same `--joon-rb-angle` registered @property + the
+// `joon-rb-spin` keyframes that the RunningBadge ring uses (defined inline at
+// the page root), so any future tweak to the spin cadence flows through both.
+// Mask technique: two linear-gradient mask layers composited with `exclude`
+// (border-box minus content-box) carve the 2px ring shape; the conic-gradient
+// behind it provides the moving green head.
+function QueueSpinner() {
+  return (
+    <span
+      aria-hidden
+      style={{
+        width: 16,
+        height: 16,
+        flexShrink: 0,
+        borderRadius: 999,
+        padding: 2,
+        background:
+          "conic-gradient(from var(--joon-rb-angle, 0deg), #03d07d, rgba(3,208,125,0.15), #03d07d, rgba(3,208,125,0.15), #03d07d)",
+        WebkitMask:
+          "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+        WebkitMaskComposite: "xor",
+        mask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+        maskComposite: "exclude",
+        animation: "joon-rb-spin 3s linear infinite",
+        pointerEvents: "none",
+      }}
+    />
   );
 }
 
@@ -1528,10 +1559,11 @@ function HealthAndPerformance() {
               </div>
             </div>
 
-            {/* Response time — fills remaining width. Label, both rows, and
-                the 1px separator are flat siblings with justify-content:
-                space-between, so the three gaps (label→row1, row1→separator,
-                separator→row2) all flex equally to fill the card's height. */}
+            {/* Response time — fills remaining width. Outer uses
+                justify-content: space-between so the label pins to the top,
+                the data block pins to the bottom, and the gap between them
+                flexes. The data block itself is content-sized with a fixed
+                8px gap between row + separator + row. */}
             <div
               style={{
                 ...INNER_CARD,
@@ -1545,15 +1577,23 @@ function HealthAndPerformance() {
               }}
             >
               <span style={{ ...T_BODY, color: "#b4b9c2" }}>Response time</span>
-              <ResponseTimeRow value="4.2" unit="h" caption="To fix" />
               <div
                 style={{
-                  alignSelf: "stretch",
-                  height: 1,
-                  background: "#23252a",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
                 }}
-              />
-              <ResponseTimeRow value="18.5" unit="h" caption="To close gaps" />
+              >
+                <ResponseTimeRow value="4.2" unit="h" caption="To fix" />
+                <div
+                  style={{
+                    alignSelf: "stretch",
+                    height: 1,
+                    background: "#23252a",
+                  }}
+                />
+                <ResponseTimeRow value="18.5" unit="h" caption="To close gaps" />
+              </div>
             </div>
           </div>
         </div>
@@ -1575,7 +1615,18 @@ function ActiveWorkloadQueue() {
     <Card>
       <CardHeader
         title="Active Workload Queue"
-        subtitle="3 Active detections"
+        subtitle={
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <QueueSpinner />
+            3 Active detections
+          </span>
+        }
         right={
           <>
             <ConnectorChip
