@@ -2032,6 +2032,7 @@ function ProposalDrivers({ style }: { style?: React.CSSProperties }) {
         </div>
         <div
           style={{
+            ...INNER_CARD,
             display: "flex",
             padding: 20,
             flexDirection: "column",
@@ -2039,8 +2040,6 @@ function ProposalDrivers({ style }: { style?: React.CSSProperties }) {
             alignItems: "flex-start",
             flex: "1 0 0",
             alignSelf: "stretch",
-            borderRadius: 8,
-            background: "#21232a",
           }}
         >
           {PROPOSAL_DRIVERS.map((row) => (
