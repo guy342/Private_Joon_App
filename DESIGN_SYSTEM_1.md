@@ -861,18 +861,19 @@ Card (--bg-card #1a1c22, 16 radius, alignSelf: stretch)
     │           ├── <RulesBreakdownSeparator/>
     │           └── <RulesBreakdownRow In test/>
     └── Right stack (flex: 1, flex column, gap: 8, minWidth: 0)
-        ├── Telemetry uptime (Inner Card, height: 144)
+        ├── Telemetry uptime (Inner Card, flex: 1 0 0, minHeight: 0) — height fills evenly with the bottom row
         │   ├── Header row (label + DeltaBadge)
         │   └── Bottom row: T_STAT_NUM/UNIT "98%" + <Sparkline/>
-        └── Bottom row (flex row, gap: 8, flex: 1, minWidth: 0)
+        └── Bottom row (flex row, gap: 8, flex: 1 0 0, minHeight: 0, minWidth: 0) — height fills evenly with Telemetry uptime
             ├── Telemetry completeness (Inner Card, content-sized, flexShrink: 0)
             │   ├── Label + small stat "98%"
             │   └── <DotGrid filled={98}/>
-            └── Response time (Inner Card, flex: 1, minWidth: 0)
-                ├── Label
-                ├── <ResponseTimeRow value="4.2" unit="h" caption="To fix"/>
-                ├── 1px separator
-                └── <ResponseTimeRow value="18.5" unit="h" caption="To close gaps"/>
+            └── Response time (Inner Card, flex: 1, minWidth: 0, flex-col, gap: 12)
+                ├── Label "Response time"
+                └── Data div (flex-col, justify-content: flex-end, alignItems: flex-start, gap: 12, flex: 1 0 0, alignSelf: stretch) — pins data lines to bottom of available height
+                    ├── <ResponseTimeRow value="4.2" unit="h" caption="To fix"/>
+                    ├── 1px separator (alignSelf: stretch)
+                    └── <ResponseTimeRow value="18.5" unit="h" caption="To close gaps"/>
 ```
 
 #### `<StackedRulesBar>` — primitive

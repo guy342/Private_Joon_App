@@ -1275,9 +1275,10 @@ function DotGrid({
   );
 }
 
-// Stat row (number + unit + caption) used twice inside Response time. Local
-// helper, not promoted to the design system because the spacing/sizing here
-// is tuned for this specific cell.
+// Stat data-line used inside Response time. Number+unit stacks on top of the
+// caption (flex-col, justify-end, align-start, alignSelf stretch). Sized to
+// content, but full-width via alignSelf so the parent's space-between can
+// position both lines symmetrically.
 function ResponseTimeRow({
   value,
   unit,
@@ -1288,7 +1289,15 @@ function ResponseTimeRow({
   caption: string;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-end",
+        alignItems: "flex-start",
+        alignSelf: "stretch",
+      }}
+    >
       <span style={{ ...T_STAT_UNIT, lineHeight: "normal" }}>
         {value}
         <span style={{ ...T_BODY_SEMI, fontWeight: 700 }}>{unit}</span>
@@ -1408,12 +1417,15 @@ function HealthAndPerformance() {
             minWidth: 0,
           }}
         >
-          {/* Top: Telemetry uptime — big stat + sparkline */}
+          {/* Top: Telemetry uptime — big stat + sparkline. Height fills the
+              available space alongside the bottom row (both with flex: 1 0 0
+              so they split evenly). */}
           <div
             style={{
               ...INNER_CARD,
               padding: 20,
-              height: 144,
+              flex: "1 0 0",
+              minHeight: 0,
               display: "flex",
               flexDirection: "column",
               justifyContent: "space-between",
@@ -1481,7 +1493,9 @@ function HealthAndPerformance() {
               </div>
             </div>
 
-            {/* Response time — fills remaining space */}
+            {/* Response time — fills remaining width. Inner data div
+                flex-grows and uses justify-content: flex-end so the two data
+                lines + separator pin to the bottom of the available height. */}
             <div
               style={{
                 ...INNER_CARD,
@@ -1489,15 +1503,31 @@ function HealthAndPerformance() {
                 flex: "1 0 0",
                 display: "flex",
                 flexDirection: "column",
-                justifyContent: "space-between",
                 overflow: "clip",
                 minWidth: 0,
+                gap: 12,
               }}
             >
               <span style={{ ...T_BODY, color: "#b4b9c2" }}>Response time</span>
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <ResponseTimeRow value="4.2"  unit="h" caption="To fix" />
-                <div style={{ height: 1, background: "#23252a" }} />
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "flex-end",
+                  alignItems: "flex-start",
+                  gap: 12,
+                  flex: "1 0 0",
+                  alignSelf: "stretch",
+                }}
+              >
+                <ResponseTimeRow value="4.2" unit="h" caption="To fix" />
+                <div
+                  style={{
+                    alignSelf: "stretch",
+                    height: 1,
+                    background: "#23252a",
+                  }}
+                />
                 <ResponseTimeRow value="18.5" unit="h" caption="To close gaps" />
               </div>
             </div>
