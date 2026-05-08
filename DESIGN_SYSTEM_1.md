@@ -338,6 +338,8 @@ The 880px is the canonical "primary card" width for two-column rows. Both rows u
 `minmax(0, 1fr)` on the right column is mandatory — without the `0` lower bound, a card with wide intrinsic content (e.g. Proposal Drivers' max-width 600 lollipop rows) could blow past its allocation. Same rule we use on the bottom rows whenever a card with wide intrinsic content might force its column wider.
 
 > **`minmax(0, fr)` rule:** any grid row containing a card whose content can exceed the column's width (horizontal scroll, very long table, etc.) must use `minmax(0, ...fr)` instead of plain `1fr` / `Nfr`. CSS Grid's default `1fr` resolves to `minmax(auto, 1fr)`, where `auto` honors the item's min-content — and a horizontal-scroll card's min-content is its full unwrapped content. `minmax(0, ...)` overrides that. Pair with `min-width: 0` on the card itself (passed via the `style` prop) for defense in depth — the heatmap's `<Card>` does this. Without both, the inner `overflow-x: auto` never fires because the parent has already grown to fit.
+>
+> **The same rule applies to ROW splits (height).** When two cards need to split a parent's height 50/50 and they have different intrinsic min-heights, **don't** use `display: flex; flex-direction: column` with `flex: 1 0 0` on each — the flex algorithm starts each item from its min-content size and distributes only the FREE space, so the taller-content card eats more of the parent's height. Use `display: grid; gridTemplateRows: minmax(0, 1fr) minmax(0, 1fr)` instead — the `minmax(0, ...)` rows ignore content min-size and always split exactly evenly. The H&P right column does this for Telemetry uptime + the bottom row.
 
 ### StatusBar (inside MainContent, scrolls with content)
 
@@ -860,11 +862,11 @@ Card (--bg-card #1a1c22, 16 radius, alignSelf: stretch)
     │           ├── <RulesBreakdownRow Proposals/>
     │           ├── <RulesBreakdownSeparator/>
     │           └── <RulesBreakdownRow In test/>
-    └── Right stack (flex: 1, flex column, gap: 8, minWidth: 0)
-        ├── Telemetry uptime (Inner Card, flex: 1 0 0, minHeight: 0) — height fills evenly with the bottom row
+    └── Right stack (flex: 1, **CSS Grid** with `gridTemplateRows: minmax(0, 1fr) minmax(0, 1fr)`, gap: 8, minWidth: 0, minHeight: 0)
+        ├── Telemetry uptime (Inner Card) — first grid row, fills evenly with the bottom row
         │   ├── Header row (label + DeltaBadge)
         │   └── Bottom row: T_STAT_NUM/UNIT "98%" + <Sparkline/>
-        └── Bottom row (flex row, gap: 8, flex: 1 0 0, minHeight: 0, minWidth: 0) — height fills evenly with Telemetry uptime
+        └── Bottom row (flex row, gap: 8, minHeight: 0, minWidth: 0) — second grid row, fills evenly with Telemetry uptime
             ├── Telemetry completeness (Inner Card, content-sized, flexShrink: 0)
             │   ├── Label + small stat "98%"
             │   └── <DotGrid filled={98}/>
