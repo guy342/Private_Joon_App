@@ -67,6 +67,39 @@ body {
     0 0 0 4px rgba(255, 255, 255, 0.10);
 }
 
+/* Response time data layout — see Health & Performance > Response time in
+   src/app/detection/page.tsx. Default is the canonical vertical stack
+   (4.2h above, 18.5h below, horizontal hairline between). At viewports
+   <1600px the parent flex switches to row + the separator becomes a
+   vertical line, so the two data lines sit "data next to data" with the
+   stat on the left half and the second on the right half. Caption stays
+   below number inside each ResponseTimeRow either way. */
+.response-time-data {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1 0 0;
+  align-self: stretch;
+}
+.response-time-separator {
+  align-self: stretch;
+  flex-shrink: 0;
+  background: #23252a;
+  height: 1px;
+}
+@media (max-width: 1599.99px) {
+  .response-time-data {
+    flex-direction: row;
+    align-items: stretch;
+  }
+  .response-time-separator {
+    height: auto;
+    width: 1px;
+  }
+}
+
 /* WorkloadDistribution row hover — see <WorkloadDistribution> in
    src/app/detection/page.tsx. The row wrapper uses `display: contents`
    (so the grid sees a flat sequence of cells) but :hover still fires when

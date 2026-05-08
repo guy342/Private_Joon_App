@@ -1605,21 +1605,11 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
               }}
             >
               <span style={{ ...T_BODY, color: "#b4b9c2" }}>Response time</span>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                }}
-              >
+              {/* Layout flips between column (default) and row (<1600px viewport)
+                  via the .response-time-data class — see globals.css. */}
+              <div className="response-time-data">
                 <ResponseTimeRow value="4.2" unit="h" caption="To fix" />
-                <div
-                  style={{
-                    alignSelf: "stretch",
-                    height: 1,
-                    background: "#23252a",
-                  }}
-                />
+                <div className="response-time-separator" aria-hidden />
                 <ResponseTimeRow value="18.5" unit="h" caption="To close gaps" />
               </div>
             </div>
