@@ -328,7 +328,9 @@ Children that should fill the full 1400px need `align-self: stretch` (because of
 **MainContent card stack (top → bottom):**
 
 1. `<StatusBar />` — full-width
-2. **Row 1** — `gridTemplateColumns: "880px minmax(0, 1fr)"`, gap 12, **`height: 420`** — Health & Performance (left, 880px fixed) + Proposal Drivers (right, fills). The fixed 420 cascades down: Card stretches via grid `align-items: stretch` (default); H&P's body div has `flex: 1 0 0 + minHeight: 0` to fill the remaining height after CardHeader; the right-stack grid splits the resulting space 50/50.
+2. **Row 1** — `gridTemplateColumns: "880px minmax(0, 1fr)"`, gap 12, **`height: 420` + `minHeight: 420`** — Health & Performance (left, 880px fixed) + Proposal Drivers (right, fills). The fixed 420 cascades down: Card stretches via grid `align-items: stretch` (default); H&P's body div has `flex: 1 0 0 + minHeight: 0` to fill the remaining height after CardHeader; the right-stack grid splits the resulting space 50/50.
+
+> **`height` + `minHeight` together** is mandatory for fixed-height rows that are flex items (i.e. inside `<main>`'s flex column). `height: 420` alone sets the flex basis, but `<main>`'s default `flex-shrink: 1` (which Tailwind v4's preflight allows to bypass content min-height) clamps the row down to its content min-size — observed in practice dropping from 420 to 228. Adding `minHeight: 420` enforces a hard floor the flex algorithm can't shrink below. Always pair the two for any fixed row height inside `<main>`.
 3. **Row 2** — `gridTemplateColumns: "880px minmax(0, 1fr)"`, gap 12 — Active Workload Queue (left, 880px fixed) + a flex column on the right (`gap: 12, minWidth: 0`) stacking Teamwork above Last Covered
 4. `<DetectionCoverageHeatmap />` — full-width
 5. `<WorkloadDistribution />` — full-width
