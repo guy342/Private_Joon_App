@@ -966,11 +966,21 @@ function RunningBadge({ text }: { text: string }) {
         ...T_CAPTION,
         borderRadius: 999,
         padding: "2px 6px",
-        background: "rgba(3,208,125,0.05)",
+        // Two-layer background: solid translucent fill clipped to padding-box,
+        // rotating conic-gradient clipped to border-box. With a transparent
+        // 0.5px border, the conic shows through *only* in the border ring,
+        // producing an animated gradient border. The conic's `from` angle is
+        // a registered @property (--joon-rb-angle) so it interpolates as a
+        // proper <angle> in the joon-rb-spin keyframes.
+        border: "0.5px solid transparent",
+        background:
+          "linear-gradient(rgba(3,208,125,0.05), rgba(3,208,125,0.05)) padding-box, " +
+          "conic-gradient(from var(--joon-rb-angle, 0deg), #B6E8D4, rgba(182,232,212,0.25), #B6E8D4, rgba(182,232,212,0.25), #B6E8D4) border-box",
         color: "#03d07d",
         display: "inline-flex",
         alignItems: "center",
         gap: 8,
+        animation: "joon-rb-spin 3s linear infinite",
       }}
     >
       <span
@@ -2056,7 +2066,6 @@ function LastCovered() {
               style={{
                 ...T_BODY,
                 color: "#f2f4f7",
-                flex: 1,
                 minWidth: 0,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -2077,7 +2086,7 @@ function LastCovered() {
             >
               Deployed
             </span>
-            <span style={{ ...T_MONO_SMALL, color: "#858a94", flexShrink: 0, width: 48 }}>
+            <span style={{ ...T_MONO_SMALL, color: "#858a94", flexShrink: 0 }}>
               {row.date}
             </span>
           </div>
@@ -2955,6 +2964,14 @@ export default function DetectionPage() {
               0% { opacity: 0; }
               75% { opacity: 1; }
               100% { opacity: 1; }
+            }
+            @property --joon-rb-angle {
+              syntax: '<angle>';
+              initial-value: 0deg;
+              inherits: false;
+            }
+            @keyframes joon-rb-spin {
+              to { --joon-rb-angle: 360deg; }
             }
           `,
         }}

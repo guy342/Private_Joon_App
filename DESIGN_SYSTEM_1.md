@@ -140,6 +140,8 @@ These are the *only* places where text breaks the type scale. New code must not 
 > **Registered border exception (1):** the Workload child ID pill (`< > DET--730` with gradient text) uses a 1px **gradient** border (`#9747FF → #CCA5FF` at 15% opacity) implemented as an outer wrapper with `padding: 1` and the gradient as `background`, holding the inner content pill. This is one of two non-button container borders allowed in the system; do not generalize the wrapper-with-padding technique to other identity tags without an explicit design-system update.
 >
 > **Registered border exception (2):** the **Floating Status Pills** (the two glass pills that replace the StatusBar in scrolled state — see StatusBar → Scrolled state below) each carry `border: 1px solid #23252a` (`var(--border)`). The 1px outline is what gives the translucent gradient + backdrop blur enough definition to read against arbitrary content scrolling underneath. These pills act as floating chip containers for action items (avatar/identity on the left; ⌘K, date button, refresh on the right) — the pill IS the action surface, so it gets a button-tier border. Only the two pills get this treatment; don't generalize to other floating containers.
+>
+> **Registered border exception (3):** the **Running Badge** carries an animated 0.5px gradient border (`#B6E8D4` → `rgba(182,232,212,0.25)` conic-gradient that rotates around the pill perimeter on a 3s loop). The motion is what signals "this group is currently running" — it's the visual heartbeat of the workload-queue's live-status state. Implemented as a transparent 0.5px border with two-layer `background` clipped to `padding-box` (the translucent green fill) + `border-box` (the conic gradient), driven by a registered `@property --joon-rb-angle`. See Running Badge below.
 
 ### Text
 
@@ -642,18 +644,45 @@ font: --type-caption                    /* Inter Regular 10px */
 
 ### Running Badge
 
-Used on Active Workload groups when at least one detection is in progress (e.g. "3 Running"). Same pill shape as DeltaBadge, but with a leading dot that mirrors the StatusBar's "Active" status indicator.
+Used on Active Workload groups when at least one detection is in progress (e.g. "3 Running"). Same pill shape as DeltaBadge, but with a leading dot that mirrors the StatusBar's "Active" status indicator **and an animated gradient border** that telegraphs the live-running state.
 
 ```
 font: --type-caption
 border-radius: 999px
 padding: 2px 6px
-background: rgba(3, 208, 125, 0.05)        /* var(--green-bg) */
+border: 0.5px solid transparent             /* the actual stroke is painted via background border-box */
+background:
+  linear-gradient(rgba(3,208,125,0.05), rgba(3,208,125,0.05)) padding-box,   /* fill — var(--green-bg) */
+  conic-gradient(from var(--joon-rb-angle, 0deg),
+    #B6E8D4,
+    rgba(182, 232, 212, 0.25),
+    #B6E8D4,
+    rgba(182, 232, 212, 0.25),
+    #B6E8D4
+  ) border-box                                                                /* animated stroke */
 color: #03d07d                              /* var(--green) */
 display: inline-flex
 align-items: center
 gap: 8px
+animation: joon-rb-spin 3s linear infinite
 ```
+
+**Why a transparent border + two-layer background?** A simple `border: 0.5px solid <gradient>` doesn't exist in CSS. The standard trick is to make the border transparent and let `background-clip` paint the rest: the **first** background layer (the translucent green fill) is clipped to `padding-box` so it stops at the inner edge of the border; the **second** layer (the conic gradient) is clipped to `border-box` so it shows through *only* in the 0.5px border ring. The result is a gradient stroke around an otherwise normal pill.
+
+**Why `@property` for the angle?** The conic gradient's `from` value is a registered custom property:
+
+```
+@property --joon-rb-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes joon-rb-spin {
+  to { --joon-rb-angle: 360deg; }
+}
+```
+
+Without `@property`, a CSS variable in a gradient is treated as a string and the keyframe transition can't interpolate it — the gradient would jump 0° → 360° on the next frame instead of smoothly rotating. Registering the property as `<angle>` makes the browser interpolate it as a real angle. The keyframes + @property pair lives in the inline `<style>` block at the bottom of the detection page (alongside `joon-shimmer` / `joon-dot-*`).
 
 The leading dot:
 
@@ -667,6 +696,8 @@ flex-shrink: 0
 ```
 
 The `box-shadow` halo (not `border`) is mandatory — same reasoning as the StatusBar status dot. The `gap: 8` between dot and text is wider than the 4 used elsewhere because the halo extends 2px outward from the 6px dot, eating ~2px into a tight gap.
+
+**Don't strip the rotating border for a static one.** The motion is the point — it's the visual heartbeat that distinguishes a running group from a paused one in the queue. If a future variant needs a non-running state, drop the `animation` property and substitute a static stroke; don't reuse this badge as a generic green pill.
 
 ### Nav Items (sidebar)
 
