@@ -1336,6 +1336,12 @@ function HealthAndPerformance() {
           gap: 8,
           alignItems: "stretch",
           minWidth: 0,
+          // flex: 1 0 0 + minHeight: 0 lets this body fill the remaining card
+          // height after the CardHeader. Required for the H&P card to honor
+          // the row-level height: 420 — without it the body is content-sized
+          // and the card has empty space below.
+          flex: "1 0 0",
+          minHeight: 0,
         }}
       >
         {/* LEFT: Total Rules — flex-1 splits evenly with the right stack at
@@ -2751,13 +2757,17 @@ function MainContent() {
       >
         <StatusBar />
 
-        {/* Row 1: Health & Performance (left, 880px fixed) + Proposal Drivers (right, fill) */}
+        {/* Row 1: Health & Performance (left, 880px fixed) + Proposal Drivers
+            (right, fill). Fixed `height: 420` cascades down — Card stretches
+            to fill the grid cell, body div flex-grows after the header, and
+            the right-stack grid splits the resulting height 50/50. */}
         <div
           style={{
             alignSelf: "stretch",
             display: "grid",
             gridTemplateColumns: "880px minmax(0, 1fr)",
             gap: 12,
+            height: 420,
           }}
         >
           <HealthAndPerformance />
