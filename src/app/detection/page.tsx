@@ -1407,14 +1407,22 @@ function HealthAndPerformance() {
           </div>
         </div>
 
-        {/* RIGHT: Telemetry stack */}
+        {/* RIGHT: Telemetry stack — CSS Grid with two equal rows.
+            `minmax(0, 1fr)` rows enforce a true 50/50 vertical split between
+            Telemetry uptime and the bottom row. Was a flex-col with `flex: 1 0 0`
+            on each child, but the flex algorithm starts each item from its
+            min-content and distributes only the FREE space — the two children
+            had different min-content heights (165 vs 125) so the split came out
+            165/125 instead of 145/145. Grid `1fr 1fr` ignores content min-size
+            (because of the `minmax(0, ...)` lower bound) and splits cleanly. */}
         <div
           style={{
             flex: "1 0 0",
-            display: "flex",
-            flexDirection: "column",
+            display: "grid",
+            gridTemplateRows: "minmax(0, 1fr) minmax(0, 1fr)",
             gap: 8,
             minWidth: 0,
+            minHeight: 0,
           }}
         >
           {/* Top: Telemetry uptime — big stat + sparkline. Height fills the
@@ -1847,6 +1855,7 @@ function ProposalRow({ label, value, max }: { label: string; value: number; max:
         gridTemplateColumns: "120px 1fr 36px",
         alignItems: "center",
         gap: 12,
+        alignSelf: "stretch",
       }}
     >
       <span style={{ ...T_BODY, color: "#b4b9c2" }}>{label}</span>
@@ -1905,10 +1914,13 @@ function ProposalDrivers() {
       />
       <div
         style={{
-          padding: 20,
           display: "flex",
+          padding: 20,
           flexDirection: "column",
-          gap: 18,
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          flex: "1 0 0",
+          alignSelf: "stretch",
         }}
       >
         {PROPOSAL_DRIVERS.map((row) => (

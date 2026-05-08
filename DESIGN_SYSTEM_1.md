@@ -1186,6 +1186,8 @@ Each row in the Proposal Drivers card is a horizontal lollipop: a track line, a 
 
 The lollipop is a neutral data-vis primitive. Don't use `--green` for chart fills/knobs unless the chart is explicitly communicating a positive/success state.
 
+**Content area layout:** `display: flex; padding: 20px; flex-direction: column; justify-content: space-between; align-items: flex-start; flex: 1 0 0; align-self: stretch`. Rows distribute via `space-between` across the full card height (no fixed `gap`), so the chart fills whatever vertical space the grid row gives it — first row pinned to top under the header, last row pinned to bottom, remaining rows evenly spaced. Because `align-items: flex-start` doesn't stretch children on the cross axis, each `ProposalRow` carries its own `align-self: stretch` to keep the lollipop bars full-width (same pattern as the Total Rules left panel).
+
 ---
 
 ## Do / Don't
