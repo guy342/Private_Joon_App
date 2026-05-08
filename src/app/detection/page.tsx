@@ -989,7 +989,7 @@ function RunningBadge({ text }: { text: string }) {
           position: "absolute",
           inset: 0,
           borderRadius: 999,
-          padding: "0.6px",
+          padding: "0.7px",
           background:
             "conic-gradient(from var(--joon-rb-angle, 0deg), #B6E8D4, rgba(182,232,212,0.25), #B6E8D4, rgba(182,232,212,0.25), #B6E8D4)",
           WebkitMask:
