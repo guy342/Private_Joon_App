@@ -1508,8 +1508,9 @@ function HealthAndPerformance() {
             </div>
 
             {/* Response time — fills remaining width. Inner data div
-                flex-grows and uses justify-content: flex-end so the two data
-                lines + separator pin to the bottom of the available height. */}
+                flex-grows and uses justify-content: space-between so the
+                top row pins to the top, the bottom row pins to the bottom,
+                and the separator lands at the midpoint between them. */}
             <div
               style={{
                 ...INNER_CARD,
@@ -1527,9 +1528,8 @@ function HealthAndPerformance() {
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  justifyContent: "flex-end",
+                  justifyContent: "space-between",
                   alignItems: "flex-start",
-                  gap: 12,
                   flex: "1 0 0",
                   alignSelf: "stretch",
                 }}
