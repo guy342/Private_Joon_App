@@ -1200,7 +1200,11 @@ function Sparkline({
       height={height}
       viewBox={`0 0 ${w} ${height}`}
       preserveAspectRatio="none"
-      style={{ display: "block", flexShrink: 0 }}
+      // flex: 1 0 0 lets the sparkline grow to fill its flex parent and shrink
+      // below the SVG's intrinsic 300px width in narrower containers — paired
+      // with vector-effect: non-scaling-stroke on the polyline so the line
+      // stays at the requested px width regardless of horizontal scale.
+      style={{ display: "block", flex: "1 0 0", minWidth: 0, height }}
     >
       <polyline
         points={points}
@@ -2667,38 +2671,39 @@ function MainContent() {
       >
         <StatusBar />
 
-        <HealthAndPerformance />
-
+        {/* Row 1: Health & Performance (left, 880px fixed) + Proposal Drivers (right, fill) */}
         <div
           style={{
             alignSelf: "stretch",
             display: "grid",
-            gridTemplateColumns: "1fr 600px",
+            gridTemplateColumns: "880px minmax(0, 1fr)",
+            gap: 12,
+          }}
+        >
+          <HealthAndPerformance />
+          <ProposalDrivers />
+        </div>
+
+        {/* Row 2: Active Workload Queue (left, 880px fixed) + (Teamwork + Last
+            Covered stacked, right fill) */}
+        <div
+          style={{
+            alignSelf: "stretch",
+            display: "grid",
+            gridTemplateColumns: "880px minmax(0, 1fr)",
             gap: 12,
           }}
         >
           <ActiveWorkloadQueue />
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <ProposalDrivers />
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}>
             <Teamwork />
+            <LastCovered />
           </div>
         </div>
 
-        <div
-          style={{
-            alignSelf: "stretch",
-            display: "grid",
-            // minmax(0, fr) is mandatory here — the heatmap card's intrinsic
-            // width is its 14 × 145px column grid (~2150px). Without minmax(0, ...)
-            // the column won't shrink below that and the card overflows the row.
-            gridTemplateColumns: "minmax(0, 469fr) minmax(0, 625fr)",
-            gap: 12,
-          }}
-        >
-          <LastCovered />
-          <DetectionCoverageHeatmap />
-        </div>
-
+        {/* Detection Coverage Heatmap and Workload Distribution stay full-width
+            below the two-column rows above. */}
+        <DetectionCoverageHeatmap />
         <WorkloadDistribution />
       </main>
 

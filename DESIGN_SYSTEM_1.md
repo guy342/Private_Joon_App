@@ -323,7 +323,19 @@ The `padding-top` / `padding-bottom` on `<main>` is part of the **scroll content
 
 The 12px gap applies to **every** card-to-card / row-to-row step inside MainContent — between the StatusBar, between cards, between row groups, between the two columns of a side-by-side row, and between cards stacked in a sub-column. **Any sub-card layout inside a top-level Card uses a smaller `8px` gap** — this includes the 2×2 stat tile grid inside Health & Performance *and* the body-level grid that splits the Total Rules Inner Card from the stat tile grid (i.e., the `gridTemplateColumns: "640px 1fr"` row). Treat 8px as the canonical inside-a-card gap; reach for 12px only at the MainContent (between top-level cards) level.
 
-Children that should fill the full 1400px need `align-self: stretch` (because of `align-items: flex-start`). **Per-card width caps:** ProposalDrivers and Teamwork cards each have `max-width: 600px` set on their `<Card>` style. The Active Workload row uses `gridTemplateColumns: "1fr 600px"` — the right column is fixed at `600px` (where Proposal Drivers + Teamwork stack), and Active Workload Queue takes the remaining `1fr`, growing flexibly with MainContent's width. The bottom Last Covered + Heatmap row uses `gridTemplateColumns: "minmax(0, 469fr) minmax(0, 625fr)"` — the `minmax(0, ...)` is mandatory because the Heatmap card has very wide intrinsic content (14 × 145px columns ≈ 2150px) and a plain `469fr 625fr` would let the heatmap column blow past its allocation.
+Children that should fill the full 1400px need `align-self: stretch` (because of `align-items: flex-start`). **Per-card width caps:** ProposalDrivers and Teamwork cards each have `max-width: 600px` set on their `<Card>` style.
+
+**MainContent card stack (top → bottom):**
+
+1. `<StatusBar />` — full-width
+2. **Row 1** — `gridTemplateColumns: "880px minmax(0, 1fr)"`, gap 12 — Health & Performance (left, 880px fixed) + Proposal Drivers (right, fills)
+3. **Row 2** — `gridTemplateColumns: "880px minmax(0, 1fr)"`, gap 12 — Active Workload Queue (left, 880px fixed) + a flex column on the right (`gap: 12, minWidth: 0`) stacking Teamwork above Last Covered
+4. `<DetectionCoverageHeatmap />` — full-width
+5. `<WorkloadDistribution />` — full-width
+
+The 880px is the canonical "primary card" width for two-column rows. Both rows use the same template so the left edges of Health & Performance and Active Workload Queue line up vertically.
+
+`minmax(0, 1fr)` on the right column is mandatory — without the `0` lower bound, a card with wide intrinsic content (e.g. Proposal Drivers' max-width 600 lollipop rows) could blow past its allocation. Same rule we use on the bottom rows whenever a card with wide intrinsic content might force its column wider.
 
 > **`minmax(0, fr)` rule:** any grid row containing a card whose content can exceed the column's width (horizontal scroll, very long table, etc.) must use `minmax(0, ...fr)` instead of plain `1fr` / `Nfr`. CSS Grid's default `1fr` resolves to `minmax(auto, 1fr)`, where `auto` honors the item's min-content — and a horizontal-scroll card's min-content is its full unwrapped content. `minmax(0, ...)` overrides that. Pair with `min-width: 0` on the card itself (passed via the `style` prop) for defense in depth — the heatmap's `<Card>` does this. Without both, the inner `overflow-x: auto` never fires because the parent has already grown to fit.
 
