@@ -1,0 +1,173 @@
+/* MainContent layout — four responsive breakpoints.
+ *
+ * Mobile-first ordering: the smallest layout (stacked, vertical-H&P) is the
+ * DEFAULT, and each larger breakpoint layers `min-width` overrides on top.
+ * Each card keeps the same DOM order across all breakpoints; only the grid
+ * template areas / columns / rows reassign positions, plus `.hpBody` flips
+ * orientation at the 1200 breakpoint.
+ *
+ *   <800px   (default): stacked single column. All five top-row cards
+ *                       become full-width siblings, one per grid row.
+ *                       H&P body is vertical (Total Rules above Telemetry
+ *                       stack) — row 1 is 800px to seat the stacked sub-
+ *                       cards comfortably.
+ *
+ *   ≥800px:             "small" two-column layout. H&P spans both columns
+ *                       in row 1, then a 50/50 split puts AWQ + Teamwork
+ *                       on the left and ProposalDrivers + LastCovered on
+ *                       the right. H&P body is still vertical at this
+ *                       breakpoint — row 1 stays 800px.
+ *
+ *   ≥1200px:            H&P body switches from vertical to horizontal
+ *                       (Total Rules on the left, Telemetry stack on the
+ *                       right). Row 1 shrinks to 420 — the design height.
+ *                       Column template stays at the small-2-col template
+ *                       until the next breakpoint.
+ *
+ *   ≥1900px:            "big" two-column layout. Original side-by-side
+ *                       arrangement — H&P + ProposalDrivers in row 1, AWQ
+ *                       spans rows 2+3 on the left, Teamwork + LastCovered
+ *                       stacked on the right. <main> is also capped at
+ *                       1600px so very wide displays stop stretching the
+ *                       cards. The 880fr / 496fr column ratio matches the
+ *                       prior 1400-width design.
+ *
+ * Heatmap and Workload Distribution sit outside `.cardsGrid` and stay
+ * full-width siblings of <main> at every breakpoint. */
+
+.wrapper {
+  flex: 1 0 0;
+  min-width: 0;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.main {
+  display: flex;
+  width: 100%;
+  /* Floor the content width at 300px (was 600). Below 300 the wrapper
+   * horizontally scrolls instead of compressing the cards further. 300 is
+   * the practical lower bound — the heatmap's 145px column + 12 gap pair
+   * needs ~310-320 to render two columns side-by-side comfortably, and the
+   * Workload Distribution table's fixed 100/267 ID/Rule columns set a
+   * similar floor. Below 300 the page reads as broken regardless. */
+  min-width: 300px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding-top: 12px;
+  padding-right: 12px;
+  padding-bottom: 12px;
+}
+
+.cardsGrid {
+  align-self: stretch;
+  display: grid;
+  gap: 12px;
+  /* Default (<800px) — stacked single column with vertical H&P. Five rows,
+   * one per card. Row 1 is 800px so the H&P body's vertical sub-card stack
+   * (Total Rules above Telemetry stack) has comfortable room — each sub-
+   * card gets ~370px after the CardHeader + body padding, enough for Total
+   * Rules' breakdown distribution AND Telemetry stack's 144 + bottom-row
+   * math. The remaining rows are auto and grow with content. */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 800px auto auto auto auto;
+  grid-template-areas:
+    "hp"
+    "prop"
+    "wq"
+    "tw"
+    "lc";
+}
+
+@media (min-width: 800px) {
+  .cardsGrid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: 800px auto auto;
+    grid-template-areas:
+      "hp   hp"
+      "wq   prop"
+      "tw   lc";
+  }
+}
+
+@media (min-width: 1200px) {
+  .cardsGrid {
+    /* H&P body flips to horizontal at ≥1200, so row 1 collapses back to
+     * the design's 420 — Total Rules and Telemetry stack now share the
+     * row's horizontal space instead of its vertical space. */
+    grid-template-rows: 420px auto auto;
+  }
+}
+
+@media (min-width: 1900px) {
+  .main {
+    max-width: 1600px;
+  }
+
+  .cardsGrid {
+    grid-template-columns: minmax(0, 880fr) minmax(0, 496fr);
+    grid-template-areas:
+      "hp   prop"
+      "wq   tw"
+      "wq   lc";
+  }
+}
+
+/* Health & Performance card body — vertical-stack at <1200px (Total Rules
+ * above the Telemetry stack), horizontal at ≥1200px (Total Rules on the
+ * left, Telemetry stack on the right). At <1200px the H&P row in
+ * `.cardsGrid` is also 800px so the stacked sub-cards have enough vertical
+ * space — `auto` here doesn't work, because Total Rules' inline
+ * `flex: 1 0 0` chain (the panel + the bar/list wrapper + the breakdown
+ * list itself) all need a definite parent height to grow into; in an
+ * `auto` row they collapse to flex-basis 0 and Total Rules vanishes. The
+ * Telemetry stack keeps the same `144px minmax(0, 1fr)` grid rows at every
+ * breakpoint, so Telemetry uptime is always fixed-height and the bottom
+ * row always fills the remainder. Mobile-first: vertical is the default
+ * and the horizontal layout is layered on at the breakpoint, mirroring
+ * the pattern this file already uses for `.cardsGrid` between 800 and
+ * 1900. */
+
+.hpBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 0 0;
+  padding: 20px;
+}
+
+.hpTelemetryStack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 144px minmax(0, 1fr);
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 0 0;
+}
+
+@media (min-width: 1200px) {
+  .hpBody {
+    flex-direction: row;
+  }
+}
+
+/* Proposal Drivers card — needs a defined height because its inner content
+ * card uses `flex: 1 0 0` + `justify-content: space-between` to distribute
+ * the lollipop rows across the card height. Without a height context the
+ * body wrapper collapses (the parent flex chain has nothing to grow into)
+ * and the lollipops visually overflow into whatever sits below. Pin a
+ * 420px floor on the Card so it always has space for the distribution —
+ * works in every layout: big-screen and small-2-col rows are already
+ * driven by the grid template, the stacked layouts (default <800 and
+ * 800-1199 with H&P spanning) put ProposalDrivers in its own row where
+ * the 420px floor here defines its height. */
+
+.propCard {
+  min-height: 420px;
+}
