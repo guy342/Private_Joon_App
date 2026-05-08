@@ -153,7 +153,18 @@
 
 @media (min-width: 1200px) {
   .hpBody {
-    flex-direction: row;
+    /* Switch from flex-column to a 2-column grid (instead of flex-row) so
+     * Total Rules and the Telemetry stack ALWAYS share the body width
+     * exactly 50:50. With flex-row + `flex: 1 0 0` on each side, the right
+     * side's intrinsic min-content (DotGrid + sparkline + Response time
+     * bottom-row math) was pushing past its share even with `min-width: 0`,
+     * because the two sides have different min-content sizes. `minmax(0, 1fr)`
+     * grid columns ignore content min-size and split exactly evenly.
+     * The single `minmax(0, 1fr)` row makes both sides fill the body
+     * vertically just like `align-items: stretch` did in flex mode. */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
   }
 }
 
