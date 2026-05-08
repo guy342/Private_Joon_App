@@ -494,7 +494,7 @@ Implemented as `<FloatingStatusPills visible={…}>` in `src/app/detection/page.
 ```
 position: fixed
 top: 12                                /* matches the StatusBar's resting top inset */
-left: 264                              /* sidebar 232 + shell-padding-left 12 + shell-gap 20 */
+left: sidebarCollapsed ? 76 : 264      /* expanded: 232 sidebar + 12 padding + 20 gap = 264. collapsed: 44 sidebar + 32 = 76. Driven by `sidebarCollapsed` prop threaded from <DetectionPage> → <MainContent> → <FloatingStatusPills>. Animated via `transition: left 200ms ease` so pills slide along with the sidebar's collapse/expand instead of jumping. */
 right: 0                               /* extends to the viewport's right edge */
 z-index: 50
 pointer-events: none                   /* MANDATORY — lets clicks pass through to cards underneath; pills re-enable pointer-events themselves */
