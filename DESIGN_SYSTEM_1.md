@@ -852,8 +852,14 @@ Card (--bg-card #1a1c22, 16 radius, alignSelf: stretch)
     ├── Total Rules panel (Inner Card, flex: 1 0 0 + minWidth: 0, padding: 20 24 24, gap: 16) — splits evenly with the right stack inside the 880px outer
     │   ├── Header row (label + DeltaBadge ↑ 1.6%)
     │   ├── Big stat (T_DISPLAY "730" + T_BODY "/ 1,250")
-    │   ├── <StackedRulesBar/>
-    │   └── 3 × <RulesBreakdownRow/> (Deployed / Proposals / In test)
+    │   └── Bar + list wrapper (flex-col, gap: 24, flex: 1 0 0, alignSelf: stretch) — fills the remaining panel height
+    │       ├── <StackedRulesBar/>
+    │       └── List (flex-col, padding: 0 4px, justify-content: space-between, alignItems: center, flex: 1 0 0, alignSelf: stretch)
+    │           ├── <RulesBreakdownRow Deployed/>
+    │           ├── <RulesBreakdownSeparator/>
+    │           ├── <RulesBreakdownRow Proposals/>
+    │           ├── <RulesBreakdownSeparator/>
+    │           └── <RulesBreakdownRow In test/>
     └── Right stack (flex: 1, flex column, gap: 8, minWidth: 0)
         ├── Telemetry uptime (Inner Card, height: 144)
         │   ├── Header row (label + DeltaBadge)
@@ -881,9 +887,15 @@ Three-segment progress bar (16px tall, gap 4) representing rule status distribut
 
 The three segment colors are also the three breakdown-row dot colors (`#03d07d` → Deployed, `#6af0ba` → Proposals, `#e8fff6` → In test). Same palette across the bar and dots — single source of truth visually. These are inlined raw hex (not tokens) because they're scoped to this single visualization; promote to tokens if reused elsewhere.
 
-#### `<RulesBreakdownRow color label value isLast>` — primitive
+#### `<RulesBreakdownRow color label value>` — primitive
 
-Dot + label (left), value (right), 1px separator below unless last row. Dot is `10×10` rounded-999 in the segment color. Reusable for any "list with category color indicator" pattern.
+Dot + label (left), value (right). Height 38, alignSelf: stretch. Dot is `10×10` rounded-999 in the segment color. Reusable for any "list with category color indicator" pattern.
+
+#### `<RulesBreakdownSeparator>` — primitive
+
+Hairline 1px line at `--border` (#23252a), alignSelf: stretch. Rendered as a **sibling** flex item between rows (not nested inside `<RulesBreakdownRow>`) so it participates in the parent list's `justify-content: space-between` distribution. With 3 rows + 2 separators as 5 evenly-spaced flex children, each separator naturally lands at the midpoint between its two adjacent rows.
+
+> **Why sibling-rendered, not row-internal**: nesting the separator inside the row would tie it to the row's height/position. With sibling rendering, the parent's space-between can distribute rows AND separators across the available height as 5 equal stops — which is the only way to get clean midpoint separators when the list is `flex: 1 0 0` and grows to fill its container.
 
 #### `<Sparkline data height color strokeWidth>` — primitive
 

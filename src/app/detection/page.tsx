@@ -1124,46 +1124,59 @@ function StackedRulesBar() {
   );
 }
 
-// Breakdown row — colored dot + label (left), value (right), 1px separator
-// below unless it's the last row. Reusable: any "list with dot indicator"
-// pattern can use this primitive.
+// Breakdown row — colored dot + label (left), value (right). The separator
+// between rows is rendered by the parent (as a sibling flex item) instead of
+// nested inside the row, so the parent's `justify-content: space-between` can
+// distribute rows AND separators evenly across the available height — the
+// separator naturally lands at the midpoint between two rows.
 function RulesBreakdownRow({
   color,
   label,
   value,
-  isLast,
 }: {
   color: string;
   label: string;
   value: string;
-  isLast: boolean;
 }) {
   return (
-    <div style={{ alignSelf: "stretch" }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          height: 38,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: 999,
-              background: color,
-              flexShrink: 0,
-            }}
-          />
-          <span style={{ ...T_BODY, color: "#b4b9c2" }}>{label}</span>
-        </div>
-        <span style={{ ...T_BODY_SEMI, color: "#f2f4f7" }}>{value}</span>
+    <div
+      style={{
+        alignSelf: "stretch",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        height: 38,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: 999,
+            background: color,
+            flexShrink: 0,
+          }}
+        />
+        <span style={{ ...T_BODY, color: "#b4b9c2" }}>{label}</span>
       </div>
-      {!isLast && <div style={{ height: 1, background: "#23252a" }} />}
+      <span style={{ ...T_BODY_SEMI, color: "#f2f4f7" }}>{value}</span>
     </div>
+  );
+}
+
+// Hairline separator used between breakdown rows. Sibling-rendered (not
+// nested in RulesBreakdownRow) so it participates in the parent's
+// justify-content: space-between distribution.
+function RulesBreakdownSeparator() {
+  return (
+    <div
+      style={{
+        alignSelf: "stretch",
+        height: 1,
+        background: "#23252a",
+      }}
+    />
   );
 }
 
@@ -1349,18 +1362,39 @@ function HealthAndPerformance() {
             <span style={{ ...T_BODY, color: "#858a94" }}>/ 1,250</span>
           </div>
 
-          <StackedRulesBar />
-
+          {/* Bar + list share a wrapper that flex-grows to fill the remaining
+              height of the Total Rules panel. Bar sits at the top; list takes
+              the rest and uses justify-content: space-between so the 3 rows
+              + 2 separators distribute evenly down the available height. */}
           <div
             style={{
-              alignSelf: "stretch",
               display: "flex",
               flexDirection: "column",
+              alignItems: "flex-start",
+              gap: 24,
+              flex: "1 0 0",
+              alignSelf: "stretch",
             }}
           >
-            <RulesBreakdownRow color="#03d07d" label="Deployed"  value="210" isLast={false} />
-            <RulesBreakdownRow color="#6af0ba" label="Proposals" value="95"  isLast={false} />
-            <RulesBreakdownRow color="#e8fff6" label="In test"   value="72"  isLast={true} />
+            <StackedRulesBar />
+
+            <div
+              style={{
+                display: "flex",
+                padding: "0 4px",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flex: "1 0 0",
+                alignSelf: "stretch",
+              }}
+            >
+              <RulesBreakdownRow color="#03d07d" label="Deployed"  value="210" />
+              <RulesBreakdownSeparator />
+              <RulesBreakdownRow color="#6af0ba" label="Proposals" value="95"  />
+              <RulesBreakdownSeparator />
+              <RulesBreakdownRow color="#e8fff6" label="In test"   value="72"  />
+            </div>
           </div>
         </div>
 
