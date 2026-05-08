@@ -17,6 +17,7 @@ import {
   Settings,
   User,
 } from "lucide-react";
+import mainContentStyles from "./main-content.module.css";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -400,7 +401,7 @@ function NavRow({
     <button
       type="button"
       style={{
-        height: 30,
+        height: 32,
         padding: "5px 8px",
         display: "flex",
         alignItems: "center",
@@ -413,8 +414,8 @@ function NavRow({
         color: active ? "#f2f4f7" : "#b4b9c2",
         fontFamily: FONT_INTER,
         fontWeight: 400,
-        fontSize: 12,
-        lineHeight: "18px",
+        fontSize: 14,
+        lineHeight: "20px",
         letterSpacing: "-0.2px",
         textAlign: "left",
       }}
@@ -465,10 +466,10 @@ function Sidebar() {
     <aside
       style={{
         display: "flex",
-        width: 280,
+        width: 232,
         flexDirection: "column",
         alignItems: "flex-start",
-        gap: 4,
+        gap: 24,
         flexShrink: 0,
         alignSelf: "stretch",
         marginTop: 12,
@@ -525,56 +526,75 @@ function Sidebar() {
         </div>
       </div>
 
-      <nav
-        style={{
-          alignSelf: "stretch",
-          padding: "0 8px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 4,
-        }}
-      >
-        <NavRow label="Activity" icon={Activity} />
-        <NavRow label="Detection" avatarUrl="/Avatar_Sean.png" active />
-        <NavRow label="Investigation" avatarUrl="/Avatar_Helen.png" />
-        <NavRow label="Hunting" avatarUrl="/Avatar_Helen.png" />
-        <NavRow label="Validation" avatarUrl="/Avatar_Valery.png" />
-      </nav>
-
+      {/* Lists layout — wrapper around the main nav + Workspace section.
+          Spacing rule: 24px between lists (matches the sidebar's outer gap),
+          padding lives on each inner list (0 8px) not on this wrapper. */}
       <div
         style={{
           alignSelf: "stretch",
-          padding: "18px 8px 0",
           display: "flex",
           flexDirection: "column",
-          gap: 4,
+          alignItems: "flex-start",
+          gap: 24,
         }}
       >
-        <div
+        {/* Main nav — list without title (8px gap between rows). */}
+        <nav
           style={{
-            padding: "6px 8px",
+            alignSelf: "stretch",
+            padding: "0 8px",
             display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: 8,
           }}
         >
-          <span
+          <NavRow label="Activity" icon={Activity} />
+          <NavRow label="Detection" avatarUrl="/Avatar_Sean.png" active />
+          <NavRow label="Investigation" avatarUrl="/Avatar_Helen.png" />
+          <NavRow label="Hunting" avatarUrl="/Avatar_Helen.png" />
+          <NavRow label="Validation" avatarUrl="/Avatar_Valery.png" />
+        </nav>
+
+        {/* Workspace — list with title (4px gap, tighter so the title binds
+            to its items). */}
+        <div
+          style={{
+            alignSelf: "stretch",
+            padding: "0 8px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: 4,
+          }}
+        >
+          <div
             style={{
-              fontFamily: FONT_INTER,
-              fontWeight: 500,
-              fontSize: 12,
-              lineHeight: "18px",
-              letterSpacing: "-0.2px",
-              color: "#858a94",
+              padding: "6px 8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              alignSelf: "stretch",
             }}
           >
-            Workspace
-          </span>
-          <ChevronDown size={10} strokeWidth={1.75} color="#858a94" />
+            <span
+              style={{
+                fontFamily: FONT_INTER,
+                fontWeight: 500,
+                fontSize: 14,
+                lineHeight: "20px",
+                letterSpacing: "-0.2px",
+                color: "#858a94",
+              }}
+            >
+              Workspace
+            </span>
+            <ChevronDown size={12} strokeWidth={1.75} color="#858a94" />
+          </div>
+          <NavRow label="Customer Profile" icon={User} />
+          <NavRow label="Memory" icon={Database} />
+          <NavRow label="Settings" icon={Settings} />
         </div>
-        <NavRow label="Customer Profile" icon={User} />
-        <NavRow label="Memory" icon={Database} />
-        <NavRow label="Settings" icon={Settings} />
       </div>
 
       <div style={{ flex: 1, alignSelf: "stretch" }} />
@@ -966,12 +986,13 @@ function RunningBadge({ text }: { text: string }) {
         ...T_CAPTION,
         position: "relative",
         borderRadius: 999,
-        padding: "2px 6px",
+        height: 22,
+        padding: "2px 10px 2px 6px",
         background: "rgba(3,208,125,0.05)",
         color: "#03d07d",
-        display: "inline-flex",
+        display: "flex",
         alignItems: "center",
-        gap: 8,
+        gap: 4,
       }}
     >
       {/* Animated 1px gradient ring. Sits as an absolute overlay over the
@@ -1192,10 +1213,12 @@ function RulesBreakdownRow({
   color,
   label,
   value,
+  style,
 }: {
   color: string;
   label: string;
   value: string;
+  style?: React.CSSProperties;
 }) {
   return (
     <div
@@ -1205,6 +1228,7 @@ function RulesBreakdownRow({
         alignItems: "center",
         justifyContent: "space-between",
         height: 38,
+        ...style,
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -1366,13 +1390,13 @@ function ResponseTimeRow({
   );
 }
 
-function HealthAndPerformance() {
+function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
   // Sample sparkline data — gentle upward trend matching the Figma reference.
   // Replace with real time-series data when wiring up.
   const sparklineData = [55, 58, 56, 60, 64, 67, 70, 72, 71, 75, 80, 84, 87, 92, 95, 98];
 
   return (
-    <Card style={{ alignSelf: "stretch" }}>
+    <Card style={{ alignSelf: "stretch", ...style }}>
       <CardHeader
         title="Health & Performance"
         subtitle="Overview of the agent and the system"
@@ -1467,7 +1491,7 @@ function HealthAndPerformance() {
               <RulesBreakdownSeparator />
               <RulesBreakdownRow color="#6af0ba" label="Proposals" value="95"  />
               <RulesBreakdownSeparator />
-              <RulesBreakdownRow color="#e8fff6" label="In test"   value="72"  />
+              <RulesBreakdownRow color="#e8fff6" label="In test"   value="72"  style={{ alignItems: "flex-end" }} />
             </div>
           </div>
         </div>
@@ -1604,7 +1628,7 @@ function HealthAndPerformance() {
 
 // ─── Active Workload Queue ────────────────────────────────────────────────────
 
-function ActiveWorkloadQueue() {
+function ActiveWorkloadQueue({ style }: { style?: React.CSSProperties }) {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
 
   function toggle(i: number) {
@@ -1612,7 +1636,7 @@ function ActiveWorkloadQueue() {
   }
 
   return (
-    <Card>
+    <Card style={style}>
       <CardHeader
         title="Active Workload Queue"
         subtitle={
@@ -1861,7 +1885,7 @@ function ActiveWorkloadQueue() {
                           {child.name}
                         </span>
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 64, flexShrink: 0 }}>
                         <span style={{ ...T_CAPTION, color: "#03d07d", width: 94, flexShrink: 0 }}>
                           {child.status}
                           <span
@@ -1934,7 +1958,7 @@ function ProposalRow({ label, value, max }: { label: string; value: number; max:
             right: 0,
             top: "50%",
             height: 1,
-            background: "#23252a",
+            background: "#1a1c22",
             transform: "translateY(-50%)",
           }}
         />
@@ -1967,34 +1991,62 @@ function ProposalRow({ label, value, max }: { label: string; value: number; max:
   );
 }
 
-function ProposalDrivers() {
+function ProposalDrivers({ style }: { style?: React.CSSProperties }) {
   return (
-    <Card style={{ maxWidth: 600 }}>
-      <CardHeader
-        title="Proposal Drivers"
-        subtitle="Sub handled"
-        right={
-          <IconBtn label="Open Proposal Drivers">
-            <ArrowUpRight size={14} strokeWidth={1.75} />
-          </IconBtn>
-        }
-      />
+    <Card style={style}>
+      {/* Body wrapper — padded frame holding the header + content card.
+          CardHeader isn't used here because its own padding ("20px 20px 0")
+          doesn't fit this card's frame: the design wants the header to live
+          inside the same padding box as the content card, separated by a
+          20px gap, so the header content is inlined. Top is 24 (matches the
+          asymmetric top-padding pattern used by Health & Performance) and
+          sides + bottom are the canonical 20. */}
       <div
         style={{
           display: "flex",
-          padding: 20,
+          padding: "24px 20px 20px",
           flexDirection: "column",
-          justifyContent: "space-between",
           alignItems: "flex-start",
+          gap: 20,
           flex: "1 0 0",
+          minHeight: 0,
           alignSelf: "stretch",
-          borderRadius: 8,
-          background: "#21232a",
         }}
       >
-        {PROPOSAL_DRIVERS.map((row) => (
-          <ProposalRow key={row.label} {...row} />
-        ))}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            alignSelf: "stretch",
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+            <span style={T_HEADING}>Proposal Drivers</span>
+            <span style={{ ...T_BODY, color: "#858a94" }}>Sub handled</span>
+          </div>
+          <IconBtn label="Open Proposal Drivers">
+            <ArrowUpRight size={14} strokeWidth={1.75} />
+          </IconBtn>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            padding: 20,
+            flexDirection: "column",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            flex: "1 0 0",
+            alignSelf: "stretch",
+            borderRadius: 8,
+            background: "#21232a",
+          }}
+        >
+          {PROPOSAL_DRIVERS.map((row) => (
+            <ProposalRow key={row.label} {...row} />
+          ))}
+        </div>
       </div>
     </Card>
   );
@@ -2002,9 +2054,9 @@ function ProposalDrivers() {
 
 // ─── Teamwork ─────────────────────────────────────────────────────────────────
 
-function Teamwork() {
+function Teamwork({ style }: { style?: React.CSSProperties }) {
   return (
-    <Card style={{ maxWidth: 600 }}>
+    <Card style={style}>
       <CardHeader
         title="Teamwork"
         subtitle="2 Tasks since yesterday"
@@ -2082,9 +2134,9 @@ function Teamwork() {
 
 // ─── Last Covered ─────────────────────────────────────────────────────────────
 
-function LastCovered() {
+function LastCovered({ style }: { style?: React.CSSProperties }) {
   return (
-    <Card>
+    <Card style={style}>
       <CardHeader
         title="Last Covered"
         subtitle="Covered by Dawn"
@@ -2227,7 +2279,6 @@ function HeatmapCell({ cell }: { cell: HeatmapCellData }) {
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: 4,
           minWidth: 0,
           flex: "1 0 0",
         }}
@@ -2246,7 +2297,7 @@ function HeatmapCell({ cell }: { cell: HeatmapCellData }) {
         <span
           style={{
             ...T_CAPTION,
-            color: "#b4b9c2",
+            color: "rgba(242,244,247,0.5)",
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -2845,71 +2896,22 @@ function MainContent() {
   }, []);
 
   return (
-    <div
-      ref={wrapperRef}
-      style={{
-        flex: "1 0 0",
-        minWidth: 0,
-        overflowY: "auto",
-        display: "flex",
-        justifyContent: "center",
-      }}
-    >
-      <main
-        style={{
-          display: "flex",
-          width: "100%",
-          maxWidth: 1400,
-          flexDirection: "column",
-          alignItems: "flex-start",
-          gap: 12,
-          paddingTop: 12,
-          paddingRight: 12,
-          paddingBottom: 12,
-        }}
-      >
+    <div ref={wrapperRef} className={mainContentStyles.wrapper}>
+      <main className={mainContentStyles.main}>
         <StatusBar />
 
-        {/* Row 1: Health & Performance (left, 880px fixed) + Proposal Drivers
-            (right, fill). Fixed 420 height cascades down — Card stretches
-            to fill the grid cell, body div flex-grows after the header, and
-            the right-stack grid splits the resulting height 50/50. Use BOTH
-            `height` and `minHeight: 420` — plain `height` was being clamped
-            to content (~228) inside the flex-col main, so minHeight enforces
-            the floor. */}
-        <div
-          style={{
-            alignSelf: "stretch",
-            display: "grid",
-            gridTemplateColumns: "880px minmax(0, 1fr)",
-            gap: 12,
-            height: 420,
-            minHeight: 420,
-          }}
-        >
-          <HealthAndPerformance />
-          <ProposalDrivers />
+        {/* Single grid holding the five top-row cards. Layout swaps between
+            the big-screen and small-screen templates via media queries on
+            `.cardsGrid` in main-content.module.css — the DOM order stays
+            the same; only the grid-template-areas reassign positions. */}
+        <div className={mainContentStyles.cardsGrid}>
+          <HealthAndPerformance style={{ gridArea: "hp", minWidth: 0 }} />
+          <ProposalDrivers style={{ gridArea: "prop", minWidth: 0 }} />
+          <ActiveWorkloadQueue style={{ gridArea: "wq", minWidth: 0 }} />
+          <Teamwork style={{ gridArea: "tw", minWidth: 0 }} />
+          <LastCovered style={{ gridArea: "lc", minWidth: 0 }} />
         </div>
 
-        {/* Row 2: Active Workload Queue (left, 880px fixed) + (Teamwork + Last
-            Covered stacked, right fill) */}
-        <div
-          style={{
-            alignSelf: "stretch",
-            display: "grid",
-            gridTemplateColumns: "880px minmax(0, 1fr)",
-            gap: 12,
-          }}
-        >
-          <ActiveWorkloadQueue />
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}>
-            <Teamwork />
-            <LastCovered />
-          </div>
-        </div>
-
-        {/* Detection Coverage Heatmap and Workload Distribution stay full-width
-            below the two-column rows above. */}
         <DetectionCoverageHeatmap />
         <WorkloadDistribution />
       </main>
