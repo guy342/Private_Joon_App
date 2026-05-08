@@ -48,3 +48,15 @@ body {
 .no-scrollbar::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Edge */
 }
+
+/* HeatmapSlider thumb hover halo — see <HeatmapSlider> in
+   src/app/detection/page.tsx. The 4px border slot is reserved at all times
+   (transparent by default) so the thumb's inner 12×12 white square stays
+   the same size in both states; only the border color animates. */
+.heatmap-slider-thumb {
+  border: 4px solid transparent;
+  transition: border-color 150ms ease;
+}
+.heatmap-slider-thumb:hover {
+  border-color: rgba(255, 255, 255, 0.10);
+}

@@ -897,15 +897,17 @@ transform: translateY(-50%)                          /* vertically center on the
 width: 20
 height: 20
 border-radius: 8
-border: 4px solid rgba(255,255,255,0.10)             /* translucent halo ring */
 background: #fff
 box-shadow: 0 2px 2px 0 rgba(0,0,0,0.10)
 cursor: grab
 touch-action: none
 box-sizing: border-box                               /* MANDATORY — without it, the 4px border adds 8 to the box and the knob renders 28×28 */
+className: "heatmap-slider-thumb"                    /* hover halo — see globals.css */
 ```
 
-With `box-sizing: border-box`, the 20×20 outer footprint is preserved and the white inner area is 12×12 (= 20 − 4 × 2). The translucent border becomes the visible "halo" around a small white square. Don't redesign this with a `box-shadow` instead — `box-shadow` can't be hit-tested for the drag pointer events, and the halo needs to be part of the draggable target.
+The hover halo is **a CSS class, not an inline border**. The class (`.heatmap-slider-thumb` in `globals.css`) sets `border: 4px solid transparent` by default and `border-color: rgba(255,255,255,0.10)` on `:hover`, transitioned 150ms ease. The 4px slot is always reserved (transparent default), so the inner 12×12 white square doesn't shift size when the halo appears — only the color of the border slot animates. Don't fold the hover into a `useState` + `onMouseEnter/Leave` pattern: native CSS `:hover` is faster (no React re-render) and the transition reads cleaner.
+
+With `box-sizing: border-box`, the 20×20 outer footprint is preserved and the white inner area is 12×12 (= 20 − 4 × 2) in both states. Don't redesign the halo as a `box-shadow` — `box-shadow` can't be hit-tested for the drag pointer events, and the halo needs to be part of the draggable target.
 
 **Sync mechanism:** `ResizeObserver` on both the scroll element AND the track (so the knob position recalculates on either resize) + a passive `scroll` listener. Drag via `pointer-events` with `setPointerCapture` — works for mouse, touch, and pen.
 
@@ -916,7 +918,8 @@ With `box-sizing: border-box`, the 20×20 outer footprint is preserved and the w
 - v2 (2026-05-08, retired same day): fixed 20×20 white knob with halo on a 3px gradient track + `border-radius: 12`. Track was too thin — the radius got clamped to 1.5px (half-height) and the pill ends weren't visibly rounded.
 - v3 (2026-05-08, retired same day): same knob, track bumped to 6px tall + `border-radius: 999`.
 - v4 (2026-05-08, retired same day): same dimensions, `border-radius: 3`. Designer flagged a stray green pixel at the right end — turned out to be the gradient bleeding through the translucent border at the rounded corner.
-- v5 (current, 2026-05-08): track back to **3px height** + `border-radius: 3`, with `background-clip: padding-box` and `box-sizing: border-box` added so the gradient terminates cleanly at the border's inner edge. Single-div structure for the bar (border + radius + bg all on one element).
+- v5 (2026-05-08, retired same day): track back to **3px height** + `border-radius: 3`, with `background-clip: padding-box` and `box-sizing: border-box`. Halo always visible.
+- v6 (current, 2026-05-08): same v5 track, but the halo is now **hover-only** via `.heatmap-slider-thumb` CSS class (transparent border at rest, `rgba(255,255,255,0.10)` on `:hover`, 150ms transition). Slider also gained `max-width: 360` on the track for ~30% shorter rendering on wide viewports.
 
 #### `.no-scrollbar` utility class
 
