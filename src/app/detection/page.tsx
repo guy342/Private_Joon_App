@@ -1441,33 +1441,24 @@ function HealthAndPerformance() {
           </div>
         </div>
 
-        {/* RIGHT: Telemetry stack — CSS Grid with two equal rows.
-            `minmax(0, 1fr)` rows enforce a true 50/50 vertical split between
-            Telemetry uptime and the bottom row. Was a flex-col with `flex: 1 0 0`
-            on each child, but the flex algorithm starts each item from its
-            min-content and distributes only the FREE space — the two children
-            had different min-content heights (165 vs 125) so the split came out
-            165/125 instead of 145/145. Grid `1fr 1fr` ignores content min-size
-            (because of the `minmax(0, ...)` lower bound) and splits cleanly. */}
+        {/* RIGHT: Telemetry stack — CSS Grid. Top row is pinned to 144px
+            (Telemetry uptime); bottom row takes the remaining height. */}
         <div
           style={{
             flex: "1 0 0",
             display: "grid",
-            gridTemplateRows: "minmax(0, 1fr) minmax(0, 1fr)",
+            gridTemplateRows: "144px minmax(0, 1fr)",
             gridTemplateColumns: "minmax(0, 1fr)",
             gap: 8,
             minWidth: 0,
             minHeight: 0,
           }}
         >
-          {/* Top: Telemetry uptime — big stat + sparkline. Height fills the
-              available space alongside the bottom row (both with flex: 1 0 0
-              so they split evenly). */}
+          {/* Top: Telemetry uptime — big stat + sparkline, fixed 144px tall. */}
           <div
             style={{
               ...INNER_CARD,
               padding: 20,
-              flex: "1 0 0",
               minHeight: 0,
               minWidth: 0,
               display: "flex",

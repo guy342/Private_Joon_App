@@ -141,7 +141,7 @@ These are the *only* places where text breaks the type scale. New code must not 
 >
 > **Registered border exception (2):** the **Floating Status Pills** (the two glass pills that replace the StatusBar in scrolled state — see StatusBar → Scrolled state below) each carry `border: 1px solid #23252a` (`var(--border)`). The 1px outline is what gives the translucent gradient + backdrop blur enough definition to read against arbitrary content scrolling underneath. These pills act as floating chip containers for action items (avatar/identity on the left; ⌘K, date button, refresh on the right) — the pill IS the action surface, so it gets a button-tier border. Only the two pills get this treatment; don't generalize to other floating containers.
 >
-> **Registered border exception (3):** the **Running Badge** carries an animated 0.5px gradient border (`#B6E8D4` → `rgba(182,232,212,0.25)` conic-gradient that rotates around the pill perimeter on a 3s loop). The motion is what signals "this group is currently running" — it's the visual heartbeat of the workload-queue's live-status state. Implemented as a transparent 0.5px border with two-layer `background` clipped to `padding-box` (the translucent green fill) + `border-box` (the conic gradient), driven by a registered `@property --joon-rb-angle`. See Running Badge below.
+> **Registered border exception (3):** the **Running Badge** carries an animated 1px gradient border (`#B6E8D4` → `rgba(182,232,212,0.25)` conic-gradient that rotates around the pill perimeter on a 3s loop). The motion is what signals "this group is currently running" — it's the visual heartbeat of the workload-queue's live-status state. Implemented as an absolute overlay with the conic-gradient masked to the 1px outer ring via `mask-composite: exclude`, driven by a registered `@property --joon-rb-angle`. See Running Badge below.
 
 ### Text
 
@@ -343,7 +343,7 @@ The 880px is the canonical "primary card" width for two-column rows. Both rows u
 
 > **`minmax(0, fr)` rule:** any grid row containing a card whose content can exceed the column's width (horizontal scroll, very long table, etc.) must use `minmax(0, ...fr)` instead of plain `1fr` / `Nfr`. CSS Grid's default `1fr` resolves to `minmax(auto, 1fr)`, where `auto` honors the item's min-content — and a horizontal-scroll card's min-content is its full unwrapped content. `minmax(0, ...)` overrides that. Pair with `min-width: 0` on the card itself (passed via the `style` prop) for defense in depth — the heatmap's `<Card>` does this. Without both, the inner `overflow-x: auto` never fires because the parent has already grown to fit.
 >
-> **The same rule applies to ROW splits (height).** When two cards need to split a parent's height 50/50 and they have different intrinsic min-heights, **don't** use `display: flex; flex-direction: column` with `flex: 1 0 0` on each — the flex algorithm starts each item from its min-content size and distributes only the FREE space, so the taller-content card eats more of the parent's height. Use `display: grid; gridTemplateRows: minmax(0, 1fr) minmax(0, 1fr)` instead — the `minmax(0, ...)` rows ignore content min-size and always split exactly evenly. The H&P right column does this for Telemetry uptime + the bottom row.
+> **The same rule applies to ROW splits (height).** When two cards need to split a parent's height 50/50 and they have different intrinsic min-heights, **don't** use `display: flex; flex-direction: column` with `flex: 1 0 0` on each — the flex algorithm starts each item from its min-content size and distributes only the FREE space, so the taller-content card eats more of the parent's height. Use `display: grid; gridTemplateRows: minmax(0, 1fr) minmax(0, 1fr)` instead — the `minmax(0, ...)` rows ignore content min-size and always split exactly evenly.
 
 ### StatusBar (inside MainContent, scrolls with content)
 
@@ -660,13 +660,13 @@ align-items: center
 gap: 8px
 ```
 
-The animated 0.5px stroke is a **separate absolute overlay** layered on top:
+The animated 1px stroke is a **separate absolute overlay** layered on top:
 
 ```
 position: absolute
 inset: 0
 border-radius: 999px
-padding: 0.5px                              /* defines the ring thickness via the mask below */
+padding: 1px                                /* defines the ring thickness via the mask below */
 background: conic-gradient(from var(--joon-rb-angle, 0deg),
   #B6E8D4,
   rgba(182, 232, 212, 0.25),
@@ -677,7 +677,7 @@ background: conic-gradient(from var(--joon-rb-angle, 0deg),
 mask:
   linear-gradient(#000 0 0) content-box,    /* solid mask, clipped to inner content-box */
   linear-gradient(#000 0 0)                 /* solid mask, clipped to full border-box */
-mask-composite: exclude                     /* visible only where exactly one layer covers — i.e. the 0.5px ring */
+mask-composite: exclude                     /* visible only where exactly one layer covers — i.e. the 1px ring */
 -webkit-mask: <same as `mask` above>
 -webkit-mask-composite: xor                 /* WebKit's name for the same operation */
 animation: joon-rb-spin 3s linear infinite
@@ -686,7 +686,7 @@ pointer-events: none
 
 **Why an overlay with mask-composite and not the simpler `transparent border + background-clip` trick?** The "obvious" gradient-border pattern — transparent border + `linear-gradient(fill) padding-box, conic-gradient(stroke) border-box` — falls apart when the **fill is translucent**. With `rgba(3,208,125,0.05)` (5% alpha), 95% of the conic gradient bleeds through the inside of the pill, tinting the entire badge body with the rotating gradient instead of just the stroke. A solid fill would mask it, but the spec calls for translucent green so the parent's bg can show through.
 
-The mask approach paints the conic gradient on a **separate absolute overlay** and clips it to the 0.5px ring with `mask-composite: exclude`. Both mask layers are "solid black" — the only difference is `mask-clip`: the first is clipped to `content-box` (the inner area), the second to `border-box` (the full area). Excluding them leaves only the difference: the 0.5px ring. The pill's own `background` stays a clean translucent green and is never touched by the gradient.
+The mask approach paints the conic gradient on a **separate absolute overlay** and clips it to the 1px ring with `mask-composite: exclude`. Both mask layers are "solid black" — the only difference is `mask-clip`: the first is clipped to `content-box` (the inner area), the second to `border-box` (the full area). Excluding them leaves only the difference: the 1px ring. The pill's own `background` stays a clean translucent green and is never touched by the gradient.
 
 `pointer-events: none` on the overlay so the underlying pill remains the click target. `aria-hidden` since the ring is decorative.
 
@@ -916,20 +916,19 @@ Card (--bg-card #1a1c22, 16 radius, alignSelf: stretch)
     │           ├── <RulesBreakdownRow Proposals/>
     │           ├── <RulesBreakdownSeparator/>
     │           └── <RulesBreakdownRow In test/>
-    └── Right stack (flex: 1, **CSS Grid** with `gridTemplateRows: minmax(0, 1fr) minmax(0, 1fr)`, gap: 8, minWidth: 0, minHeight: 0)
-        ├── Telemetry uptime (Inner Card) — first grid row, fills evenly with the bottom row
+    └── Right stack (flex: 1, **CSS Grid** with `gridTemplateRows: 144px minmax(0, 1fr)`, gap: 8, minWidth: 0, minHeight: 0)
+        ├── Telemetry uptime (Inner Card) — first grid row, fixed 144px tall
         │   ├── Header row (label + DeltaBadge)
         │   └── Bottom row: T_STAT_NUM/UNIT "98%" + <Sparkline/>
-        └── Bottom row (flex row, gap: 8, minHeight: 0, minWidth: 0) — second grid row, fills evenly with Telemetry uptime
+        └── Bottom row (flex row, gap: 8, minHeight: 0, minWidth: 0) — second grid row, takes remaining height
             ├── Telemetry completeness (Inner Card, content-sized, flexShrink: 0)
             │   ├── Label + small stat "98%"
             │   └── <DotGrid filled={98}/>
-            └── Response time (Inner Card, flex: 1, minWidth: 0, flex-col, gap: 12) — label pins to top; data div flexes to fill remaining height
+            └── Response time (Inner Card, flex: 1, minWidth: 0, flex-col, justify-content: space-between) — label + both rows + 1px separator are flat siblings; the three gaps (label→row1, row1→separator, separator→row2) all flex equally to fill the card's height (same sibling-divider pattern as `<RulesBreakdownSeparator>`, scaled up to include the label as the first stop)
                 ├── Label "Response time"
-                └── Data div (flex-col, flex: 1, minHeight: 0, justify-content: space-between) — fills remaining height; row + 1px separator + row are distributed as 3 sibling flex children, putting the separator in the geometric middle and the rows pinned to top/bottom of the available space (same sibling-divider pattern as `<RulesBreakdownSeparator>`)
-                    ├── <ResponseTimeRow value="4.2" unit="h" caption="To fix"/>
-                    ├── 1px separator (alignSelf: stretch)
-                    └── <ResponseTimeRow value="18.5" unit="h" caption="To close gaps"/>
+                ├── <ResponseTimeRow value="4.2" unit="h" caption="To fix"/>
+                ├── 1px separator (alignSelf: stretch)
+                └── <ResponseTimeRow value="18.5" unit="h" caption="To close gaps"/>
 ```
 
 #### `<StackedRulesBar>` — primitive
