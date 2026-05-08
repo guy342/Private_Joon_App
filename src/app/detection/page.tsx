@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Database,
   HeartPulse,
+  ListFilter,
   Maximize2,
   PanelLeftClose,
   Plus,
@@ -991,13 +992,22 @@ function RunningBadge({ text }: { text: string }) {
   );
 }
 
-function NeutralBadge({ text }: { text: string }) {
+// Neutral pill — used for connector overflow indicators ("+2"), accordion
+// counts ("3"), and (with size="md") the WorkloadDistribution Category chip.
+// `size` controls horizontal padding only; vertical padding stays 2px.
+function NeutralBadge({
+  text,
+  size = "sm",
+}: {
+  text: React.ReactNode;
+  size?: "sm" | "md";
+}) {
   return (
     <span
       style={{
         ...T_CAPTION,
         borderRadius: 999,
-        padding: "2px 6px",
+        padding: size === "md" ? "2px 10px" : "2px 6px",
         background: "rgba(255,255,255,0.05)",
         color: "#858a94",
         display: "inline-flex",
@@ -2146,6 +2156,267 @@ function DetectionCoverageHeatmap() {
   );
 }
 
+// ─── Workload Distribution ────────────────────────────────────────────────────
+// Card with a search/filter header and a 10-column data table.
+// Reusable primitives: <FilterPill>, <SearchField>, <SeverityBadge>.
+
+type WorkloadSeverity = "Critical" | "High" | "Medium" | "Low";
+
+const SEVERITY_COLORS: Record<WorkloadSeverity, { fg: string; bg: string }> = {
+  Critical: { fg: "var(--severity-critical)", bg: "var(--severity-critical-bg)" },
+  High:     { fg: "var(--severity-high)",     bg: "var(--severity-high-bg)" },
+  Medium:   { fg: "var(--green)",              bg: "var(--green-bg)" },
+  Low:      { fg: "var(--blue)",               bg: "var(--blue-bg)" },
+};
+
+type WorkloadRow = {
+  id: string;
+  ruleName: string;
+  category: string;
+  technique: string;
+  severity: WorkloadSeverity;
+  status: string;
+  hits: string;
+  fpRate: string;
+  source: string;
+};
+
+const WORKLOAD_ROWS: WorkloadRow[] = [
+  { id: "DAWN-730", ruleName: "Suspicious Threat Hunt Pattern Detected", category: "Execution", technique: "T1059", severity: "Critical", status: "Testing", hits: "-", fpRate: "-", source: "Down" },
+  { id: "DAWN-730", ruleName: "Suspicious Threat Hunt Pattern Detected", category: "Execution", technique: "T1059", severity: "Low",      status: "Testing", hits: "-", fpRate: "-", source: "Down" },
+  { id: "DAWN-730", ruleName: "Suspicious Threat Hunt Pattern Detected", category: "Execution", technique: "T1059", severity: "Medium",   status: "Testing", hits: "-", fpRate: "-", source: "Down" },
+  { id: "DAWN-730", ruleName: "Suspicious Threat Hunt Pattern Detected", category: "Execution", technique: "T1059", severity: "High",     status: "Testing", hits: "-", fpRate: "-", source: "Down" },
+  { id: "DAWN-730", ruleName: "Suspicious Threat Hunt Pattern Detected", category: "Execution", technique: "T1059", severity: "High",     status: "Testing", hits: "-", fpRate: "-", source: "Down" },
+  { id: "DAWN-730", ruleName: "Suspicious Threat Hunt Pattern Detected", category: "Execution", technique: "T1059", severity: "Medium",   status: "Testing", hits: "-", fpRate: "-", source: "Down" },
+  { id: "DAWN-730", ruleName: "Suspicious Threat Hunt Pattern Detected", category: "Execution", technique: "T1059", severity: "Critical", status: "Testing", hits: "-", fpRate: "-", source: "Down" },
+  { id: "DAWN-730", ruleName: "Suspicious Threat Hunt Pattern Detected", category: "Execution", technique: "T1059", severity: "Low",      status: "Testing", hits: "-", fpRate: "-", source: "Down" },
+  { id: "DAWN-730", ruleName: "Suspicious Threat Hunt Pattern Detected", category: "Execution", technique: "T1059", severity: "Low",      status: "Testing", hits: "-", fpRate: "-", source: "Down" },
+  { id: "DAWN-730", ruleName: "Suspicious Threat Hunt Pattern Detected", category: "Execution", technique: "T1059", severity: "Medium",   status: "Testing", hits: "-", fpRate: "-", source: "Down" },
+];
+
+// Search field — bg white-5, search icon + placeholder. Display-only for now
+// (no input element); promote to a real <input> when wiring real state.
+function SearchField({
+  placeholder,
+  width,
+}: {
+  placeholder: string;
+  width?: number | string;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 4,
+        height: 34,
+        padding: "0 12px",
+        borderRadius: 100,
+        background: "rgba(255,255,255,0.05)",
+        width,
+        flexShrink: 0,
+      }}
+    >
+      <Search size={16} strokeWidth={1.75} color="#b4b9c2" style={{ flexShrink: 0 }} />
+      <span
+        style={{
+          ...T_BODY,
+          color: "#b4b9c2",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          flex: "1 0 0",
+          minWidth: 0,
+        }}
+      >
+        {placeholder}
+      </span>
+    </div>
+  );
+}
+
+// Filter pill — same shape as the StatusBar's "Last 7 days" date button.
+// Generalized: pass any lucide icon + label. Width optional (defaults to
+// content sizing).
+function FilterPill({
+  icon: Icon,
+  label,
+  width,
+}: {
+  icon: IconComponent;
+  label: string;
+  width?: number | string;
+}) {
+  return (
+    <button
+      type="button"
+      style={{
+        ...T_BODY,
+        background: "#1f2126",
+        border: "1px solid #23252a",
+        borderRadius: 100,
+        padding: "0 13px",
+        height: 34,
+        width,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 4,
+        color: "#b4b9c2",
+        cursor: "pointer",
+        flexShrink: 0,
+      }}
+    >
+      <span
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+          minWidth: 0,
+          overflow: "hidden",
+        }}
+      >
+        <Icon size={16} strokeWidth={1.75} style={{ flexShrink: 0 }} />
+        <span
+          style={{
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {label}
+        </span>
+      </span>
+      <ChevronDown size={11} strokeWidth={1.75} style={{ flexShrink: 0 }} />
+    </button>
+  );
+}
+
+// Severity badge — 4 named tiers, colors come from SEVERITY_COLORS map.
+function SeverityBadge({ severity }: { severity: WorkloadSeverity }) {
+  const { fg, bg } = SEVERITY_COLORS[severity];
+  return (
+    <span
+      style={{
+        ...T_CAPTION,
+        borderRadius: 999,
+        padding: "2px 10px",
+        background: bg,
+        color: fg,
+        display: "inline-flex",
+        alignItems: "center",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {severity}
+    </span>
+  );
+}
+
+function WorkloadDistribution() {
+  // Default the 3rd row to selected so the design reads exactly as in Figma
+  // out of the box. Click any row to change selection; click again to clear.
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(2);
+
+  const COLS =
+    "100px 267px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 44px";
+  const HEADERS = ["ID", "Rule Name", "Category", "Technique", "Severity", "Status", "Hits (7d)", "FP Rate", "Source", ""];
+
+  const cellBase: React.CSSProperties = {
+    height: 52,
+    padding: "0 10px",
+    display: "flex",
+    alignItems: "center",
+    minWidth: 0,
+    ...T_BODY,
+  };
+  const headerCellBase: React.CSSProperties = {
+    ...cellBase,
+    color: "#858a94",
+    borderBottom: "1px solid #23252a",
+  };
+  const dataCellBase = (selected: boolean): React.CSSProperties => ({
+    ...cellBase,
+    color: "#f2f4f7",
+    borderBottom: "1px solid #23252a",
+    background: selected ? "#1e2026" : "transparent",
+    cursor: "pointer",
+  });
+
+  return (
+    <Card style={{ alignSelf: "stretch", minWidth: 0 }}>
+      <CardHeader
+        title="Workload Distribution"
+        subtitle="Tickets & Backlog"
+        right={
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+            <SearchField placeholder="Search rules by name, tact" width={247} />
+            <FilterPill icon={ListFilter} label="All Statuses" width={132} />
+            <FilterPill icon={ListFilter} label="All Activities" width={132} />
+            <IconBtn label="Open in new tab">
+              <ArrowUpRight size={14} strokeWidth={1.75} />
+            </IconBtn>
+          </div>
+        }
+      />
+      <div style={{ padding: "16px 20px 20px", minWidth: 0 }}>
+        <div style={{ display: "grid", gridTemplateColumns: COLS, minWidth: 0 }}>
+          {/* Header row */}
+          {HEADERS.map((h, i) => (
+            <div key={`h-${i}`} style={headerCellBase}>{h}</div>
+          ))}
+
+          {/* Data rows */}
+          {WORKLOAD_ROWS.map((row, i) => {
+            const selected = selectedIdx === i;
+            const isLast = i === WORKLOAD_ROWS.length - 1;
+            const cell = (extra?: React.CSSProperties): React.CSSProperties => ({
+              ...dataCellBase(selected),
+              ...(isLast ? { borderBottom: "none" } : {}),
+              ...extra,
+            });
+            const onSelect = () => setSelectedIdx(selected ? null : i);
+
+            return (
+              <div key={`r-${i}`} style={{ display: "contents" }}>
+                <div style={cell({ fontWeight: selected ? 600 : 400 })} onClick={onSelect}>
+                  {row.id}
+                </div>
+                <div
+                  style={cell({
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  })}
+                  onClick={onSelect}
+                >
+                  {row.ruleName}
+                </div>
+                <div style={cell()} onClick={onSelect}>
+                  <NeutralBadge text={row.category} size="md" />
+                </div>
+                <div style={cell()} onClick={onSelect}>{row.technique}</div>
+                <div style={cell()} onClick={onSelect}>
+                  <SeverityBadge severity={row.severity} />
+                </div>
+                <div style={cell()} onClick={onSelect}>{row.status}</div>
+                <div style={cell()} onClick={onSelect}>{row.hits}</div>
+                <div style={cell()} onClick={onSelect}>{row.fpRate}</div>
+                <div style={cell()} onClick={onSelect}>{row.source}</div>
+                <div style={cell({ justifyContent: "center" })} onClick={onSelect}>
+                  {selected && (
+                    <ArrowUpRight size={14} strokeWidth={1.75} color="#b4b9c2" />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 // ─── MainContent ──────────────────────────────────────────────────────────────
 
 function MainContent() {
@@ -2232,6 +2503,8 @@ function MainContent() {
           <LastCovered />
           <DetectionCoverageHeatmap />
         </div>
+
+        <WorkloadDistribution />
       </main>
 
       {/* Top edge fade — color gradient + progressive backdrop blur. Sits below

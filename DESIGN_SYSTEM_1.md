@@ -78,6 +78,12 @@ Spelled out so future code lands on the right token without guessing:
 | Heatmap cell — technique id ("T1595") | `--type-body` w/ `--text-primary` (white for legibility on tier-tinted bg) |
 | Heatmap cell — technique name ("Active Scanning") | `--type-caption` w/ `--text-secondary` |
 | Heatmap legend label ("100%", "75%"...) | `--type-caption` w/ `--text-secondary` |
+| WorkloadDistribution table header ("ID", "Rule Name"…) | `--type-body` w/ `--text-tertiary` |
+| WorkloadDistribution data cell text (id, rule name, technique, status…) | `--type-body` w/ `--text-primary`; selected row's ID column shifts to weight 600 |
+| WorkloadDistribution Category chip ("Execution") | `--type-caption` via `<NeutralBadge size="md">` |
+| WorkloadDistribution SeverityBadge ("Critical" / "High" / "Medium" / "Low") | `--type-caption` w/ severity-tier color |
+| WorkloadDistribution SearchField placeholder ("Search rules by name, tact") | `--type-body` w/ `--text-secondary` |
+| WorkloadDistribution FilterPill label ("All Statuses" / "All Activities") | `--type-body` w/ `--text-secondary` |
 | ~~Heatmap tooltip "93%"~~ | _retired — replaced by the column-header + cell layout_ |
 | ~~Heatmap tooltip technique id (T1190)~~ | _retired_ |
 | ~~Heatmap tooltip technique name~~ | _retired_ |
@@ -178,6 +184,21 @@ Each tier pairs a cell background with a 2px accent-bar color. Add a new tier by
 |---|---|---|
 | `--purple` | `#9747ff` | Accent where needed |
 | `--purple-bg` | `#9747ff` at 5% | Purple badge backgrounds |
+
+### Severity (workload / detection severity tiers)
+
+| Token | Hex | Usage |
+|---|---|---|
+| `--severity-critical` | `#e40054` | Critical-severity badge fg (WorkloadDistribution + future severity surfaces) |
+| `--severity-critical-bg` | `rgba(228, 0, 84, 0.05)` | Critical-severity badge bg |
+| `--severity-high` | `#ff7300` | High-severity badge fg |
+| `--severity-high-bg` | `rgba(255, 115, 0, 0.05)` | High-severity badge bg |
+
+Medium and Low **reuse** existing brand tokens — same hex, different semantic role at the call site:
+- Medium → `--green` / `--green-bg` (`#03d07d`)
+- Low → `--blue` / `--blue-bg` (`#2684ff`)
+
+Don't add `--severity-medium` / `--severity-low` aliases — they'd be hex-identical to `--green` / `--blue` and just create a token-vs-token decision at every call site.
 
 ### Semantic
 
@@ -946,6 +967,90 @@ type HeatmapColumnData = { category: string; percent: number; cells: HeatmapCell
 #### Legacy heatmap (retired 2026-05-08)
 
 The previous heatmap was a 7×14 `number[][]` of percentages rendered as 24px-tall opacity-tinted squares plus a floating tooltip card showing "93% / T1190 / Initial Access / 81%". Replaced wholesale; the `HEATMAP` const and `heatColor()` helper were removed. The four `--heatmap-100/50/25/10` tokens are still in `tokens.css` for one cycle in case anything else accidentally references them — remove on a follow-up cleanup.
+
+---
+
+### Workload Distribution
+
+Card with a search/filter header and a 10-column data table. Lives in `src/app/detection/page.tsx`. Built on three new reusable primitives — `<SearchField>`, `<FilterPill>`, `<SeverityBadge>` — plus the existing `<Card>` / `<CardHeader>` / `<IconBtn>` / `<NeutralBadge>` (now with a `size` prop).
+
+#### Layout
+
+```
+Card (--bg-card #1a1c22, 16 radius, alignSelf: stretch, minWidth: 0)
+├── CardHeader (20 sides + top, 0 bottom)
+│   ├── Left: title "Workload Distribution" (T_HEADING) + subtitle "Tickets & Backlog" (T_BODY tertiary)
+│   └── Right: action group (flex, gap: 12)
+│       ├── SearchField (width: 247)
+│       ├── FilterPill icon=ListFilter label="All Statuses"   (width: 132)
+│       ├── FilterPill icon=ListFilter label="All Activities" (width: 132)
+│       └── IconBtn (ArrowUpRight 14×14)
+└── Body (padding: 16 20 20)
+    └── Grid (10 columns: 100, 267, 7×minmax(0, 1fr), 44)
+        ├── Header row × 10 cells (T_BODY tertiary, borderBottom: 1px var(--border))
+        └── Data row × N — flat grid using `display: contents` row wrappers so a
+            single onClick covers all 10 cells; selected row gets bg --bg-elevated
+            and the action column reveals the ArrowUpRight icon. ID cell weight
+            shifts 400 → 600 on selection.
+```
+
+The table is a single CSS grid (not nested rows) so columns align automatically. Each "row" is a fragment-equivalent (`display: contents`) wrapper — its only purpose is to attach a single `onClick` to all ten cells. The wrapper itself is invisible to layout, so the grid sees a flat sequence of cells.
+
+#### `<SearchField>` — primitive
+
+```
+height: 34
+padding: 0 12
+border-radius: 100
+background: rgba(255,255,255,0.05)         /* --white-5 — input-like surface, lighter than the action pills */
+display: flex, gap: 4, alignItems: center
+flex-shrink: 0
+```
+
+Search icon (16×16, `--text-secondary`) + placeholder text (`T_BODY` `--text-secondary`, ellipsis). Currently a display-only `<div>`; promote to a real `<input>` when wiring real state. `width` is a prop (number or string).
+
+#### `<FilterPill>` — primitive (dropdown-shaped button)
+
+Same shape as the StatusBar's "Last 7 days" date button, generalized to take any lucide icon + label. Pattern:
+
+```
+height: 34
+padding: 0 13
+border-radius: 100
+border: 1px solid var(--border)            /* registered button border */
+background: #1f2126                         /* StatusBar action-pill color (raw hex, see Backgrounds) */
+T_BODY, color: --text-secondary
+flex-shrink: 0
+```
+
+Layout: `[icon 16] [label, ellipsis]` (left-grouped) and `[ChevronDown 11]` (right-anchored), with `justify-content: space-between`. Width prop optional.
+
+The `#1f2126` background is the same raw-hex used by StatusBar action pills — this is the second documented use, so promote to a token (`--bg-action-pill`) on the next refactor pass. Until then keep the raw hex. **Don't** use `--bg-icon` (#292b31) for these — that token is reserved for icon-only buttons.
+
+#### `<SeverityBadge>` — primitive
+
+```
+font: T_CAPTION
+border-radius: 999
+padding: 2px 10px
+background: SEVERITY_COLORS[tier].bg
+color:      SEVERITY_COLORS[tier].fg
+```
+
+Reads from `SEVERITY_COLORS` (in `page.tsx`) so the palette is the single source of truth. Adding a new tier means editing `tokens.css` (if non-existing color) AND `SEVERITY_COLORS`.
+
+#### `<NeutralBadge size="sm" | "md">` — extended
+
+The existing NeutralBadge gained a `size` prop. `sm` (default) keeps its prior `padding: 2px 6px` for small labels like "+2" / "3". `md` uses `padding: 2px 10px` and is what the WorkloadDistribution **Category** chips use. Same bg/color either way (`rgba(255,255,255,0.05)` / `--text-tertiary`).
+
+#### Selected-row interaction
+
+`useState<number | null>(2)` defaults to the 3rd row to match the Figma. Click a row to select; click the same row again to clear. When selected:
+- Row bg: `transparent` → `--bg-elevated` (#1e2026)
+- ID column font-weight: `400` → `600` (Inter Semi Bold)
+- Action column: empty → `<ArrowUpRight size=14 color=--text-secondary>` icon
+
+The selected row is independent from URL/route state — lift to a parent or a route param if multi-component coordination is ever needed.
 
 ---
 

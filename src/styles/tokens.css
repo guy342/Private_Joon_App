@@ -75,6 +75,16 @@
   --purple-bg:         rgba(151, 71, 255, 0.05);
 
   /* ---------------------------------------------------------------------------
+     SEVERITY (workload / detection severity tiers)
+  --------------------------------------------------------------------------- */
+  --severity-critical:    #e40054;
+  --severity-critical-bg: rgba(228, 0, 84, 0.05);
+  --severity-high:        #ff7300;
+  --severity-high-bg:     rgba(255, 115, 0, 0.05);
+  /* Medium maps to --green / --green-bg (#03d07d) — same hex, semantic re-use */
+  /* Low    maps to --blue  / --blue-bg  (#2684ff) — same hex, semantic re-use */
+
+  /* ---------------------------------------------------------------------------
      SEMANTIC
   --------------------------------------------------------------------------- */
   --red:               #da1b1b;
