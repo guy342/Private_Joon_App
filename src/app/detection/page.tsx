@@ -2758,9 +2758,12 @@ function MainContent() {
         <StatusBar />
 
         {/* Row 1: Health & Performance (left, 880px fixed) + Proposal Drivers
-            (right, fill). Fixed `height: 420` cascades down — Card stretches
+            (right, fill). Fixed 420 height cascades down — Card stretches
             to fill the grid cell, body div flex-grows after the header, and
-            the right-stack grid splits the resulting height 50/50. */}
+            the right-stack grid splits the resulting height 50/50. Use BOTH
+            `height` and `minHeight: 420` — plain `height` was being clamped
+            to content (~228) inside the flex-col main, so minHeight enforces
+            the floor. */}
         <div
           style={{
             alignSelf: "stretch",
@@ -2768,6 +2771,7 @@ function MainContent() {
             gridTemplateColumns: "880px minmax(0, 1fr)",
             gap: 12,
             height: 420,
+            minHeight: 420,
           }}
         >
           <HealthAndPerformance />
