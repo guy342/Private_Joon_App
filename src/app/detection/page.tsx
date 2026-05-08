@@ -1316,17 +1316,20 @@ function HealthAndPerformance() {
           minWidth: 0,
         }}
       >
-        {/* LEFT: Total Rules — fixed 516px Inner Card */}
+        {/* LEFT: Total Rules — flex-1 splits evenly with the right stack at
+            880px outer. Was fixed 516 in the previous full-width design,
+            but at 880 outer that leaves only ~316 for the right stack which
+            is too tight for the Telemetry completeness + Response time row. */}
         <div
           style={{
             ...INNER_CARD,
-            width: 516,
+            flex: "1 0 0",
+            minWidth: 0,
             padding: "20px 24px 24px",
             display: "flex",
             flexDirection: "column",
             alignItems: "flex-start",
             gap: 16,
-            flexShrink: 0,
           }}
         >
           <div

@@ -849,7 +849,7 @@ Top-of-page card. Three-zone layout: Total Rules panel on the left (fixed 516px)
 Card (--bg-card #1a1c22, 16 radius, alignSelf: stretch)
 ├── CardHeader (title + subtitle + Jira IconBtn)
 └── Body (padding: 20, flex row, gap: 8, alignItems: stretch)
-    ├── Total Rules panel (Inner Card, width: 516, padding: 20 24 24, gap: 16, flexShrink: 0)
+    ├── Total Rules panel (Inner Card, flex: 1 0 0 + minWidth: 0, padding: 20 24 24, gap: 16) — splits evenly with the right stack inside the 880px outer
     │   ├── Header row (label + DeltaBadge ↑ 1.6%)
     │   ├── Big stat (T_DISPLAY "730" + T_BODY "/ 1,250")
     │   ├── <StackedRulesBar/>
