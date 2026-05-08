@@ -646,28 +646,49 @@ font: --type-caption                    /* Inter Regular 10px */
 
 Used on Active Workload groups when at least one detection is in progress (e.g. "3 Running"). Same pill shape as DeltaBadge, but with a leading dot that mirrors the StatusBar's "Active" status indicator **and an animated gradient border** that telegraphs the live-running state.
 
+The pill itself is a clean translucent green pill — no border:
+
 ```
 font: --type-caption
+position: relative                          /* anchor for the absolute ring overlay below */
 border-radius: 999px
 padding: 2px 6px
-border: 0.5px solid transparent             /* the actual stroke is painted via background border-box */
-background:
-  linear-gradient(rgba(3,208,125,0.05), rgba(3,208,125,0.05)) padding-box,   /* fill — var(--green-bg) */
-  conic-gradient(from var(--joon-rb-angle, 0deg),
-    #B6E8D4,
-    rgba(182, 232, 212, 0.25),
-    #B6E8D4,
-    rgba(182, 232, 212, 0.25),
-    #B6E8D4
-  ) border-box                                                                /* animated stroke */
+background: rgba(3, 208, 125, 0.05)        /* var(--green-bg) */
 color: #03d07d                              /* var(--green) */
 display: inline-flex
 align-items: center
 gap: 8px
-animation: joon-rb-spin 3s linear infinite
 ```
 
-**Why a transparent border + two-layer background?** A simple `border: 0.5px solid <gradient>` doesn't exist in CSS. The standard trick is to make the border transparent and let `background-clip` paint the rest: the **first** background layer (the translucent green fill) is clipped to `padding-box` so it stops at the inner edge of the border; the **second** layer (the conic gradient) is clipped to `border-box` so it shows through *only* in the 0.5px border ring. The result is a gradient stroke around an otherwise normal pill.
+The animated 0.5px stroke is a **separate absolute overlay** layered on top:
+
+```
+position: absolute
+inset: 0
+border-radius: 999px
+padding: 0.5px                              /* defines the ring thickness via the mask below */
+background: conic-gradient(from var(--joon-rb-angle, 0deg),
+  #B6E8D4,
+  rgba(182, 232, 212, 0.25),
+  #B6E8D4,
+  rgba(182, 232, 212, 0.25),
+  #B6E8D4
+)
+mask:
+  linear-gradient(#000 0 0) content-box,    /* solid mask, clipped to inner content-box */
+  linear-gradient(#000 0 0)                 /* solid mask, clipped to full border-box */
+mask-composite: exclude                     /* visible only where exactly one layer covers — i.e. the 0.5px ring */
+-webkit-mask: <same as `mask` above>
+-webkit-mask-composite: xor                 /* WebKit's name for the same operation */
+animation: joon-rb-spin 3s linear infinite
+pointer-events: none
+```
+
+**Why an overlay with mask-composite and not the simpler `transparent border + background-clip` trick?** The "obvious" gradient-border pattern — transparent border + `linear-gradient(fill) padding-box, conic-gradient(stroke) border-box` — falls apart when the **fill is translucent**. With `rgba(3,208,125,0.05)` (5% alpha), 95% of the conic gradient bleeds through the inside of the pill, tinting the entire badge body with the rotating gradient instead of just the stroke. A solid fill would mask it, but the spec calls for translucent green so the parent's bg can show through.
+
+The mask approach paints the conic gradient on a **separate absolute overlay** and clips it to the 0.5px ring with `mask-composite: exclude`. Both mask layers are "solid black" — the only difference is `mask-clip`: the first is clipped to `content-box` (the inner area), the second to `border-box` (the full area). Excluding them leaves only the difference: the 0.5px ring. The pill's own `background` stays a clean translucent green and is never touched by the gradient.
+
+`pointer-events: none` on the overlay so the underlying pill remains the click target. `aria-hidden` since the ring is decorative.
 
 **Why `@property` for the angle?** The conic gradient's `from` value is a registered custom property:
 
@@ -903,9 +924,9 @@ Card (--bg-card #1a1c22, 16 radius, alignSelf: stretch)
             ├── Telemetry completeness (Inner Card, content-sized, flexShrink: 0)
             │   ├── Label + small stat "98%"
             │   └── <DotGrid filled={98}/>
-            └── Response time (Inner Card, flex: 1, minWidth: 0, flex-col, justify-content: space-between, gap: 12) — label pins to top, data div pins to bottom, the gap between them grows to fill the card's available height
+            └── Response time (Inner Card, flex: 1, minWidth: 0, flex-col, gap: 12) — label pins to top; data div flexes to fill remaining height
                 ├── Label "Response time"
-                └── Data div (flex-col, gap: 12) — content-sized cluster: top row, 1px separator, bottom row tightly stacked at the bottom of the card
+                └── Data div (flex-col, flex: 1, minHeight: 0, justify-content: space-between) — fills remaining height; row + 1px separator + row are distributed as 3 sibling flex children, putting the separator in the geometric middle and the rows pinned to top/bottom of the available space (same sibling-divider pattern as `<RulesBreakdownSeparator>`)
                     ├── <ResponseTimeRow value="4.2" unit="h" caption="To fix"/>
                     ├── 1px separator (alignSelf: stretch)
                     └── <ResponseTimeRow value="18.5" unit="h" caption="To close gaps"/>

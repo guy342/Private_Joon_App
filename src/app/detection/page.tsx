@@ -964,25 +964,43 @@ function RunningBadge({ text }: { text: string }) {
     <span
       style={{
         ...T_CAPTION,
+        position: "relative",
         borderRadius: 999,
         padding: "2px 6px",
-        // Two-layer background: solid translucent fill clipped to padding-box,
-        // rotating conic-gradient clipped to border-box. With a transparent
-        // 0.5px border, the conic shows through *only* in the border ring,
-        // producing an animated gradient border. The conic's `from` angle is
-        // a registered @property (--joon-rb-angle) so it interpolates as a
-        // proper <angle> in the joon-rb-spin keyframes.
-        border: "0.5px solid transparent",
-        background:
-          "linear-gradient(rgba(3,208,125,0.05), rgba(3,208,125,0.05)) padding-box, " +
-          "conic-gradient(from var(--joon-rb-angle, 0deg), #B6E8D4, rgba(182,232,212,0.25), #B6E8D4, rgba(182,232,212,0.25), #B6E8D4) border-box",
+        background: "rgba(3,208,125,0.05)",
         color: "#03d07d",
         display: "inline-flex",
         alignItems: "center",
         gap: 8,
-        animation: "joon-rb-spin 3s linear infinite",
       }}
     >
+      {/* Animated 0.5px gradient ring. Sits as an absolute overlay over the
+          pill; the rotating conic-gradient is masked to the 0.5px outer ring
+          via two mask layers composited with `exclude` (border-box minus
+          content-box). This keeps the gradient strictly on the border and
+          leaves the pill's translucent green bg untouched — without the mask,
+          the conic shows through the 5%-alpha fill and the whole pill ends up
+          tinted by the gradient instead of just the stroke. The conic's
+          `from` angle is a registered @property (--joon-rb-angle) so it
+          interpolates smoothly inside the joon-rb-spin keyframes. */}
+      <span
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          borderRadius: 999,
+          padding: "0.5px",
+          background:
+            "conic-gradient(from var(--joon-rb-angle, 0deg), #B6E8D4, rgba(182,232,212,0.25), #B6E8D4, rgba(182,232,212,0.25), #B6E8D4)",
+          WebkitMask:
+            "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+          WebkitMaskComposite: "xor",
+          mask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+          maskComposite: "exclude",
+          animation: "joon-rb-spin 3s linear infinite",
+          pointerEvents: "none",
+        }}
+      />
       <span
         style={{
           width: 6,
@@ -1519,11 +1537,10 @@ function HealthAndPerformance() {
               </div>
             </div>
 
-            {/* Response time — fills remaining width. Outer card uses
-                justify-content: space-between so the label pins to the top
-                and the data block pins to the bottom; the gap between them
-                grows to fill the card's available height. The data block
-                itself is content-sized with a 12px gap between rows. */}
+            {/* Response time — fills remaining width. Label, both rows, and
+                the 1px separator are flat siblings with justify-content:
+                space-between, so the three gaps (label→row1, row1→separator,
+                separator→row2) all flex equally to fill the card's height. */}
             <div
               style={{
                 ...INNER_CARD,
@@ -1534,27 +1551,18 @@ function HealthAndPerformance() {
                 justifyContent: "space-between",
                 overflow: "clip",
                 minWidth: 0,
-                gap: 12,
               }}
             >
               <span style={{ ...T_BODY, color: "#b4b9c2" }}>Response time</span>
+              <ResponseTimeRow value="4.2" unit="h" caption="To fix" />
               <div
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 12,
+                  alignSelf: "stretch",
+                  height: 1,
+                  background: "#23252a",
                 }}
-              >
-                <ResponseTimeRow value="4.2" unit="h" caption="To fix" />
-                <div
-                  style={{
-                    alignSelf: "stretch",
-                    height: 1,
-                    background: "#23252a",
-                  }}
-                />
-                <ResponseTimeRow value="18.5" unit="h" caption="To close gaps" />
-              </div>
+              />
+              <ResponseTimeRow value="18.5" unit="h" caption="To close gaps" />
             </div>
           </div>
         </div>
