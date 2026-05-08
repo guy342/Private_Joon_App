@@ -2038,7 +2038,7 @@ function ProposalDrivers({ style }: { style?: React.CSSProperties }) {
           style={{
             ...INNER_CARD,
             display: "flex",
-            padding: 20,
+            padding: 24,
             flexDirection: "column",
             justifyContent: "space-between",
             alignItems: "flex-start",
