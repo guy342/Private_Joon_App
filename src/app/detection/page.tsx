@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   Activity,
   ArrowUpRight,
@@ -1007,7 +1007,8 @@ function FloatingStatusPills({
         style={{
           width: "100%",
           maxWidth: 1600,
-          paddingRight: 12,
+          paddingLeft: 8,
+          paddingRight: 20,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "flex-start",
@@ -1552,26 +1553,41 @@ function RulesBreakdownSeparator() {
 // stretches horizontally to fit any container width.
 function Sparkline({
   data,
-  height = 52,
-  color = "#03d07d",
-  strokeWidth = 1.5,
+  height = 68,
+  color = "#68ee76",
+  strokeWidth = 4,
+  lineAreaHeight = 40,
+  lineTopOffset = 16,
 }: {
   data: number[];
   height?: number;
   color?: string;
   strokeWidth?: number;
+  // Vertical range the line traces inside the SVG (highest data point at the
+  // top of this band, lowest at the bottom).
+  lineAreaHeight?: number;
+  // Padding above the line area inside the SVG. Below the line area, the
+  // gradient fill extends down to the SVG's bottom edge — that's the bit
+  // that gives the chart visual weight under the curve.
+  lineTopOffset?: number;
 }) {
+  const gradientId = useId();
   const min = Math.min(...data);
   const max = Math.max(...data);
   const range = max - min || 1;
   const w = 300; // viewBox width — actual rendered width controlled by parent
-  const points = data
-    .map((v, i) => {
-      const x = (i / (data.length - 1)) * w;
-      const y = height - ((v - min) / range) * (height - strokeWidth) - strokeWidth / 2;
-      return `${x},${y}`;
-    })
-    .join(" ");
+
+  // Line points: each data value normalises into the `lineAreaHeight` band,
+  // offset down by `lineTopOffset`. Highest value sits at lineTopOffset;
+  // lowest sits at lineTopOffset + lineAreaHeight.
+  const points = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * w;
+    const y = lineTopOffset + lineAreaHeight - ((v - min) / range) * lineAreaHeight;
+    return { x, y };
+  });
+  const linePoints = points.map((p) => `${p.x},${p.y}`).join(" ");
+  // Closed polygon for the fill: line points + go down to bottom-right + bottom-left.
+  const fillPoints = `${linePoints} ${w},${height} 0,${height}`;
 
   return (
     <svg
@@ -1585,8 +1601,15 @@ function Sparkline({
       // stays at the requested px width regardless of horizontal scale.
       style={{ display: "block", flex: "1 0 0", minWidth: 0, height }}
     >
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity={0.2} />
+          <stop offset="100%" stopColor={color} stopOpacity={0} />
+        </linearGradient>
+      </defs>
+      <polygon points={fillPoints} fill={`url(#${gradientId})`} />
       <polyline
-        points={points}
+        points={linePoints}
         fill="none"
         stroke={color}
         strokeWidth={strokeWidth}
