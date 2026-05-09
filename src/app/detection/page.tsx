@@ -557,21 +557,17 @@ function CollapsedSidebar({ onExpand }: { onExpand: () => void }) {
   return (
     <aside
       style={{
+        // Width/bg/radius/margin/overflow live on the wrapper in DetectionPage
+        // so they can transition across the collapsed/expanded swap. This
+        // aside is just the content layout — full wrapper width + height,
+        // flex-column with space-between pinning the top wrapper to the top
+        // and the bottom-toggle row to the bottom.
         display: "flex",
-        width: 64,
         flexDirection: "column",
         alignItems: "center",
-        // space-between pins the top wrapper to the top and the bottom-toggle
-        // row to the bottom; the empty space in between fills automatically
-        // (no explicit spacer div like the expanded rail uses).
         justifyContent: "space-between",
-        flexShrink: 0,
+        flex: 1,
         alignSelf: "stretch",
-        marginTop: 12,
-        marginBottom: 12,
-        background: "#1e2026",
-        borderRadius: 100,
-        overflow: "clip",
       }}
     >
       {/* Top wrapper — brand row + the two nav groups */}
@@ -695,17 +691,17 @@ function Sidebar({
   return (
     <aside
       style={{
+        // Width/bg/radius/margin live on the wrapper in DetectionPage so they
+        // can transition across the collapsed/expanded swap. This aside is
+        // just the content layout — full wrapper width + height, flex-column
+        // with the brand row, lists wrapper, spacer, and bottom row stacked
+        // top to bottom.
         display: "flex",
-        width: 232,
         flexDirection: "column",
         alignItems: "flex-start",
         gap: 24,
-        flexShrink: 0,
+        flex: 1,
         alignSelf: "stretch",
-        marginTop: 12,
-        marginBottom: 12,
-        background: "#1e2026",
-        borderRadius: 16,
       }}
     >
       <div
@@ -3362,7 +3358,32 @@ export default function DetectionPage() {
           `,
         }}
       />
-      <Sidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+      {/* Sidebar wrapper — owns the visible card styling (bg, radius, margin,
+          width). Both the expanded and collapsed Sidebar components render
+          inside here as transparent, full-size content. The wrapper carries
+          the `width` and `border-radius` transitions so the rail morphs
+          smoothly across the collapsed/expanded swap (~240ms is the gentle
+          casual feel — long enough to read as a transition, short enough not
+          to drag). `overflow: clip` hides any content that overshoots while
+          the wrapper is still narrowing/widening. */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          width: sidebarCollapsed ? 64 : 232,
+          flexShrink: 0,
+          alignSelf: "stretch",
+          marginTop: 12,
+          marginBottom: 12,
+          background: "#1e2026",
+          borderRadius: sidebarCollapsed ? 100 : 16,
+          overflow: "clip",
+          transition:
+            "width 240ms ease, border-radius 240ms ease",
+        }}
+      >
+        <Sidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+      </div>
       <MainContent sidebarCollapsed={sidebarCollapsed} />
     </div>
   );
