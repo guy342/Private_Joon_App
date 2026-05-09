@@ -68,27 +68,31 @@ body {
 }
 
 /* Response time data layout — see Health & Performance > Response time in
-   src/app/detection/page.tsx. Default is the canonical vertical stack
-   (4.2h above, 18.5h below, horizontal hairline between). At viewports
-   <1600px the parent flex switches to row + the separator becomes a
-   vertical line, so the two data lines sit "data next to data" with the
-   stat on the left half and the second on the right half. Caption stays
-   below number inside each ResponseTimeRow either way. */
+   src/app/detection/page.tsx. Two layouts driven by a CSS container query
+   on the Response time card itself (see `.response-time-card`):
+     • Narrow card (default): two stacked rows separated by a 1px hairline.
+     • Wide card (≥220px):    two rows side-by-side, no separator.
+   Each `.response-time-row` is always a vertical stack (number on top,
+   caption below). Container queries are scoped via the `response-time`
+   container name set by the card. */
+.response-time-card {
+  container-type: inline-size;
+  container-name: response-time;
+}
 .response-time-data {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 12px;
   flex: 1 0 0;
   align-self: stretch;
 }
 .response-time-row {
   display: flex;
-  flex-direction: row;
-  align-items: baseline;
-  gap: 8px;
-  align-self: stretch;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
 }
 .response-time-separator {
   align-self: stretch;
@@ -96,16 +100,13 @@ body {
   background: #23252a;
   height: 1px;
 }
-@media (max-width: 1599.99px) {
+@container response-time (min-width: 220px) {
   .response-time-data {
     flex-direction: row;
-    justify-content: space-between;
-    align-items: stretch;
+    align-items: end;
   }
   .response-time-row {
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-end;
+    flex: 1 1 0;
   }
   .response-time-separator {
     display: none;

@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import {
   Activity,
   ArrowUpRight,
+  BookOpen,
+  Brain,
   Calendar,
   ChevronDown,
   ChevronRight,
-  Database,
   ListFilter,
   Maximize2,
   PanelLeftClose,
@@ -16,7 +17,6 @@ import {
   RefreshCw,
   Search,
   Settings,
-  User,
 } from "lucide-react";
 import mainContentStyles from "./main-content.module.css";
 
@@ -320,13 +320,25 @@ const T_MONO_MED: React.CSSProperties = {
   fontFamily: FONT_MONO, fontWeight: 500, fontSize: 12, lineHeight: "18px", letterSpacing: "-0.2px",
 };
 const T_DISPLAY: React.CSSProperties = {
-  fontFamily: FONT_INTER, fontWeight: 700, fontSize: 46, lineHeight: "46px", letterSpacing: "-0.03px", color: "#f2f4f7",
+  fontFamily: FONT_INTER, fontWeight: 700, fontSize: 64, lineHeight: "46px", letterSpacing: "-0.03px", color: "#f2f4f7",
 };
 const T_STAT_NUM: React.CSSProperties = {
-  fontFamily: FONT_INTER, fontWeight: 700, fontSize: 30, lineHeight: "34px", letterSpacing: "-0.02px", color: "#f2f4f7",
+  fontFamily: FONT_INTER, fontWeight: 700, fontSize: 44, lineHeight: "normal", letterSpacing: "-0.02px", color: "#f2f4f7",
 };
 const T_STAT_UNIT: React.CSSProperties = {
-  fontFamily: FONT_INTER, fontWeight: 700, fontSize: 18, lineHeight: "24px", letterSpacing: "-0.02px", color: "#f2f4f7",
+  fontFamily: FONT_INTER, fontWeight: 700, fontSize: 24, lineHeight: "normal", letterSpacing: "-0.02px", color: "#f2f4f7",
+};
+// Medium-sized stat (Response time number "4.2", Telemetry completeness "98").
+// Sits one size step below T_STAT_UNIT so it still reads as a stat number but
+// fits in the smaller Inner Cards on the H&P right column.
+const T_STAT_MED: React.CSSProperties = {
+  fontFamily: FONT_INTER, fontWeight: 700, fontSize: 20, lineHeight: "normal", letterSpacing: "-0.02px", color: "#f2f4f7",
+};
+// Tabular value used in the H&P Total Rules breakdown rows ("210", "95",
+// "72"). Inter SemiBold 14 / 16 — Figma's reference uses Geist SemiBold but
+// we substitute with Inter so we don't pull in a third font family.
+const T_VALUE: React.CSSProperties = {
+  fontFamily: FONT_INTER, fontWeight: 600, fontSize: 14, lineHeight: "16px", color: "#f2f4f7",
 };
 
 // ─── Inner Card ───────────────────────────────────────────────────────────────
@@ -471,37 +483,11 @@ function NavRow({
   );
 }
 
-// Single round monogram — the Joon "O" mark. Sized via the inline styles
-// below to match the Figma's logo slot: it lives inside a 44×44 padded
-// container in the collapsed sidebar; with `flex: 1 0 0` it fills the
-// inner ~20px width, and the explicit `aspect-ratio` keeps its proportions
-// matching the original asset.
-function JoonMark() {
-  return (
-    <svg
-      style={{
-        flex: "1 0 0",
-        minWidth: 1,
-        aspectRatio: "16.13429069519043 / 15.831598281860352",
-      }}
-      viewBox="0 0 23 23"
-      fill="none"
-      role="img"
-      aria-label="Joon"
-    >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M11.5 0C17.8513 0 23 5.14873 23 11.5C23 17.8513 17.8513 23 11.5 23C5.14873 23 0 17.8513 0 11.5C0 5.14873 5.14873 0 11.5 0ZM11.5 4.59996C7.69138 4.59996 4.59996 7.69138 4.59996 11.5C4.59996 15.3086 7.69138 18.4 11.5 18.4C15.3086 18.4 18.4 15.3086 18.4 11.5C18.4 7.69138 15.3086 4.59996 11.5 4.59996Z"
-        fill="white"
-      />
-    </svg>
-  );
-}
-
-// Nav button used in the collapsed sidebar. Fixed 44×38 click area; the active
-// highlight is drawn as a 28×28 inner pill so the bg sits behind the icon
-// without filling the full button — matches the Figma's contained pill.
+// Nav button used in the collapsed sidebar. Two visual modes:
+//   - Icon mode    (icon prop)      → 64×52 click area, 20×20 lucide icon centered
+//   - Avatar mode  (avatarUrl prop) → 64×56 click area, 30×30 avatar centered;
+//                                     active state wraps the avatar in a 52×52
+//                                     `#292b31` pill (rounded 8) per the Figma
 function CollapsedNavBtn({
   icon: Icon,
   avatarUrl,
@@ -513,13 +499,14 @@ function CollapsedNavBtn({
   label: string;
   active?: boolean;
 }) {
+  const isAvatar = !!avatarUrl;
   return (
     <button
       type="button"
       aria-label={label}
       style={{
-        width: 44,
-        height: 38,
+        width: 64,
+        height: isAvatar ? 56 : 52,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -529,26 +516,27 @@ function CollapsedNavBtn({
         color: active ? "#f2f4f7" : "#b4b9c2",
         flexShrink: 0,
         padding: 0,
+        borderRadius: 5,
       }}
     >
-      <span
-        style={{
-          width: 28,
-          height: 28,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          borderRadius: 5,
-          background: active ? "#292b31" : "transparent",
-        }}
-      >
-        {avatarUrl ? (
+      {isAvatar ? (
+        <span
+          style={{
+            width: 52,
+            height: 52,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 8,
+            background: active ? "#292b31" : "transparent",
+          }}
+        >
           <span
             role="img"
             aria-label={`${label} avatar`}
             style={{
-              width: 20,
-              height: 20,
+              width: 30,
+              height: 30,
               borderRadius: "50%",
               backgroundColor: "#1a1c22",
               backgroundImage: `url('${avatarUrl}')`,
@@ -557,10 +545,10 @@ function CollapsedNavBtn({
               flexShrink: 0,
             }}
           />
-        ) : Icon ? (
-          <Icon size={20} strokeWidth={1.75} />
-        ) : null}
-      </span>
+        </span>
+      ) : Icon ? (
+        <Icon size={20} strokeWidth={1.75} />
+      ) : null}
     </button>
   );
 }
@@ -570,9 +558,13 @@ function CollapsedSidebar({ onExpand }: { onExpand: () => void }) {
     <aside
       style={{
         display: "flex",
-        width: 44,
+        width: 64,
         flexDirection: "column",
         alignItems: "center",
+        // space-between pins the top wrapper to the top and the bottom-toggle
+        // row to the bottom; the empty space in between fills automatically
+        // (no explicit spacer div like the expanded rail uses).
+        justifyContent: "space-between",
         flexShrink: 0,
         alignSelf: "stretch",
         marginTop: 12,
@@ -582,88 +574,96 @@ function CollapsedSidebar({ onExpand }: { onExpand: () => void }) {
         overflow: "clip",
       }}
     >
-      {/* Header — two 44×44 slots stacked (logo + search). The logo slot
-          carries 12px padding so the 20×19.62 inner SVG sits visually
-          balanced (Figma asset spec). The search slot is the same 34×34
-          SidebarIconBtn from the expanded rail centered in its slot. Each
-          slot keeps a 44×44 vertical rhythm regardless of inner size. */}
+      {/* Top wrapper — brand row + the two nav groups */}
       <div
         style={{
-          alignSelf: "stretch",
-          minHeight: 56,
-          padding: "0 10px",
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
+          alignItems: "flex-start",
+          flexShrink: 0,
+          width: "100%",
         }}
       >
+        {/* Brand row — just the 34×34 search button centered in a 64-tall
+            row. No logo in this version. */}
         <div
           style={{
             display: "flex",
-            width: 44,
-            height: 44,
-            padding: 12,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <JoonMark />
-        </div>
-        <div
-          style={{
-            width: 44,
-            height: 44,
-            display: "flex",
+            flexDirection: "column",
+            height: 64,
             alignItems: "center",
             justifyContent: "center",
+            padding: "0 10px",
+            flexShrink: 0,
+            width: "100%",
           }}
         >
           <SidebarIconBtn icon={Search} label="Search" />
         </div>
+
+        {/* Two nav groups separated by a 12px gap. */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+            alignItems: "flex-start",
+            flexShrink: 0,
+            width: "100%",
+          }}
+        >
+          {/* Activity & agents — Activity icon (64×52) + four 64×64 avatar
+              buttons. Detection is the active row. */}
+          <nav
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              padding: "0 8px",
+              flexShrink: 0,
+              width: "100%",
+            }}
+          >
+            <CollapsedNavBtn label="Activity" icon={Activity} />
+            <CollapsedNavBtn
+              label="Detection"
+              avatarUrl="/Avatar_Sean.png"
+              active
+            />
+            <CollapsedNavBtn label="Investigation" avatarUrl="/Avatar_Helen.png" />
+            <CollapsedNavBtn label="Hunting" avatarUrl="/Avatar_Helen.png" />
+            <CollapsedNavBtn label="Validation" avatarUrl="/Avatar_Valery.png" />
+          </nav>
+
+          {/* Categories — three 64×52 icon buttons. Per the Figma the icons
+              switch from User / Database / Settings (expanded rail) to
+              BookOpen / Brain / Settings in the collapsed rail. */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              flexShrink: 0,
+              width: "100%",
+            }}
+          >
+            <CollapsedNavBtn label="Customer Profile" icon={BookOpen} />
+            <CollapsedNavBtn label="Memory" icon={Brain} />
+            <CollapsedNavBtn label="Settings" icon={Settings} />
+          </div>
+        </div>
       </div>
 
-      {/* Main nav */}
-      <nav
-        style={{
-          alignSelf: "stretch",
-          padding: "0 8px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
-        <CollapsedNavBtn label="Activity" icon={Activity} />
-        <CollapsedNavBtn label="Detection" avatarUrl="/Avatar_Sean.png" active />
-        <CollapsedNavBtn label="Investigation" avatarUrl="/Avatar_Helen.png" />
-        <CollapsedNavBtn label="Hunting" avatarUrl="/Avatar_Helen.png" />
-        <CollapsedNavBtn label="Validation" avatarUrl="/Avatar_Valery.png" />
-      </nav>
-
-      {/* Workspace items — no title in collapsed mode, no padding/margin
-          override either; sections sit flush, the parent has no gap. */}
+      {/* Bottom row — 64-tall, with the 34×34 PanelLeftOpen toggle centered. */}
       <div
         style={{
-          alignSelf: "stretch",
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
-        <CollapsedNavBtn label="Customer Profile" icon={User} />
-        <CollapsedNavBtn label="Memory" icon={Database} />
-        <CollapsedNavBtn label="Settings" icon={Settings} />
-      </div>
-
-      <div style={{ flex: 1, alignSelf: "stretch" }} />
-
-      {/* Bottom: PanelLeftOpen toggle (click to expand) */}
-      <div
-        style={{
-          alignSelf: "stretch",
-          height: 44,
-          display: "flex",
+          height: 64,
           alignItems: "center",
           justifyContent: "center",
+          flexShrink: 0,
+          width: "100%",
         }}
       >
         <SidebarIconBtn
@@ -821,8 +821,8 @@ function Sidebar({
             </span>
             <ChevronDown size={12} strokeWidth={1.75} color="#858a94" />
           </div>
-          <NavRow label="Customer Profile" icon={User} />
-          <NavRow label="Memory" icon={Database} />
+          <NavRow label="Customer Profile" icon={BookOpen} />
+          <NavRow label="Memory" icon={Brain} />
           <NavRow label="Settings" icon={Settings} />
         </div>
       </div>
@@ -1191,7 +1191,17 @@ function CardHeader({
   );
 }
 
-function IconBtn({ label, children }: { label: string; children: React.ReactNode }) {
+function IconBtn({
+  label,
+  children,
+  background = "#292b31",
+}: {
+  label: string;
+  children: React.ReactNode;
+  // Optional bg override. Defaults to the canonical `#292b31` chip colour;
+  // pass `#1f2126` for the H&P jira button which uses a darker variant.
+  background?: string;
+}) {
   return (
     <button
       type="button"
@@ -1200,7 +1210,7 @@ function IconBtn({ label, children }: { label: string; children: React.ReactNode
         width: 34,
         height: 34,
         borderRadius: 100,
-        background: "#292b31",
+        background,
         border: "1px solid #23252a",
         display: "flex",
         alignItems: "center",
@@ -1223,8 +1233,8 @@ function DeltaBadge({ text }: { text: string }) {
         ...T_CAPTION,
         borderRadius: 999,
         padding: "2px 6px",
-        background: "rgba(3,208,125,0.05)",
-        color: "#03d07d",
+        background: "rgba(104,238,118,0.05)",
+        color: "#68ee76",
         display: "inline-flex",
         alignItems: "center",
       }}
@@ -1425,33 +1435,45 @@ function ConnectorChip({
 // visual-fixed per design.
 function StackedRulesBar() {
   return (
-    <div style={{ alignSelf: "stretch", display: "flex", gap: 4, height: 16 }}>
+    <div
+      style={{
+        alignSelf: "stretch",
+        display: "flex",
+        alignItems: "center",
+        gap: 4,
+        height: 22,
+        padding: 4,
+        borderRadius: 100,
+        background: "#23252a",
+      }}
+    >
+      {/* Deployed (fills) — green vertical gradient */}
       <span
         style={{
           flex: "1 0 0",
-          background: "linear-gradient(to right, #026a40, #03d07d)",
-          borderTopLeftRadius: 8,
-          borderBottomLeftRadius: 8,
-          borderTopRightRadius: 2,
-          borderBottomRightRadius: 2,
+          minWidth: 0,
+          height: "100%",
+          background: "linear-gradient(to bottom, #99ffa3, #68ee76)",
+          borderRadius: "30px 4px 4px 30px",
         }}
       />
+      {/* Proposals — fixed 59 wide, blue gradient */}
       <span
         style={{
-          width: 75,
-          background: "#6af0ba",
-          borderRadius: 2,
+          width: 59,
+          height: "100%",
+          background: "linear-gradient(to bottom, #7ad3ff, #4fbaf0)",
+          borderRadius: 4,
           flexShrink: 0,
         }}
       />
+      {/* In test — fixed 23 wide, orange gradient */}
       <span
         style={{
-          width: 6,
-          background: "#e8fff6",
-          borderTopLeftRadius: 2,
-          borderBottomLeftRadius: 2,
-          borderTopRightRadius: 8,
-          borderBottomRightRadius: 8,
+          width: 23,
+          height: "100%",
+          background: "linear-gradient(to bottom, #ff9364, #f25f33)",
+          borderRadius: "4px 30px 30px 4px",
           flexShrink: 0,
         }}
       />
@@ -1459,21 +1481,24 @@ function StackedRulesBar() {
   );
 }
 
-// Breakdown row — colored dot + label (left), value (right). The separator
-// between rows is rendered by the parent (as a sibling flex item) instead of
-// nested inside the row, so the parent's `justify-content: space-between` can
-// distribute rows AND separators evenly across the available height — the
-// separator naturally lands at the midpoint between two rows.
+// Breakdown row — colored dot, label, value. Two flex children: a 10×10 dot
+// (centered vertically) and a fill panel that holds the label (left) and the
+// value (right) on opposite ends via `justify-content: space-between`. Value
+// uses `T_VALUE` (Inter SemiBold 14 / 16); label uses `T_BODY`. The 4px gap
+// between the dot and the right panel matches the Figma spec.
+//
+// Separator between rows is rendered by the parent (as a sibling flex item)
+// instead of nested inside the row, so the parent's
+// `justify-content: space-between` can distribute rows AND separators evenly
+// across the available height.
 function RulesBreakdownRow({
   color,
   label,
   value,
-  style,
 }: {
   color: string;
   label: string;
   value: string;
-  style?: React.CSSProperties;
 }) {
   return (
     <div
@@ -1481,24 +1506,31 @@ function RulesBreakdownRow({
         alignSelf: "stretch",
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-between",
-        height: 38,
-        ...style,
+        gap: 4,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span
-          style={{
-            width: 10,
-            height: 10,
-            borderRadius: 999,
-            background: color,
-            flexShrink: 0,
-          }}
-        />
+      <span
+        style={{
+          width: 10,
+          height: 10,
+          borderRadius: 999,
+          background: color,
+          flexShrink: 0,
+        }}
+      />
+      <div
+        style={{
+          flex: "1 0 0",
+          minWidth: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          whiteSpace: "nowrap",
+        }}
+      >
         <span style={{ ...T_BODY, color: "#b4b9c2" }}>{label}</span>
+        <span style={T_VALUE}>{value}</span>
       </div>
-      <span style={{ ...T_BODY_SEMI, color: "#f2f4f7" }}>{value}</span>
     </div>
   );
 }
@@ -1626,11 +1658,13 @@ function ResponseTimeRow({
   unit: string;
   caption: string;
 }) {
-  // Number left + caption right, baseline-aligned, at every viewport size —
-  // no responsive variant. See `.response-time-row` in globals.css.
+  // Always vertical (number on top, caption below). The data block around
+  // these rows flips between column-stack (with separator) and row (two
+  // rows side-by-side, no separator) via a container query — see
+  // `.response-time-data` and `.response-time-row` in globals.css.
   return (
     <div className="response-time-row">
-      <span style={{ ...T_STAT_UNIT, lineHeight: "normal" }}>
+      <span style={T_STAT_MED}>
         {value}
         <span style={{ ...T_BODY_SEMI, fontWeight: 700 }}>{unit}</span>
       </span>
@@ -1645,33 +1679,76 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
   const sparklineData = [55, 58, 56, 60, 64, 67, 70, 72, 71, 75, 80, 84, 87, 92, 95, 98];
 
   return (
-    <Card style={{ alignSelf: "stretch", ...style }}>
-      <CardHeader
-        title="Health & Performance"
-        subtitle="Overview of the agent and the system"
-        right={
-          <IconBtn label="Open Health & Performance in Jira">
-            <img
-              src="/jira_icon.svg"
-              alt=""
-              width={14}
-              height={14}
-              style={{ display: "block" }}
-            />
-          </IconBtn>
-        }
-      />
-      {/* Body layout — see `.hpBody` in main-content.module.css. Defaults to
-          flex-direction: column at <600px so Total Rules stacks above the
-          Telemetry stack; switches to flex-direction: row at ≥600px (the
-          standard side-by-side layout). flex: 1 0 0 + min-height: 0 are
-          carried by the class so the body fills the remaining card height
-          after the CardHeader (required for the 420px row to be honored). */}
+    <Card
+      style={{
+        alignSelf: "stretch",
+        // Asymmetric padding (24 top, 20 right/bottom/left) + 20px gap
+        // between the header and the body — both per the new Figma. The
+        // header is inlined here (CardHeader's built-in `20 20 0` padding
+        // doesn't fit this card's frame).
+        padding: "24px 20px 20px",
+        gap: 20,
+        ...style,
+      }}
+    >
+      {/* Header — inlined. Title is Inter Bold 18 (heavier than the standard
+          T_HEADING used by other cards) per Figma; subtitle is the canonical
+          T_BODY pattern. The Jira IconBtn uses the darker `#1f2126` chip bg
+          variant and a 16×16 icon (vs the standard 14×14). */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 12,
+          alignSelf: "stretch",
+        }}
+      >
+        <div
+          style={{
+            flex: "1 0 0",
+            minWidth: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: 8,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: FONT_INTER,
+              fontWeight: 700,
+              fontSize: 18,
+              lineHeight: "normal",
+              letterSpacing: "0.06px",
+              color: "#ffffff",
+            }}
+          >
+            Health & Performance
+          </span>
+          <span style={{ ...T_BODY, color: "#858a94", letterSpacing: "0.06px" }}>
+            Overview of the agent and the system
+          </span>
+        </div>
+        <IconBtn
+          label="Open Health & Performance in Jira"
+          background="#1f2126"
+        >
+          <img
+            src="/jira_icon.svg"
+            alt=""
+            width={16}
+            height={16}
+            style={{ display: "block" }}
+          />
+        </IconBtn>
+      </div>
+
+      {/* Body — see `.hpBody` in main-content.module.css. Flex column by
+          default; switches to a 50/50 grid at ≥800px so Total Rules and
+          Telemetry stack share the body width exactly evenly. */}
       <div className={mainContentStyles.hpBody}>
-        {/* LEFT: Total Rules — flex-1 splits evenly with the right stack at
-            880px outer. Was fixed 516 in the previous full-width design,
-            but at 880 outer that leaves only ~316 for the right stack which
-            is too tight for the Telemetry completeness + Response time row. */}
+        {/* LEFT: Total Rules — fills 50% of the body width via the parent grid */}
         <div
           style={{
             ...INNER_CARD,
@@ -1720,7 +1797,7 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
             <div
               style={{
                 display: "flex",
-                padding: "0 4px",
+                padding: "0 8px",
                 flexDirection: "column",
                 justifyContent: "space-between",
                 alignItems: "center",
@@ -1728,21 +1805,20 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
                 alignSelf: "stretch",
               }}
             >
-              <RulesBreakdownRow color="#03d07d" label="Deployed"  value="210" />
+              {/* Dot colors match the dominant (darker) end of each segment's
+                  gradient in the new StackedRulesBar — green / blue / orange. */}
+              <RulesBreakdownRow color="#68ee76" label="Deployed"  value="210" />
               <RulesBreakdownSeparator />
-              <RulesBreakdownRow color="#6af0ba" label="Proposals" value="95"  />
+              <RulesBreakdownRow color="#4fbaf0" label="Proposals" value="95"  />
               <RulesBreakdownSeparator />
-              <RulesBreakdownRow color="#e8fff6" label="In test"   value="72"  style={{ alignItems: "flex-end" }} />
+              <RulesBreakdownRow color="#f25f33" label="In test"   value="72"  />
             </div>
           </div>
         </div>
 
-        {/* RIGHT: Telemetry stack — CSS Grid. At ≥600px: top row pinned to
-            144px (Telemetry uptime), bottom row takes the remaining height.
-            At <600px: both rows go `auto` because the H&P body is now a
-            content-sized column flex; a `1fr` row in a content-sized parent
-            would collapse to 0 and hide the Telemetry completeness +
-            Response time row. See `.hpTelemetryStack` in main-content.module.css. */}
+        {/* RIGHT: Telemetry stack — CSS Grid. Top row pinned to 144px
+            (Telemetry uptime), bottom row takes the remaining height. See
+            `.hpTelemetryStack` in main-content.module.css. */}
         <div className={mainContentStyles.hpTelemetryStack}>
           {/* Top: Telemetry uptime — big stat + sparkline, fixed 144px tall. */}
           <div
@@ -1777,8 +1853,8 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
               }}
             >
               <div style={{ display: "flex", alignItems: "baseline", flexShrink: 0 }}>
-                <span style={{ ...T_STAT_NUM, lineHeight: "normal" }}>98</span>
-                <span style={{ ...T_STAT_UNIT, lineHeight: "normal" }}>%</span>
+                <span style={T_STAT_NUM}>98</span>
+                <span style={T_STAT_UNIT}>%</span>
               </div>
               <Sparkline data={sparklineData} />
             </div>
@@ -1810,7 +1886,7 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
                 Telemetry completeness
               </span>
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <span style={{ ...T_STAT_UNIT, lineHeight: "normal" }}>
+                <span style={T_STAT_MED}>
                   98
                   <span style={{ ...T_BODY_SEMI, fontWeight: 700 }}>%</span>
                 </span>
@@ -1818,12 +1894,15 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
               </div>
             </div>
 
-            {/* Response time — fills remaining width. Outer uses
-                justify-content: space-between so the label pins to the top,
-                the data block pins to the bottom, and the gap between them
-                flexes. The data block itself is content-sized with a fixed
-                8px gap between row + separator + row. */}
+            {/* Response time — fills remaining width. The card carries the
+                `response-time-card` class which sets `container-type: inline-size`
+                so the inner data block can flip layout via a container query
+                instead of a viewport media query (the Figma's two variants
+                differ on the *card* width, not the viewport). At ≥220px wide
+                the data block becomes a 2-column row (no separator); below
+                that it stays vertical with a 1px separator between rows. */}
             <div
+              className="response-time-card"
               style={{
                 ...INNER_CARD,
                 padding: 20,
@@ -1836,9 +1915,6 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
               }}
             >
               <span style={{ ...T_BODY, color: "#b4b9c2" }}>Response time</span>
-              {/* Vertical stack — number+caption rows with a 1px separator
-                  between them, at every viewport size. See
-                  `.response-time-data` in globals.css. */}
               <div className="response-time-data">
                 <ResponseTimeRow value="4.2" unit="h" caption="To fix" />
                 <div className="response-time-separator" aria-hidden />
