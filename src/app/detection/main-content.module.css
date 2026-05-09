@@ -1,4 +1,4 @@
-/* MainContent layout — four responsive breakpoints.
+/* MainContent layout — three responsive breakpoints.
  *
  * Mobile-first ordering: the smallest layout (stacked, vertical-H&P) is the
  * DEFAULT, and each larger breakpoint layers `min-width` overrides on top.
@@ -6,23 +6,22 @@
  * template areas / columns / rows reassign positions, plus `.hpBody` flips
  * orientation at the 800 breakpoint.
  *
- *   <400px   (default): stacked single column. All five top-row cards
+ *   <800px   (default): stacked single column. All five top-row cards
  *                       become full-width siblings, one per grid row.
- *                       H&P body is vertical (Total Rules above Telemetry
- *                       stack) — row 1 is 800px to seat the stacked sub-
- *                       cards comfortably.
+ *                       NO two top-level cards share a row at this tier
+ *                       (per agreed convention) — even at 700–799px the
+ *                       page stays one-card-per-row. H&P body is vertical
+ *                       (Total Rules above Telemetry stack) — row 1 is
+ *                       800px to seat the stacked sub-cards comfortably.
  *
- *   ≥400px:             "small" two-column layout. H&P spans both columns
+ *   ≥800px:             "small" two-column layout. H&P spans both columns
  *                       in row 1, then a 50/50 split puts AWQ + Teamwork
  *                       on the left and ProposalDrivers + LastCovered on
- *                       the right. H&P body is still vertical at this
- *                       breakpoint — row 1 stays 800px.
- *
- *   ≥800px:             H&P body switches from vertical to horizontal
- *                       (Total Rules on the left, Telemetry stack on the
- *                       right). Row 1 shrinks to 420 — the design height.
- *                       Column template stays at the small-2-col template
- *                       until the next breakpoint.
+ *                       the right. H&P body switches from vertical to
+ *                       horizontal at this breakpoint (Total Rules left,
+ *                       Telemetry stack right) — row 1 collapses from
+ *                       800px (vertical layout space) to the design's
+ *                       420px (horizontal layout space).
  *
  *   ≥1200px:            "big" two-column layout. Original side-by-side
  *                       arrangement — H&P + ProposalDrivers in row 1, AWQ
@@ -33,7 +32,12 @@
  *                       prior 1400-width design.
  *
  * Heatmap and Workload Distribution sit outside `.cardsGrid` and stay
- * full-width siblings of <main> at every breakpoint. */
+ * full-width siblings of <main> at every breakpoint.
+ *
+ * Earlier iteration introduced an intermediate ≥400px breakpoint that
+ * paired AWQ + ProposalDrivers in row 2 at any viewport ≥400. The user
+ * flagged this as off-spec — small screens (≤799) must keep all cards
+ * stacked. Don't reintroduce a sub-800 2-col breakpoint. */
 
 .wrapper {
   flex: 1 0 0;
@@ -65,7 +69,7 @@
   align-self: stretch;
   display: grid;
   gap: 12px;
-  /* Default (<400px) — stacked single column with vertical H&P. Five rows,
+  /* Default (<800px) — stacked single column with vertical H&P. Five rows,
    * one per card. Row 1 is 800px so the H&P body's vertical sub-card stack
    * (Total Rules above Telemetry stack) has comfortable room — each sub-
    * card gets ~370px after the CardHeader + body padding, enough for Total
@@ -81,23 +85,19 @@
     "lc";
 }
 
-@media (min-width: 400px) {
+@media (min-width: 800px) {
   .cardsGrid {
+    /* "Small" two-column layout. H&P spans both columns in row 1, then
+     * AWQ + Prop pair in row 2, Teamwork + Last Covered pair in row 3.
+     * H&P body also flips from vertical to horizontal at this breakpoint
+     * (see `.hpBody` below), so row 1 collapses from 800 → 420 — the
+     * design height for horizontal H&P. */
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: 800px auto auto;
+    grid-template-rows: 420px auto auto;
     grid-template-areas:
       "hp   hp"
       "wq   prop"
       "tw   lc";
-  }
-}
-
-@media (min-width: 800px) {
-  .cardsGrid {
-    /* H&P body flips to horizontal at ≥800, so row 1 collapses back to
-     * the design's 420 — Total Rules and Telemetry stack now share the
-     * row's horizontal space instead of its vertical space. */
-    grid-template-rows: 420px auto auto;
   }
 }
 
@@ -126,9 +126,8 @@
  * Telemetry stack keeps the same `144px minmax(0, 1fr)` grid rows at every
  * breakpoint, so Telemetry uptime is always fixed-height and the bottom
  * row always fills the remainder. Mobile-first: vertical is the default
- * and the horizontal layout is layered on at the breakpoint, mirroring
- * the pattern this file already uses for `.cardsGrid` between 400 and
- * 1200. */
+ * and the horizontal layout is layered on at the 800 breakpoint,
+ * mirroring `.cardsGrid`'s stacked → 2-col flip at the same 800 mark. */
 
 .hpBody {
   display: flex;

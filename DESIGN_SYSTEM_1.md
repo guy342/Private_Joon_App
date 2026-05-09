@@ -42,7 +42,7 @@ Every text node in the product uses one of these 12 styles. No other sizes, weig
 - Font sizes are even numbers only: 10, 12, 18, 30, 46
 - Never use fractional sizes (11.5px, 12.1px etc.)
 - When a stat tile shows "98%" — "98" is `--type-stat-num` (30px), "%" is `--type-stat-unit` (18px) in the same text layer
-- **Pick from the 12 tokens above. Never roll a custom font / weight / size combination.** If you can't find a match, the right answer is to either pick the closest token or raise the question — not invent a new one inline. The shared style fragments at the top of `src/app/detection/page.tsx` (`T_HEADING`, `T_BODY`, `T_BODY_MED`, `T_BODY_SEMI`, `T_CAPTION`, `T_CAPTION_MED`, `T_MONO_SMALL`, `T_MONO_MED`, `T_DISPLAY`, `T_STAT_NUM`, `T_STAT_UNIT`) implement these tokens — use them in inline styles instead of typing `fontFamily / fontWeight / fontSize / lineHeight / letterSpacing` by hand.
+- **Pick from the 13 tokens above. Never roll a custom font / weight / size combination.** If you can't find a match, the right answer is to either pick the closest token or raise the question — not invent a new one inline. The shared style fragments at the top of `src/app/detection/page.tsx` (`T_HEADING`, `T_BODY`, `T_BODY_MED`, `T_BODY_SEMI`, `T_CAPTION`, `T_CAPTION_MED`, `T_MONO_SMALL`, `T_MONO_MED`, `T_DISPLAY`, `T_STAT_NUM`, `T_STAT_UNIT`, `T_STAT_MED`, `T_VALUE`) implement these tokens — use them in inline styles instead of typing `fontFamily / fontWeight / fontSize / lineHeight / letterSpacing` by hand.
 
 ### Component → token assignments
 
@@ -85,7 +85,7 @@ Spelled out so future code lands on the right token without guessing:
 | Heatmap column header — category ("Reconnaissance") | `--type-body` w/ `--text-secondary` |
 | Heatmap column header — percentage ("72%") | `--type-body` w/ `--text-primary` |
 | Heatmap cell — technique id ("T1595") | `--type-body` w/ `--text-primary` (white for legibility on tier-tinted bg) |
-| Heatmap cell — technique name ("Active Scanning") | `--type-caption` w/ `rgba(242,244,247,0.5)` (text-primary at 50% — quieter than `--text-secondary` so the technique name reads as a true subtitle next to its tier-tinted bg) |
+| Heatmap cell — technique name ("Active Scanning") | `--type-caption` w/ `color-mix(in srgb, var(--text-primary) 50%, transparent)` (text-primary at 50% — quieter than `--text-secondary` so the technique name reads as a true subtitle next to its tier-tinted bg). **Color-mix instead of hardcoded `rgba(242,244,247,0.5)`** — the rgba was light-text@50% and disappeared against the pastel cell tints in light mode; color-mix keeps the alpha riding on top of the themed text color (dark-text@50% in light, light-text@50% in dark). |
 | Heatmap legend label ("100%", "75%"...) | `--type-caption` w/ `--text-secondary` |
 | WorkloadDistribution table header ("ID", "Rule Name"…) | `--type-body` w/ `--text-tertiary` |
 | WorkloadDistribution data cell text (id, rule name, technique, status…) | `--type-body` w/ `--text-primary`; selected row's ID column shifts to weight 600 |
@@ -108,20 +108,103 @@ These are the *only* places where text breaks the type scale. New code must not 
 
 ---
 
+## Theming (Dark / Light)
+
+The product runs in **dark mode by default**. Light mode is a token-override layer activated by `<html data-theme="light">`. `tokens.css` defines the dark palette on `:root` and a parallel set of overrides under `[data-theme="light"]`. Every component that uses `var(--…)` flips automatically — there is **no React-context ThemeProvider**, and there should not be one (every component already consumes design tokens, so context would be redundant and CSS-variable propagation has zero re-render cost).
+
+### What flips, what stays
+
+**Flips** (light/dark divergent): all `--bg-*` tokens (page, base, card, elevated, icon, action), all `--text-*` tokens, all `--border*` tokens.
+
+**Stays** (single value across themes): every accent — `--green`, `--blue`, `--purple`, severity, heatmap tier values, the Running Badge's `#B6E8D4`, the Workload child ID gradient (`#9747FF → #CCA5FF`), and the shimmer text fills. These hues read on both surfaces. The accent `*-bg` 5%-opacity variants may need a saturation bump on white if visibility suffers — flag for polish when you see it live; do not pre-emptively change them here.
+
+### Light-mode palette
+
+Defined as a single `[data-theme="light"]` block in `src/styles/tokens.css`:
+
+| Token | Dark | Light |
+|---|---|---|
+| `--bg-page` | `#0f1116` | `#f4f5f7` |
+| `--bg-card` | `#1a1c22` | `#ffffff` |
+| `--bg-base` (sidebar) | `#1e2026` | `#eef0f3` |
+| `--bg-elevated` (inner card) | `#1e2026` | `#fafbfc` |
+| `--bg-icon` | `#292b31` | `#e8eaef` |
+| `--bg-action` | `#1f2126` | `#f7f8fa` |
+| `--bar-track` | `#23252a` | `#eef0f3` |
+| `--text-primary` | `#f2f4f7` | `#0f1116` |
+| `--text-secondary` | `#b4b9c2` | `#3d424c` |
+| `--text-tertiary` | `#858a94` | `#6c7280` |
+| `--text-disabled` | `#5e6370` | `#a4abb6` |
+| `--border` | `#23252a` | `#d8dbe1` |
+| `--border-input` | `#2d3038` | `#cdd1d9` |
+| `--border-subtle` | `rgba(255,255,255,0.02)` | `rgba(0,0,0,0.04)` |
+| `--overlay-subtle` | `rgba(255,255,255,0.02)` | `rgba(0,0,0,0.04)` |
+| `--overlay-hover` | `rgba(255,255,255,0.05)` | `rgba(0,0,0,0.05)` |
+| `--overlay-strong` | `rgba(255,255,255,0.10)` | `rgba(0,0,0,0.10)` |
+| `--bg-glass-from` | `rgba(26,28,34,0.75)` | `rgba(255,255,255,0.85)` |
+| `--bg-glass-to` | `rgba(31,33,41,0.75)` | `rgba(247,248,250,0.85)` |
+| `--bg-page-fade` | `rgba(15,17,22,0.55)` | `rgba(244,245,247,0.55)` |
+| `--shimmer-text-base` | `rgba(255,255,255,0.25)` | `rgba(15,17,22,0.25)` |
+| `--shimmer-text-peak` | `#ffffff` | `#0f1116` |
+| `--pill-shadow` | `0 2px 20px 0 rgba(0,0,0,0.40)` | `0 2px 12px 0 rgba(15,17,22,0.08)` |
+| `--slider-thumb` (heatmap scroll knob) | `#ffffff` | `#a4abb6` |
+| `--green-bg` | `rgba(3,208,125,0.05)` | `rgba(3,208,125,0.10)` |
+| `--blue-bg` | `rgba(38,132,255,0.05)` | `rgba(38,132,255,0.10)` |
+| `--purple-bg` | `rgba(151,71,255,0.05)` | `rgba(151,71,255,0.10)` |
+| `--severity-critical-bg` | `rgba(228,0,84,0.05)` | `rgba(228,0,84,0.10)` |
+| `--severity-high-bg` | `rgba(255,115,0,0.05)` | `rgba(255,115,0,0.10)` |
+| `--heatmap-tier-100-bg` | `#163931` | `#bce5d1` |
+| `--heatmap-tier-75-bg` | `#17322d` | `#cfead9` |
+| `--heatmap-tier-50-bg` | `#182a29` | `#dfeee3` |
+| `--heatmap-tier-25-bg` | `#192326` | `#e8efeb` |
+| `--heatmap-tier-0-bg` | `#11181a` | `#eef0f2` |
+| `--heatmap-empty` | `#17191f` | `#f0f1f3` |
+| Heatmap tier `-bar` accents | unchanged | unchanged (saturated greens read on both surfaces) |
+
+### Hierarchy reads the same in both modes (even though literals invert)
+
+In dark mode, the sidebar + inner cards LIFT off the page (lighter than page bg). In light mode, the cards LIFT (white off the gray page) and the sidebar + inner cards SINK (slightly darker than the white card). Both directions express **depth-by-tint** and keep the **"borders only on buttons / action items"** rule intact. Page→card contrast is roughly the same magnitude in both themes (≈6% lightness delta), so depth-by-tint works without shadows in either mode. **Don't reintroduce borders or shadows on cards in light mode** — if it feels too subtle in practice, raise the question; don't pre-emptively patch.
+
+### `--bg-base` and `--bg-elevated` diverge in light mode
+
+They share `#1e2026` in dark mode but pull apart in light (`#eef0f3` for the sidebar, `#fafbfc` for inner cards — JUST a hair darker than the white card so sub-cards "sink in" gently rather than reading as cut-out rectangles). **Always use the semantically correct token at the call site** — `--bg-base` for the sidebar wrapper only, `--bg-elevated` for every nested sub-card (stat tiles, AWQ expanded groups, Teamwork rows, Last Covered rows, tooltips). If you swap the two, dark mode looks correct and light mode looks subtly off — easy to miss in review.
+
+> **Don't drop `--bg-elevated` back to `#f4f5f7` (= `--bg-page`)**. An earlier draft did that, and the sub-cards looked harshly cut out of the white card — page color showing through, instead of a soft sub-surface. Keep elevated very close to white in light mode; depth comes from the small delta, not a hard tint. If a sub-card needs MORE separation from the card, that's a sign you should reconsider the hierarchy (e.g. add a header / tile pattern), not increase the gray.
+
+### How the theme is applied
+
+1. **`src/app/layout.tsx`** renders `<html data-theme="dark">` at the SSR boundary, then injects an inline `<script>` in `<head>` that reads `localStorage.getItem('joon-theme')` and flips the attribute to `"light"` if that's the saved choice. The script runs before paint, so there is no flash-of-wrong-theme on first load. **Don't replace this with a deferred import** — it must execute synchronously, before any render-blocking CSS resolves.
+2. **`<ThemeToggle>` in `src/app/detection/page.tsx`** is a 32×32 icon button (Sun in dark mode → click to go light, Moon in light mode → click to go dark) wired to `document.documentElement.dataset.theme` and `localStorage('joon-theme')`. It lives in **both** the StatusBar's left identity group AND the FloatingStatusPills' left pill, so the toggle stays reachable at any scroll position. Currently scoped to the detection page; if light mode goes app-wide, lift the component to a shared location.
+
+### What's still raw (intentionally) and what to watch
+
+Almost everything theme-relevant flows through tokens now. The remaining raw color literals in `page.tsx` are deliberately untokenized:
+
+- **Solid accent hex inside gradient strings** — e.g. the Running Badge's conic-gradient (`#03d07d` ↔ `rgba(3,208,125,0.15)` ladder), the Workload child ID pill's purple shimmer (`#9747ff` → `#b67eff`), the Telemetry sparkline's vertical green gradient (`#99ffa3` → `#03d07d`), the heatmap slider track (`#07D582` → `#0ABE77` → `#0DA86B` → `#137B54` → `var(--bg-elevated)`). These are accent hues that read on both light and dark surfaces; tokenizing them buys nothing visual.
+- **JSX color/fill props passing accent hex to children** — `<ConnectorChip color="#2684ff" ... />`, `<path fill="#9747ff" />` for the Workload ID pill chevron arrows. Same reason.
+- **Black drop-shadows** (`0 2px 8px rgba(0,0,0,0.4)` etc.) — black shadows render correctly on both white and dark surfaces.
+- **Light-purple shimmer rgba** (`rgba(151,71,255,0.05)` overlay on the Workload child ID pill body, `rgba(204,165,255,0.15)` in its gradient border) — purple-on-white still reads as purple-tinted at these alphas.
+
+If a NEW component needs an accent color, prefer the existing tokens (`--green`, `--blue`, `--purple`, `--severity-*`, `--green-bg`, `--blue-bg`, etc.) over a fresh hex. If the value is a pure-white text fill, use `var(--text-primary)` so it inverts in light mode rather than going invisible (the JoonMark wordmark and the heatmap slider thumb were both broken this way before being migrated).
+
+---
+
 ## Colors
 
 ### Backgrounds
 
-| Token | Hex | Usage |
+| Token | Hex (dark) | Usage |
 |---|---|---|
 | `--bg-page` | `#0f1116` | Outermost page background |
-| `--bg-base` | `#1e2026` | **Sidebar (left rail) only.** |
+| `--bg-base` | `#1e2026` | **Sidebar (left rail) only.** Diverges from `--bg-elevated` in light mode — see Theming section. |
 | `--bg-card` | `#1a1c22` | **Top-level cards in MainContent — Card surfaces and the floating StatusBar.** |
-| `--bg-elevated` | `#1e2026` | **Inner Card surfaces** — every card-shaped element nested inside a top-level Card (stat tiles, expanded queue groups, Last Covered rows, Teamwork rows, heatmap tooltip). Same value as `--bg-base`; kept as a separate token so the call site states intent (sub-card vs sidebar). |
-| _(no token, raw hex)_ | `#1f2126` | StatusBar action pill buttons (⌘K kbd chip, "Last 7 days" date button). One shade brighter than `--bg-elevated` so action buttons read as interactive against the StatusBar surface. Kept as raw hex for now — promote to a token if reused elsewhere. |
+| `--bg-elevated` | `#1e2026` | **Inner Card surfaces** — every card-shaped element nested inside a top-level Card (stat tiles, expanded queue groups, Last Covered rows, Teamwork rows, heatmap tooltip). Same value as `--bg-base` IN DARK MODE; separate token because it diverges in light mode. |
+| `--bg-action` | `#1f2126` | StatusBar action pill buttons (⌘K kbd chip, "Last 7 days" date button), the H&P Jira chip. One shade brighter than `--bg-elevated` so action buttons read as interactive against `--bg-card`. Promoted from raw hex 2026-05-09 alongside the light-mode rollout. |
 | `--bg-icon` | `#292b31` | Icon button background; also active sidebar nav item |
 
-> Brightness hierarchy: `bg-page (#0f1116) < bg-card (#1a1c22) < bg-base / bg-elevated (#1e2026)`. The page is darkest, top-level cards are slightly lighter and float in front of it, and the sidebar + Inner Cards share the lightest tier so they read as "elevated chrome". Sidebar and Inner Cards intentionally use the same hex — but use the right token at the call site (`--bg-base` for the rail, `--bg-elevated` for nested sub-cards).
+> **Dark mode hierarchy:** `bg-page (#0f1116) < bg-card (#1a1c22) < bg-base / bg-elevated (#1e2026) < bg-action (#1f2126) < bg-icon (#292b31)`. The page is darkest, top-level cards are slightly lighter and float in front of it, the sidebar + Inner Cards share the next tier as "elevated chrome", action pills are one shade brighter still (interactive surfaces), and icon-button backs are the brightest neutral.
+>
+> **Light mode hierarchy** (see Theming section): `bg-base (#eef0f3) < bg-page (#f4f5f7) < bg-action (#f7f8fa) < bg-elevated (#fafbfc) < bg-card (#ffffff)`. The sidebar SINKS deepest (chrome); the page sits behind the cards as a clear gray; action pills (StatusBar chips, Jira chip) read as interactive surfaces just above the page; inner sub-cards (Total rules, Telemetry uptime, Proposal Drivers lollipop area, etc.) sit JUST below white so they read as embedded in the card without harshly cutting the surface; the card itself is pure white as the focal stage. The order of `bg-action` vs `bg-elevated` flips relative to dark mode — that's intentional. In dark mode "more elevated = lighter", so action chips (interactive) are the lightest neutral. In light mode "more elevated = whiter", and we want passive sub-cards to feel as close to the white card as possible while keeping interactive chips a touch more visible — so action sinks slightly more than elevated. Different visual logic, same intent: action surfaces stay clearly distinguishable from passive ones.
 >
 > **Don't mix these up.** `--bg-card` is the card color (matches its name). `--bg-base` is reserved for the sidebar — the name is legacy. If you find yourself reaching for `--bg-base` for anything other than the sidebar, you're probably looking for `--bg-card`.
 
@@ -273,28 +356,48 @@ Don't put `padding-y` or `padding-right` on the outer shell or on the wrapper �
 
 ### Sidebar (left rail — fixed, not scrolling)
 
+The sidebar is structured as **a wrapper element + an inner content aside**. The wrapper owns the visible card styling (width, bg, radius, margins, overflow) and is the element that animates between collapsed and expanded states; the inner aside is just the content layout (display/flex props for stacking children) and lives at full wrapper size.
+
+**Wrapper** (in DetectionPage, around `<Sidebar>`):
+
 ```
 display: flex
-width: 232px
 flex-direction: column
-align-items: flex-start
-gap: 24px                          /* between top-level sections (brand row, lists wrapper, spacer, bottom row) */
+width: 232px (expanded) / 64px (collapsed)
 flex-shrink: 0
 align-self: stretch                /* fills the shell's content height */
 margin-top: 12px                   /* vertical frame gutter — owned here, not on outer shell */
 margin-bottom: 12px
 background: var(--bg-base)         /* #1e2026 — the lighter rail color */
-border-radius: 16px
+border-radius: 16px                /* same in both states — the rail keeps the same card shape whether it's a wide or narrow column; don't pill the collapsed rail to 100 */
+overflow: clip                     /* hides any expanded-content overflow while the wrapper is still narrowing/widening */
+transition: width 240ms ease
 /* no border — depth comes from bg-base vs bg-page */
 ```
+
+**Inner content aside** (the `<aside>` returned by `Sidebar` / `CollapsedSidebar`):
+
+```
+display: flex
+flex-direction: column
+align-items: flex-start (expanded) / center (collapsed)
+justify-content: space-between (collapsed only)
+gap: 24px (expanded only)          /* between top-level sections */
+flex: 1                            /* fills wrapper height */
+align-self: stretch                /* fills wrapper width */
+```
+
+The aside has **no width / margin / bg / radius / overflow of its own** — those live on the wrapper. Don't reintroduce them on the aside or the transition will be doubled up against the wrapper's transition and the rail will animate both layers separately.
 
 The sidebar is a floating card. Stays put while MainContent scrolls. Each direct child needs `align-self: stretch` (because the parent uses `align-items: flex-start`, children won't stretch by default).
 
 Internal sections, top to bottom:
 1. **Brand row** — `min-height: 56px; padding: 8px 10px`. "joon" wordmark left, two icon buttons (Search, Plus) right at 34×34, `background: rgba(255,255,255,0.02)`, `border: 1px solid rgba(255,255,255,0.02)`, icons at 14×14.
 2. **Lists wrapper** — `align-self: stretch; display: flex; flex-direction: column; align-items: flex-start; gap: 24`. A grouping wrapper that holds the two nav lists and gives them their canonical 24px separation. No padding lives here — each inner list owns its own `padding: 0 8`. Don't flatten the wrapper away in favor of putting both lists directly under the sidebar; keeping the lists grouped semantically is what lets future additions (a notifications card, a status card, etc.) slot between them or after them with consistent spacing.
-   - **Primary nav (no title)** — `padding: 0 8; gap: 4`. Nav items: `height: 32px; padding: 5px 8px; border-radius: 5px; gap: 10`. Active item: `background: var(--bg-icon)` + text `var(--text-primary)`. Section nav rows use a 16×16 avatar circle on the left, holding a person's photo. Mapping: Detection → `/Avatar_Sean.png`, Investigation → `/Avatar_Helen.png`, Hunting → `/Avatar_Helen.png`, Validation → `/Avatar_Valery.png`. Pass via `avatarUrl` on `<NavRow>`. Avatar circle: `width: 16; height: 16; border-radius: 50%; background-color: #1a1c22 (fallback); background-image: url(...); background-size: cover; background-position: center`. If no avatar is available, fall back to `initials` (8px Inter Medium centered in the circle).
-   - **Workspace section (with title)** — `padding: 0 8; gap: 4`. Header row with "Workspace" label (Inter Medium 14 / 20 `var(--text-tertiary)`) + ChevronDown 12×12. Three nav items (Customer Profile / Memory / Settings) using Lucide icons.
+   - **Primary nav (no title)** — `padding: 0 8; gap: 4`. Nav items: `height: 32px; padding: 5px 8px; border-radius: 5px; gap: 10`. Active item: `background: var(--bg-icon)` + text `var(--text-primary)`. Section nav rows use a 16×16 avatar circle on the left, holding a person's photo. Mapping (canonical, per user direction): Detection → `/Avatar_Dawn.png`, Investigation → `/Avatar_Helen.png`, Hunting → `/Avatar_Sean.png`, Validation → `/Avatar_Valery.png`. Pass via `avatarUrl` on `<NavRow>`. Avatar circle: `width: 16; height: 16; border-radius: 50%; background-color: var(--bg-elevated) (fallback — matches the sidebar bg so any PNG edge transparency blends in instead of showing a darker ring); background-image: url(...); background-size: cover; background-position: center`. If no avatar is available, fall back to `initials` (8px Inter Medium centered in the circle).
+
+> **Avatar inventory is fixed at 4 PNGs** in `/public/`: `Avatar_Dawn`, `Avatar_Helen`, `Avatar_Sean`, `Avatar_Valery`. Each agent slot in the rail must use a **unique** asset — don't reassign two slots to the same face. Dawn also doubles as the StatusBar / Floating Pills user identity ("Dawn — Detection Engineering"); reusing her there is intentional and aligned — the user IS the Detection agent, so seeing Dawn's face in the sidebar's active Detection row AND in the StatusBar reinforces the identity instead of being a duplicate-by-accident. If a 5th agent is ever added, a new PNG must ship before adding the row — don't double-up an existing face.
+   - **Workspace section (with title)** — `padding: 0 8; gap: 4`. Header row with "Workspace" label (Inter Medium 14 / 20 `var(--text-tertiary)`) + ChevronDown 12×12. Three nav items (Customer Profile / Memory / Settings) using Lucide icons. Icon mapping: Customer Profile → `BookOpen`, Memory → `Brain`, Settings → `Settings`. Same icon set as the collapsed rail (single source of truth across the two sidebar variants).
 3. **Spacer** — `flex: 1; align-self: stretch`. The sidebar's 24px gap on either side of the spacer is intentional — it leaves at least 48px of breathing room between the last list and the bottom row even when the viewport is tall enough that the spacer would otherwise collapse to zero.
 4. **Bottom row** — `padding: 6px 8px 8px; gap: 6`. Collapse icon button + version string `v0.43.2` (JetBrains Mono 10px `var(--text-disabled)`, `margin-left: auto`).
 
@@ -302,40 +405,68 @@ Internal sections, top to bottom:
 
 **Nav row font: 14 / 20 (was 12 / 18).** The sidebar nav uses a one-step-larger size than the canonical `--type-body` (12 / 18) so the rail reads as primary navigation, not secondary metadata. The "Workspace" title and the items below it use the same 14 / 20 — keeping them at the same size lets the chevron + lighter color do the work of distinguishing the title from the items.
 
+**Nav row label `white-space: nowrap` is mandatory.** Every `<NavRow>` label `<span>` carries `white-space: nowrap` — load-bearing for the collapse→expand transition. The wrapper animates `width: 64 → 232` over 240ms while the expanded `<Sidebar>` renders instantly inside it, so during the first ~100ms there isn't horizontal room for multi-word labels. Without `nowrap`, "Customer Profile" wraps to a second line at narrow widths, and the row's `align-items: center` shifts the text vertically as it un-wraps back to one line — reads as the label "jumping." With `nowrap` the label overflows horizontally instead (clipped by the wrapper's `overflow: clip`) and only ever moves left-to-right as the wrapper widens. Single-word labels (Activity, Detection, Memory, etc.) don't show the bug because they can't wrap, but apply the rule to every NavRow for consistency — never special-case the multi-word ones.
+
 #### Collapsed sidebar (icon rail)
 
-The sidebar can be collapsed to an icon-only rail via the `PanelLeftClose` button in the bottom row. State lives in `<Sidebar>` itself (`useState<boolean>`); toggling it swaps the entire rendered tree between `<ExpandedSidebar>` (the layout above) and `<CollapsedSidebar>`. The `PanelLeftOpen` icon at the bottom of the collapsed rail flips it back. No animated transition — instant swap; the two layouts are different enough (changing widths, item shapes, brand mark) that a CSS width-tween wouldn't carry the content cleanly.
+The sidebar can be collapsed to an icon-only rail via the `PanelLeftClose` button in the bottom row. State lives in `DetectionPage` (`useState<boolean>`) and is fed to `<Sidebar>` as a prop so other layout pieces (the FloatingStatusPills' fixed `left`) can react to it; toggling it swaps the inner aside between the expanded layout (above) and `<CollapsedSidebar>`. The `PanelLeftOpen` icon at the bottom of the collapsed rail flips it back.
+
+**Animated transition — wrapper width morph + inner crossfade.** The wrapper's `width` (232 ↔ 64) carries a `240ms ease` transition. Inside, **both** content trees (`<CollapsedSidebar>` AND the expanded aside) are mounted at all times, absolutely positioned (`position: absolute; inset: 0`) inside a `position: relative` parent, and their visibility is driven by `opacity` (`200ms ease` — slightly faster than the wrapper so the new tree is fully visible before the morph completes). `pointer-events` follows the target state instantly so clicks always reach the visible tree. The 16px corner radius stays constant — the rail keeps the same rounded-rectangle card shape in both states. Don't pill the collapsed rail (border-radius 100) — earlier iterations did, but the design now keeps a single 16px card identity across both states.
+
+**Why crossfade (and not a swap, lagged or otherwise).** Earlier iterations tried two patterns that both felt harsh:
+- **Instant swap** (drive both content tree and wrapper off the same boolean): on collapse, the expanded content vanished in a single frame and the collapsed icons popped into the centre of a still-wide rail. User described this as "components appear and disappear at once."
+- **Lagged swap** (delay the content swap by 240ms on collapse only): the wipe-from-the-right looked OK for the wrapper-narrowing window, but the swap moment at t=240 was still a single-frame opacity step (1 → 0 in one tick) — felt the same as the instant swap, just delayed.
+
+There's no lerping a swap. The only way to get a *gentle* fade is a CSS opacity transition on always-mounted siblings — which is the crossfade. Trade-off: both trees pay render cost at all times. Neither tree is heavy, so this is fine; don't try to defer-mount the inactive tree to "save renders," you'll reintroduce the swap moment.
+
+**DOM order = paint order.** The collapsed tree is rendered FIRST (background), the expanded tree SECOND (foreground). At rest with `collapsed=false`, the expanded tree's `opacity: 1` paints over the collapsed tree's `opacity: 0`, so even if some browser quirk leaks pointer-events on opacity:0 elements, the painter's algorithm + `pointer-events: none` on the inactive tree both keep clicks where they belong.
+
+Implementation: `DetectionPage` owns one boolean — `sidebarCollapsed` — that drives wrapper width, FloatingStatusPills' left, top-edge fade's left, and the inner crossfade simultaneously. The crossfade lives entirely inside `<Sidebar>` (no extra state). The 200ms opacity duration must stay ≤ the 240ms wrapper duration — if opacity outlasts wrapper, the new tree is still partially transparent when the morph ends and the rest-state shows a faded sidebar.
+
+**Action-name tooltips on hover.** Every action button in the collapsed rail (Search, the five primary-nav rows, the three Workspace rows, and the PanelLeftOpen toggle) is wrapped in a `<SidebarTooltip label="...">` that renders a small dark pill 8px to the right of the button on `mouseenter`, vertically centered on the button. Tooltip styling: `background: #1a1c22`; `color: #f2f4f7`; `padding: 6px 10px`; `border-radius: 6`; font `--type-body` (12 / 18); `white-space: nowrap`; soft drop shadow `0 2px 8px rgba(0,0,0,0.4)`; `pointer-events: none`. The label is the same string already passed to `<SidebarIconBtn label>` / `<CollapsedNavBtn label>` for `aria-label`, so screen readers and the tooltip stay in sync.
+
+**Tooltip transition (gentle fade + slide).** The pill `transition: opacity 150ms ease, transform 150ms ease` between `opacity: 0; translateX(-4px)` and `opacity: 1; translateX(0)` (vertical centering via `translateY(-50%)` is preserved on both ends). The transition runs on **both enter and leave**: on enter, `pos` is set first (mounting at opacity 0), then `requestAnimationFrame` flips `visible: true` in the next frame so the CSS transition has a "from" state to interpolate from — without the rAF gap React batches both updates into one render and the tooltip just snaps to opacity 1. On leave, `visible: false` triggers the fade-out and a 150ms `setTimeout` then unmounts (clears `pos`); the timer is cancelable so re-entering before it fires keeps the tooltip mounted and reverses the fade without flicker. Don't increase the duration past ~200ms — past that the tooltip starts feeling sluggish for what's a passive label.
+
+**Why `position: fixed` and not `position: absolute` for the tooltip.** The sidebar wrapper carries `overflow: clip` (to handle the expand-animation case where the inner expanded content is wider than the wrapper for a frame). An absolutely-positioned tooltip would render *inside* the rail's bounding box and get clipped at the rail's right edge. `position: fixed` escapes the clip because the wrapper has no `transform` / `filter` / `backdrop-filter` / `contain` that would establish a containing block for fixed elements. Coords come from a `getBoundingClientRect` read on `mouseenter` — there's no scroll/layout listener, the tooltip is only alive while hovered.
+
+**Why custom (not the project's Radix `<Tooltip>`).** The detection page is a single self-contained file built with inline styles; pulling in `<TooltipProvider>` and the Radix Tooltip primitive for one decoration would break that pattern. Wrap with `<SidebarTooltip>` only in the collapsed rail — the expanded rail shows full labels inline, so it doesn't need them.
+
+**Inner content** (just the layout — width/bg/radius/margins live on the wrapper above):
 
 ```
 display: flex
-width: 44px                        /* matches the inner item width (44 logo/search slots, 44 nav buttons) — items fill the rail edge to edge */
 flex-direction: column
 align-items: center                /* every child centers horizontally */
-/* no gap between sections — items stack flush; vertical rhythm comes from each section's own min-height / item heights */
-flex-shrink: 0
-align-self: stretch
-margin-top: 12px
-margin-bottom: 12px
-background: var(--bg-base)         /* #1e2026 — same as expanded */
-border-radius: 100px               /* pill ends — the thin column reads as a capsule, not a rectangle */
-overflow: clip                     /* belt-and-suspenders: the header / nav wrappers carry Figma-spec px-10 / px-8 padding which the 44-wide children overflow with `flex-shrink: 0` — the clip keeps any sub-pixel overflow from leaking past the pill */
+justify-content: space-between     /* pins the top wrapper to the top, bottom-toggle row to the bottom — no explicit spacer div */
+flex: 1                            /* fills wrapper height */
+align-self: stretch                /* fills wrapper width */
 ```
 
-Internal sections, top to bottom:
+Internal sections, top to bottom (all carry `width: 100%; flex-shrink: 0`):
 
-1. **Brand + Search** — `align-self: stretch; min-height: 56px; padding: 0 10px; flex-direction: column; align-items: center`. Two 44×44 slots stacked. The first slot has its own `padding: 12px` (so the inner area is 20×20) and holds the `<JoonMark>` SVG, which uses `flex: 1 0 0; min-width: 1; aspect-ratio: 16.13429069519043 / 15.831598281860352` to fill the inner area and preserve the Figma asset's proportions; the visible donut renders at ~20×19.625. The second slot holds the same 34×34 `<SidebarIconBtn icon={Search} />` from the expanded brand row, centered. Each slot keeps the 44×44 vertical rhythm regardless of inner size, so the logo and search button line up cleanly even though one is much smaller than the other. The expanded rail's `Plus` button is dropped — there's no second action slot in the collapsed brand row.
-2. **Primary nav** — `align-self: stretch; padding: 0 8; flex-direction: column; align-items: center`. Five `<CollapsedNavBtn>`s (Activity, Detection, Investigation, Hunting, Validation). Each button is `width: 44; height: 38; padding: 0` — the click area is fixed-size (not full-width). Inside, a 28×28 inner pill carries the active highlight: `background: #292b31` when active, `transparent` otherwise, `border-radius: 5`. Icon (Lucide at `size={20}`) or **20×20** avatar circle sits centered in the pill. Same icon/avatar mapping as expanded.
-3. **Workspace items** — `align-self: stretch; flex-direction: column; align-items: center` (no padding, no margin override). Three `<CollapsedNavBtn>`s: Customer Profile (User), Memory (Database), Settings (Settings). No "Workspace" title (hidden in collapsed). Sections sit flush — the parent has no gap, and item heights drive the vertical rhythm.
-4. **Spacer** — `flex: 1; align-self: stretch`.
-5. **Bottom toggle** — `align-self: stretch; height: 44; align-items: center; justify-content: center`. Single 34×34 `<SidebarIconBtn icon={PanelLeftOpen} />` centered. No version string (no horizontal room for it).
+1. **Top wrapper** — flex column holding the brand row + the two nav groups; pinned to the top by the aside's `justify-content: space-between`. Contains:
+   1. **Brand row (search-only)** — `height: 64; padding: 0 10; flex-direction: column; align-items: center; justify-content: center`. Single 34×34 `<SidebarIconBtn icon={Search} />` centered. **No Joon logo / monogram in this layout** — the previous version's `<JoonMark>` was removed when the design dropped the logo from the collapsed rail.
+   2. **Nav groups wrapper** — `flex-direction: column; gap: 12; align-items: flex-start`. Holds the two nav groups separated by a 12px gap.
+      - **Activity & agents** — `padding: 0 8; flex-direction: column; align-items: center`. Five `<CollapsedNavBtn>`s: Activity (icon-only, 64×52); Detection (avatar, **active**), Investigation, Hunting, Validation (each avatar, 64×56). Same identity mapping as expanded (Detection → `/Avatar_Dawn.png`, etc.).
+      - **Categories** — `flex-direction: column; align-items: center` (no padding). Three icon-only `<CollapsedNavBtn>`s: Customer Profile (`BookOpen`), Memory (`Brain`), Settings (`Settings`). Same icon set as the expanded rail's Workspace section — single source of truth across both variants.
+2. **Bottom row** — `height: 64; flex-direction: column; align-items: center; justify-content: center`. Single 34×34 `<SidebarIconBtn icon={PanelLeftOpen} />` centered. No version string (no horizontal room for it).
+
+**`<CollapsedNavBtn>` — two visual modes** driven by which prop is set:
+
+| Mode | Triggered by | Click area | Inner content | Active state |
+|---|---|---|---|---|
+| Icon-only | `icon` prop | 64 × **52** | 20×20 Lucide icon centered | colour change only (no pill in current designs) |
+| Avatar | `avatarUrl` prop | 64 × **56** | 30×30 avatar circle centered (background-image) | wrapped in a **52×52 pill** (`background: #292b31; border-radius: 8`) — the avatar stays 30×30 inside the pill |
 
 **Why no per-row clicks yet?** The collapsed `<CollapsedNavBtn>` doesn't take an `onClick` prop because route navigation isn't wired up anywhere on the sidebar yet (the expanded rail's `<NavRow>`s are also static). When routing lands, both components need to thread the same handler, since they represent the same nav model.
 
-**`<JoonMark>`** — single-path SVG, white fill, donut shape via even-odd. Reuses one of the "O" outlines from the full wordmark. No props — the SVG carries fixed `flex: 1 0 0; min-width: 1; aspect-ratio: 16.13429069519043 / 15.831598281860352` styles so it fills its parent flex slot at the Figma-spec proportions. Living next to `<Sidebar>` keeps the brand assets in one place; promote to `/public` if a second surface needs the same mark.
+**Active state shape note** — the avatar's active highlight is a `border-radius: 8` (slightly rounded square), not the `border-radius: 5` used elsewhere on the rail. Per Figma; presumably to read as a tile-shaped chip behind the round avatar so the curves stay distinct.
 
 ### MainContent (center column — scrolls)
 
-MainContent layout is **responsive at four viewport breakpoints** (400px, 800px, 1200px) and lives in [`src/app/detection/main-content.module.css`](src/app/detection/main-content.module.css). The same five top-row cards are laid out via a single CSS Grid; only the `grid-template-areas` swap between breakpoints (plus `.hpBody` flips display mode at 800). The DOM order stays the same (Health & Performance → Proposal Drivers → Active Workload Queue → Teamwork → Last Covered) — render once, position via grid areas. Mobile-first ordering — the smallest layout (stacked single column, vertical H&P) is the default, and each larger breakpoint layers `min-width` overrides on top.
+MainContent layout is **responsive at three viewport breakpoints** (default <800px, ≥800px, ≥1200px) and lives in [`src/app/detection/main-content.module.css`](src/app/detection/main-content.module.css). The same five top-row cards are laid out via a single CSS Grid; only the `grid-template-areas` swap between breakpoints (plus `.hpBody` flips display mode at 800). The DOM order stays the same (Health & Performance → Proposal Drivers → Active Workload Queue → Teamwork → Last Covered) — render once, position via grid areas. Mobile-first ordering — the smallest layout (stacked single column, vertical H&P) is the default, and each larger breakpoint layers `min-width` overrides on top.
+
+> **Strict rule: no two top-level cards share a row below 800px.** Earlier iteration introduced a sub-800 (≥400px) breakpoint that paired AWQ + Proposal Drivers in row 2. The user flagged this — the agreed convention is that "really small" screens stay fully stacked, with every card on its own row. The 2-col layout starts at exactly ≥800px; below that, all five top-row cards are siblings stacked top-to-bottom. Don't reintroduce a sub-800 2-col breakpoint, even one that pairs only some cards.
 
 ```
 /* Outer wrapper — extends the full 100vh so its scroll boundary is the viewport edge */
@@ -371,7 +502,7 @@ Children that should fill main's full width need `align-self: stretch` (because 
 **MainContent card stack (top → bottom):**
 
 1. `<StatusBar />` — full-width
-2. **`.cardsGrid` — single CSS Grid covering the next five cards.** `display: grid; gap: 12px; align-self: stretch`. Row 1 is always fixed 420px (so Health & Performance keeps its design height); the remaining rows are `auto` and grow with content.
+2. **`.cardsGrid` — single CSS Grid covering the next five cards.** `display: grid; gap: 12px; align-self: stretch`. Row 1 is `800px` at <800px viewport (vertical-stacked H&P) and `420px` at ≥800px viewport (horizontal H&P, the design height); the remaining rows are `auto` and grow with content.
 3. `<DetectionCoverageHeatmap />` — full-width
 4. `<WorkloadDistribution />` — full-width
 
@@ -379,12 +510,11 @@ Children that should fill main's full width need `align-self: stretch` (because 
 
 | Breakpoint | grid-template-columns | grid-template-rows | grid-template-areas |
 |---|---|---|---|
-| < 400px (stacked, default — vertical H&P) | `minmax(0, 1fr)` | `800px auto auto auto auto` | `"hp"` / `"prop"` / `"wq"` / `"tw"` / `"lc"` |
-| ≥ 400px (small 2-col — vertical H&P) | `minmax(0, 1fr) minmax(0, 1fr)` | `800px auto auto` | `"hp hp"` / `"wq prop"` / `"tw lc"` |
-| ≥ 800px (small 2-col — horizontal H&P) | _inherits_ `minmax(0, 1fr) minmax(0, 1fr)` | `420px auto auto` | _inherits_ `"hp hp"` / `"wq prop"` / `"tw lc"` |
+| < 800px (stacked, default — vertical H&P) | `minmax(0, 1fr)` | `800px auto auto auto auto` | `"hp"` / `"prop"` / `"wq"` / `"tw"` / `"lc"` |
+| ≥ 800px (small 2-col — horizontal H&P) | `minmax(0, 1fr) minmax(0, 1fr)` | `420px auto auto` | `"hp hp"` / `"wq prop"` / `"tw lc"` |
 | ≥ 1200px (big 2-col — horizontal H&P) | `minmax(0, 880fr) minmax(0, 496fr)` | _inherits_ `420px auto auto` | `"hp prop"` / `"wq tw"` / `"wq lc"` |
 
-The `880fr / 496fr` ratio on big screens preserves the prior 880:496 column split from the 1400-width design, so both columns grow proportionally as content widens up to 1600. On big screens AWQ spans rows 2+3 (its content height drives the combined row 2+3 height; Teamwork sits in row 2, Last Covered in row 3, both on the right). On the 400-799 small layout, H&P promotes to a full-width row 1 spanning both columns; row 2 pairs AWQ (left) with Proposal Drivers (right); row 3 pairs Teamwork (left) with Last Covered (right). At 800-1199 the column template stays the same but H&P's body flips from vertical to horizontal (and the row shrinks back to its 420 design height). Below 400 every card collapses to its own full-width row, stacked top-to-bottom in DOM order. The page floor is `min-width: 300px` on `<main>`; below a 300px viewport the wrapper horizontally scrolls instead of compressing the cards further.
+The `880fr / 496fr` ratio on big screens preserves the prior 880:496 column split from the 1400-width design, so both columns grow proportionally as content widens up to 1600. On big screens AWQ spans rows 2+3 (its content height drives the combined row 2+3 height; Teamwork sits in row 2, Last Covered in row 3, both on the right). On the 800-1199 small 2-col layout, H&P promotes to a full-width row 1 spanning both columns; row 2 pairs AWQ (left) with Proposal Drivers (right); row 3 pairs Teamwork (left) with Last Covered (right). H&P's body also flips from vertical to horizontal at the same 800 mark, and row 1 collapses from 800 → 420 (the design height for horizontal H&P). Below 800 every card collapses to its own full-width row, stacked top-to-bottom in DOM order — no two cards share a row in this tier. The page floor is `min-width: 300px` on `<main>`; below a 300px viewport the wrapper horizontally scrolls instead of compressing the cards further.
 
 **H&P body — `.hpBody` + `.hpTelemetryStack` (800px breakpoint).** The Health & Performance card body is the only card whose internal layout has a viewport-tied breakpoint, because its design splits evenly between two equally-important blocks (Total Rules + Telemetry stack) that must each have enough horizontal room to read. The classes live in `main-content.module.css` and use the same mobile-first pattern as `.cardsGrid`:
 
@@ -494,7 +624,7 @@ Implemented as `<FloatingStatusPills visible={…}>` in `src/app/detection/page.
 ```
 position: fixed
 top: 12                                /* matches the StatusBar's resting top inset */
-left: sidebarCollapsed ? 76 : 264      /* expanded: 232 sidebar + 12 padding + 20 gap = 264. collapsed: 44 sidebar + 32 = 76. Driven by `sidebarCollapsed` prop threaded from <DetectionPage> → <MainContent> → <FloatingStatusPills>. Animated via `transition: left 200ms ease` so pills slide along with the sidebar's collapse/expand instead of jumping. */
+left: sidebarCollapsed ? 96 : 264      /* expanded: 232 sidebar + 12 padding + 20 gap = 264. collapsed: 64 sidebar + 32 = 96. Driven by `sidebarCollapsed` prop threaded from <DetectionPage> → <MainContent> → <FloatingStatusPills>. Animated via `transition: left 200ms ease` so pills slide along with the sidebar's collapse/expand instead of jumping. */
 right: 0                               /* extends to the viewport's right edge */
 z-index: 50
 pointer-events: none                   /* MANDATORY — lets clicks pass through to cards underneath; pills re-enable pointer-events themselves */
@@ -523,9 +653,9 @@ flex: 1 0 0
 
 ```
 border-radius: 100                     /* full pill */
-border: 1px solid #23252a              /* var(--border) — registered exception, see Borders section */
-background: linear-gradient(90deg, rgba(26,28,34,0.75) 0%, rgba(31,33,41,0.75) 100%)
-box-shadow: 0 2px 20px 0 rgba(0,0,0,0.40)
+border: 1px solid var(--border)        /* registered exception, see Borders section */
+background: linear-gradient(90deg, var(--bg-glass-from) 0%, var(--bg-glass-to) 100%)
+box-shadow: var(--pill-shadow)         /* dark: 0 2px 20px rgba(0,0,0,0.40) — strong drop, lifts off the dark page. light: 0 2px 12px rgba(15,17,22,0.08) — gentler, slightly tighter blur, low alpha (a 40% black shadow on white reads as a hard cast shadow that doesn't fit the lighter surface family). */
 backdrop-filter: blur(5px)             /* + WebkitBackdropFilter for Safari */
 display: flex
 align-items: center
@@ -553,24 +683,24 @@ In tandem with the pills, a fixed gradient overlay softens content scrolling pas
 ```
 position: fixed
 top: 0
-left: 264                              /* matches the pills' left inset — sidebar 232 + shell-padding 12 + shell-gap 20 */
+left: sidebarCollapsed ? 96 : 264      /* matches the pills' left inset — expanded: sidebar 232 + shell-padding 12 + shell-gap 20 = 264. collapsed: sidebar 64 + 32 = 96. Same `sidebarCollapsed` prop threaded down from <DetectionPage>. */
 right: 0
-height: 60
+height: 80                              /* was 60 — bumped to give the bottom blur band more vertical room to fade out smoothly. */
 pointer-events: none
 z-index: 40                            /* MUST be lower than the pills' 50 so pills paint cleanly on top */
 opacity: isScrolled ? 1 : 0
-transition: opacity 200ms ease
+transition: opacity 200ms ease, left 240ms ease  /* `left` matches the sidebar's own 240ms width transition so the fade and sidebar move in lock-step */
 aria-hidden                            /* purely decorative */
 ```
 
-**Inner layers** — four absolutely-positioned children with `inset: 0`. Three masked backdrop-blur bands plus a color overlay on top. Each blur layer's `mask-image` confines its blur to a horizontal slice of the band:
+**Inner layers** — four absolutely-positioned children with `inset: 0`. Three masked backdrop-blur bands plus a color overlay on top. **Every blur band's mask must fade to `transparent` at its bottom edge** so the blur intensity decays smoothly to zero at y=80 — earlier the lightest band ended at `#000 100%`, leaving a visible horizontal cut where the blurred area abruptly stopped (the user spotted it slicing through card titles like "Teamwork"). Each layer:
 
 | Layer | DOM order | `backdrop-filter` | `mask-image` (where the blur is visible) |
 |---|---|---|---|
-| Blur band 3 (lightest, bottom) | 1st child | `blur(1px)` | `linear-gradient(transparent 33%, #000 66%, #000 100%)` — peaks y=40–60 |
-| Blur band 2 (medium, middle) | 2nd child | `blur(2px)` | `linear-gradient(transparent 0%, #000 33%, #000 66%, transparent 100%)` — peaks y=20–40 |
-| Blur band 1 (heaviest, top) | 3rd child | `blur(4px)` | `linear-gradient(#000 0%, #000 33%, transparent 66%)` — peaks y=0–20 |
-| Color overlay | 4th child (top of stack) | — | `background: linear-gradient(to bottom, #0f1116 0%, rgba(15,17,22,0.55) 50%, transparent 100%)` |
+| Blur band 3 (lightest, bottom) | 1st child | `blur(1px)` | `linear-gradient(transparent 25%, #000 55%, #000 70%, transparent 100%)` — peaks y=44–56, fades to 80 |
+| Blur band 2 (medium, middle) | 2nd child | `blur(2px)` | `linear-gradient(transparent 0%, #000 25%, #000 55%, transparent 80%)` — peaks y=20–44 |
+| Blur band 1 (heaviest, top) | 3rd child | `blur(4px)` | `linear-gradient(#000 0%, #000 25%, transparent 55%)` — peaks y=0–20 |
+| Color overlay | 4th child (top of stack) | — | `background: linear-gradient(to bottom, var(--bg-page) 0%, var(--bg-page-fade) 50%, transparent 100%)` |
 
 Always set both `maskImage` and `WebkitMaskImage` (Safari hasn't dropped the prefix on mask-image yet). Same for `backdropFilter` / `WebkitBackdropFilter`.
 
@@ -698,12 +828,14 @@ border: 1px solid var(--white-2)
 
 Icon inside: 14×14px.
 
-**Brand-icon variant:** when a card-header IconBtn opens that card in an external system (e.g. Jira), use the system's brand `<img>` instead of a Lucide icon. Same 14×14 size, `display: block`, `alt=""` (the `aria-label` on the button conveys meaning). Example: Health & Performance card's right action uses `/jira_icon.svg` to indicate "open in Jira" — the button's `aria-label` is then "Open Health & Performance in Jira".
+**Brand-icon variant:** when a card-header IconBtn opens that card in an external system (e.g. Jira), use the system's brand `<img>` instead of a Lucide icon. `display: block`, `alt=""` (the `aria-label` on the button conveys meaning). Example: Health & Performance card's right action uses `/jira_icon.svg` to indicate "open in Jira" — the button's `aria-label` is then "Open Health & Performance in Jira". H&P uses **16×16** for the brand icon (per Figma) — other brand-icon usages still use 14×14.
+
+**`background?` prop override.** `<IconBtn>` accepts an optional `background` prop. Default is `#292b31` (canonical chip bg). Health & Performance passes `background="#1f2126"` (a darker chip variant) per Figma. Use sparingly — the default is the canonical look across the page.
 
 ### Delta Badges (↑ +7%)
 
 ```
-background: var(--green-bg)             /* #03d07d at 5% */
+background: var(--green-bg)             /* rgba(3,208,125,0.05) — #03d07d at 5% */
 color: var(--green)                     /* #03d07d */
 border-radius: var(--badge-radius)      /* 999px */
 padding: 2px 6px
@@ -839,6 +971,44 @@ color: var(--text-primary)
 background: var(--bg-card)
 border-left: 2px solid var(--text-primary)
 ```
+
+### Hover state — `.hover-tint`
+
+A single utility class in `globals.css` for clickable surfaces that don't carry their own elaborate hover (workload-row, heatmap-slider-thumb, etc. each have their own bespoke states; everything else uses this).
+
+```
+.hover-tint        { transition: box-shadow 150ms ease, filter 150ms ease; }
+.hover-tint:hover  { box-shadow: inset 0 0 0 9999px rgba(255, 255, 255, 0.02);
+                     filter: brightness(1.04); }
+```
+
+**Two stacked techniques, by design.** Inline `style={{ background: ... }}` overrides any plain `:hover { background-color }` rule unless you reach for `!important`, so neither alone is enough:
+
+1. `box-shadow: inset` paints a translucent white plane on top of the element's bg. Works for elements with a solid inline bg (IconBtn `#292b31`, "Last 7 days" `#1f2126`, etc.).
+2. `filter: brightness(1.04)` lifts everything inside the element (icon, text, bg) by a small uniform amount. Works for transparent elements (default NavRow, default CollapsedNavBtn) where the box-shadow overlay would have nothing to lighten the user's eye against.
+
+Both fire at the same 150ms ease (parity with `.heatmap-slider-thumb`). The 9999px inset reach is comfortably larger than any element so the overlay always fills regardless of size. The overlay respects `border-radius`, so rounded buttons stay rounded on hover.
+
+**Tint strength: 2% white overlay + 1.04× brightness.** Deliberately barely-there — enough that the cursor confirms the surface is clickable, but not so much that the page feels like it's animating in response to mouse movement. Visible across the full bg range we use (#1a1c22 page bg through #292b31 chip bg).
+
+**Where it's applied** (the canonical clickable surfaces):
+
+| Component | Notes |
+|---|---|
+| `<IconBtn>` | Card-header chip buttons (Open in Jira, etc.) |
+| `<SidebarIconBtn>` | Sidebar's chip buttons (Search, Plus, PanelLeftClose/Open) |
+| `<NavRow>` | Sidebar nav items (Activity, Detection, etc.) |
+| `<CollapsedNavBtn>` | Collapsed sidebar nav items — overlay fills the full 64×52 / 64×56 button (intentionally wider than the 52×52 active pill so the hover area matches the click area) |
+| AWQ group toggle | Active Workload Queue's expand/collapse buttons. Needs an explicit `border-radius: 8` on the button (matches the parent INNER_CARD radius) so the inset overlay rounds the corners cleanly. |
+| StatusBar / FloatingStatusPills "Last 7 days" date pill | Pill-shaped (border-radius: 100); overlay is also pill-shaped. |
+| `<FilterPill>` | WorkloadDistribution filter pills — same shape as the date pill. |
+
+**Where it's NOT applied** (each has its own bespoke hover):
+- `.workload-row` — full-row bg fade + ID weight bump + action-icon reveal (250ms ease-out).
+- `.heatmap-slider-thumb` — drop shadow + halo ring transition.
+- `<HeatmapCell>` — drives a tooltip via React state, not a CSS hover state.
+
+**Static elements that are not buttons** (`ConnectorChip`, `⌘K` kbd, "Updated 2h ago", etc.) don't get the tint — they're informational, not actionable.
 
 ### Animations
 
@@ -1000,60 +1170,73 @@ Outer ends use a `6px` corner (half the bar's 12px height — gives a clean half
 
 ### Health & Performance
 
-Top-of-page card. Three-zone layout: Total Rules panel on the left (fixed 516px), and a vertical right column with Telemetry uptime above and a row of Telemetry completeness + Response time below. Lives in `src/app/detection/page.tsx`. Built on four reusable primitives — `<StackedRulesBar>`, `<RulesBreakdownRow>`, `<Sparkline>`, `<DotGrid>` — plus the existing `<Card>` / `<CardHeader>` / `<IconBtn>` / `<DeltaBadge>` / `INNER_CARD`.
+Top-of-page card. Three-zone layout: Total Rules panel on the left (50% of body width), and a vertical right column (also 50%) with Telemetry uptime above and a row of Telemetry completeness + Response time below. Lives in `src/app/detection/page.tsx`. Built on four reusable primitives — `<StackedRulesBar>`, `<RulesBreakdownRow>`, `<Sparkline>`, `<DotGrid>` — plus the existing `<Card>` / `<IconBtn>` / `<DeltaBadge>` / `INNER_CARD`. The card does **not** use the shared `<CardHeader>` — its asymmetric `padding: 24 20 20 20` + `gap: 20` layout doesn't fit CardHeader's built-in padding, so the title (Inter Bold 18 white) + subtitle row is inlined. The Jira `<IconBtn>` uses the darker `background="#1f2126"` variant (override via the new `background?` prop on IconBtn) and a 16×16 jira icon.
 
 #### Layout
 
 ```
-Card (--bg-card #1a1c22, 16 radius, alignSelf: stretch)
-├── CardHeader (title + subtitle + Jira IconBtn)
-└── Body (padding: 20, flex row, gap: 8, alignItems: stretch)
-    ├── Total Rules panel (Inner Card, flex: 1 0 0 + minWidth: 0, padding: 20 24 24, gap: 16) — splits evenly with the right stack inside the 880px outer
+Card (--bg-card #1a1c22, 16 radius, padding: 24 20 20 20, gap: 20, alignSelf: stretch)
+├── Header row (inlined — flex row, justify-between, gap: 12, items-start, align-self: stretch)
+│   ├── Identity column (flex: 1 0 0, flex-col, gap: 8, items-start)
+│   │   ├── Title "Health & Performance" — Inter Bold 18 / normal, white, letter-spacing 0.06px (heavier than the standard T_HEADING — inlined)
+│   │   └── Subtitle "Overview of the agent and the system" — T_BODY @ #858a94
+│   └── <IconBtn background="#1f2126"> — 34×34 chip with darker bg variant, holds 16×16 jira icon
+└── Body (.hpBody — flex column at <800px viewport, **CSS Grid 1fr / 1fr** at ≥800px, gap: 8, no padding — outer Card carries it)
+    ├── Total Rules panel (Inner Card, flex: 1 0 0 + minWidth: 0, padding: 20 24 24, gap: 16)
     │   ├── Header row (label + DeltaBadge ↑ 1.6%)
     │   ├── Big stat (T_DISPLAY "730" + T_BODY "/ 1,250")
     │   └── Bar + list wrapper (flex-col, gap: 24, flex: 1 0 0, alignSelf: stretch) — fills the remaining panel height
     │       ├── <StackedRulesBar/>
-    │       └── List (flex-col, padding: 0 4px, justify-content: space-between, alignItems: center, flex: 1 0 0, alignSelf: stretch)
-    │           ├── <RulesBreakdownRow Deployed/>
+    │       └── List (flex-col, padding: 0 8px, justify-content: space-between, alignItems: center, flex: 1 0 0, alignSelf: stretch)
+    │           ├── <RulesBreakdownRow color="#03d07d" label="Deployed" value="210"/>
     │           ├── <RulesBreakdownSeparator/>
-    │           ├── <RulesBreakdownRow Proposals/>
+    │           ├── <RulesBreakdownRow color="#4fbaf0" label="Proposals" value="95"/>
     │           ├── <RulesBreakdownSeparator/>
-    │           └── <RulesBreakdownRow In test/>
-    └── Right stack (flex: 1, **CSS Grid** with `gridTemplateRows: 144px minmax(0, 1fr)`, gap: 8, minWidth: 0, minHeight: 0)
+    │           └── <RulesBreakdownRow color="#f25f33" label="In test" value="72"/>
+    └── Right stack (.hpTelemetryStack — **CSS Grid** with `gridTemplateRows: 144px minmax(0, 1fr)`, gap: 8, minWidth: 0, minHeight: 0)
         ├── Telemetry uptime (Inner Card) — first grid row, fixed 144px tall
         │   ├── Header row (label + DeltaBadge)
-        │   └── Bottom row: T_STAT_NUM/UNIT "98%" + <Sparkline/>
+        │   └── Bottom row: T_STAT_NUM "98" + T_STAT_UNIT "%" + <Sparkline/>
         └── Bottom row (flex row, gap: 8, minHeight: 0, minWidth: 0) — second grid row, takes remaining height
-            ├── Telemetry completeness (Inner Card, content-sized, flexShrink: 0)
-            │   ├── Label + small stat "98%"
-            │   └── <DotGrid filled={98}/>
-            └── Response time (Inner Card, flex: 1, minWidth: 0, flex-col, justify-content: space-between) — label pins to top, data block pins to bottom, the gap between them flexes to fill the card's height
+            ├── Telemetry completeness (Inner Card, flex: 1 0 0, minWidth: 0)
+            │   ├── Label + small stat (T_STAT_MED "98" + bolded T_BODY_SEMI "%")
+            │   └── <DotGrid percent={98}/> (responsive — refills its parent on resize)
+            └── Response time (Inner Card + `class="response-time-card"`, flex: 1 0 0, minWidth: 0, flex-col, justify-content: space-between) — `class` sets `container-type: inline-size` so the data block can flip layout via container query (see below)
                 ├── Label "Response time"
-                └── Data div (`.response-time-data` — flex-col, gap 12, justify-content: flex-end, flex: 1 0 0, align-self: stretch) — see globals.css
-                    ├── <ResponseTimeRow value="4.2" unit="h" caption="To fix"/> — `.response-time-row` (flex-row, baseline-aligned, gap 8 — number/unit on the left, caption to the right on the same line)
-                    ├── Separator (`.response-time-separator`) — 1px horizontal hairline at `#23252a`, align-self: stretch
+                └── Data div (`.response-time-data`) — flex-col by default, flex-row at container ≥220px
+                    ├── <ResponseTimeRow value="4.2" unit="h" caption="To fix"/> — `.response-time-row` (always flex-col internally — number on top, caption below)
+                    ├── Separator (`.response-time-separator`) — visible (horizontal hairline) at <220, hidden at ≥220
                     └── <ResponseTimeRow value="18.5" unit="h" caption="To close gaps"/>
 ```
 
-**Response time has no responsive variant.** An earlier iteration flipped the data div to `flex-direction: row` at `<1600px` viewports (two side-by-side tiles with no separator), but that broke the design at 1440 — the most common laptop screen — and the side-by-side treatment didn't read as a single coherent stat panel. The vertical stack (number+caption rows with a 1px hairline between them) is now the canonical layout at every viewport width. Don't reintroduce a horizontal variant unless the Response time card gets noticeably wider at some breakpoint; at the current widths the vertical layout is always legible.
+**Response time switches layout via a CSS container query.** The Response time card carries `class="response-time-card"` which sets `container-type: inline-size; container-name: response-time`. Inside, the data block (`.response-time-data`) reads its container's width and flips between two layouts at the **220px** threshold:
+
+| Container width | `.response-time-data` | `.response-time-row` | `.response-time-separator` |
+|---|---|---|---|
+| < 220px (narrow) | `flex-direction: column` — the two ResponseTimeRows stack vertically with the 1px hairline between them | `flex-direction: column` — number on top, caption directly below | visible (1px hairline at `--border`) |
+| ≥ 220px (wide)  | `flex-direction: row; align-items: end` — two rows side-by-side, each filling half the width via `flex: 1 1 0` on the row | `flex-direction: column` — number on top, caption below (unchanged) | `display: none` |
+
+Container queries (not viewport media queries) are used here because the layout switch depends on the *card's* width, not the viewport's. The H&P card body is a 50/50 grid, so the right-stack column width is half the card width — and the Response time card itself is a fraction of that, after the Telemetry completeness card is laid out beside it. Driving off the card width directly via `@container` keeps the threshold honest no matter how wide or narrow the H&P card ends up at any given viewport / parent-grid configuration.
 
 #### `<StackedRulesBar>` — primitive
 
-Three-segment progress bar (16px tall, gap 4) representing rule status distribution. Asymmetric corner radii so the outer ends round off at 8px and the inner ends stay crisp at 2px. Segment widths are visual-fixed per the design (Deployed grows to fill; Proposals 75px; In test 6px sliver) — wire to data-proportional widths when integrating real data.
+Three-segment progress bar (22px tall, gap 4) representing rule status distribution, sitting inside a `var(--bar-track)` rounded track with 4px internal padding. Each segment uses a vertical (top→bottom) gradient and asymmetric corner radii so the outer ends round off (7px — a soft round, **not** a full pill) and the inner ends stay crisp (4px). Segment widths are visual-fixed per the design (Deployed grows to fill; Proposals 59px; In test 23px) — wire to data-proportional widths when integrating real data.
 
-| Segment | Background | Width | Corners (TL TR BR BL) |
+> **Track uses the dedicated `--bar-track` token, not `--border`.** Dark mode value is `#23252a` (matches the prior hard-coded value, no visual change). Light mode value is `#eef0f3` (sidebar tone). Earlier the track was using `var(--border)` which renders as `#d8dbe1` in light mode — too heavy on the white H&P card and read as a hard groove. The dedicated token routes light to a much softer chrome gray. Don't reach for `--border` here even though dark-mode values match — they diverge in light, and the semantic of "passive bar groove" deserves its own token.
+
+> **Outer radius is 7px, not 30px.** Earlier iteration used 30px to fully round the outer ends into pill caps; the design now calls for a softer 7px round so the segments read as rounded rectangles, not capsules. Don't reintroduce the pill cap.
+
+| Segment | Background gradient | Width | Corners (TL TR BR BL) |
 |---|---|---|---|
-| Deployed | `linear-gradient(to right, #026a40, #03d07d)` | `flex: 1 0 0` | 8/2/2/8 |
-| Proposals | `#6af0ba` | `75px` | 2/2/2/2 |
-| In test | `#e8fff6` | `6px` | 2/8/8/2 |
+| Deployed | `linear-gradient(to bottom, #99ffa3, #03d07d)` | `flex: 1 0 0` | 7/4/4/7 |
+| Proposals | `linear-gradient(to bottom, #7ad3ff, #4fbaf0)` | `59px` | 4/4/4/4 |
+| In test | `linear-gradient(to bottom, #ff9364, #f25f33)` | `23px` | 4/7/7/4 |
 
-The three segment colors are also the three breakdown-row dot colors (`#03d07d` → Deployed, `#6af0ba` → Proposals, `#e8fff6` → In test). Same palette across the bar and dots — single source of truth visually. These are inlined raw hex (not tokens) because they're scoped to this single visualization; promote to tokens if reused elsewhere.
+The dominant (darker) end of each gradient is the matching breakdown-row dot color: `#03d07d` → Deployed, `#4fbaf0` → Proposals, `#f25f33` → In test. Single source of truth visually across bar and dots. These are inlined raw hex (not tokens) because they're scoped to this single visualization.
 
 #### `<RulesBreakdownRow color label value>` — primitive
 
-Dot + label (left), value (right). Height 38, alignSelf: stretch. Dot is `10×10` rounded-999 in the segment color. Accepts an optional `style?: React.CSSProperties` pass-through that's spread onto the row's outer div *after* the defaults, so call sites can override layout properties like `alignItems`. Reusable for any "list with category color indicator" pattern.
-
-**Last row override — `alignItems: flex-end`.** The breakdown list uses `justify-content: space-between` so the first row pins to the top of the panel and the last row pins to the bottom. With each row's default `alignItems: center`, the last row's text sits centered inside its 38px height, which leaves ~10px of empty space between the text and the panel's bottom edge. Pass `style={{ alignItems: "flex-end" }}` on the **last** `RulesBreakdownRow` ("In test") so its content hugs the bottom of the row — the visible text now sits at 0px from the panel bottom while the row's 38px height (and therefore the parent's even-distribution math for the separators) is preserved. Don't apply the same override to the first row; the canonical `gap: 24` between the StackedRulesBar and the list already handles the visual spacing at the top.
+10×10 dot + label panel. Two flex children with `gap: 4`: a `width: 10; height: 10; border-radius: 999; background: <color>` dot, and a fill panel (`flex: 1 0 0; min-width: 0`) that holds the label (left) and value (right) on opposite ends via `justify-content: space-between`. Label uses `T_BODY` with `color: #b4b9c2`; value uses `T_VALUE` (Inter SemiBold 14/16, `#f2f4f7`). The whole row is `align-items: center` so the dot vertically centers with the label baseline. Reusable for any "list with category color indicator" pattern.
 
 #### `<RulesBreakdownSeparator>` — primitive
 
@@ -1061,29 +1244,46 @@ Hairline 1px line at `--border` (#23252a), alignSelf: stretch. Rendered as a **s
 
 > **Why sibling-rendered, not row-internal**: nesting the separator inside the row would tie it to the row's height/position. With sibling rendering, the parent's space-between can distribute rows AND separators across the available height as 5 equal stops — which is the only way to get clean midpoint separators when the list is `flex: 1 0 0` and grows to fill its container.
 
-#### `<Sparkline data height color strokeWidth>` — primitive
+#### `<Sparkline data height color strokeWidth lineAreaHeight lineTopOffset>` — primitive
 
-SVG `<polyline>` over normalized data. Uses `viewBox` + `preserveAspectRatio="none"` so the curve **stretches horizontally** to fit any container width without distorting the stroke (`vector-effect="non-scaling-stroke"` keeps the line at the requested px width regardless of horizontal scale). Default color `#03d07d` (brand green).
+SVG with two layers: a `<polygon>` fill (gradient: `color` at 20% alpha at the top, fully transparent at the bottom) and a `<polyline>` stroke on top. Uses `viewBox` + `preserveAspectRatio="none"` so the curve **stretches horizontally** to fit any container width without distorting the stroke (`vector-effect="non-scaling-stroke"` keeps the line at the requested px width regardless of horizontal scale). Default color `#03d07d` (bright green, matches the H&P palette).
 
-Reusable: pass any `data: number[]` — the polyline normalizes to fit the box vertically. Default height 52, stroke 1.5.
+Defaults are tuned to the H&P Telemetry uptime card:
+- `height: 68` — total SVG height; the `<polygon>` extends from the line down to this bottom edge, giving the under-line gradient its visual weight
+- `strokeWidth: 4`
+- `lineAreaHeight: 40` — the vertical band the line traces (highest data value sits at the top, lowest at the bottom)
+- `lineTopOffset: 16` — padding above the line area inside the SVG; combined with `lineAreaHeight` this leaves `68 − 16 − 40 = 12px` of fill area below the line's lowest point so the gradient always has visible body
 
-#### `<DotGrid filled total columns dotSize gap>` — primitive
+The gradient `<stop>`s use a `useId()`-generated unique gradient ID so multiple Sparklines on the page don't collide. Pair with a flex parent that has `align-items: flex-end` so the chart's bottom aligns with the bottom of any sibling stat number (the chart is taller than typical text — it intentionally extends above the row).
 
-N×M grid of small dots representing percentages. `filled` dots use `--green` (`#03d07d`); the remainder use `rgba(3,208,125,0.20)` (dimmed green). Defaults: 100 total, 25 columns × 4 rows, dot size 4, gap 4. Reusable for any "out of N" progress visualization.
+#### `<DotGrid percent rows dotSize gap>` — primitive (responsive)
+
+Width-responsive grid of small dots that visualizes a percentage value. **Rows are fixed (default 4); columns vary with the host's width via a `ResizeObserver`** (`columns = floor((width + gap) / (dotSize + gap))`, floored at 1). Total dots = `columns × rows`; filled dots = `round((percent / 100) × total)`. Filled dots use `--green` (`#03d07d`); the remainder use `rgba(3,208,125,0.20)`. Defaults: rows 4, dot size 4, gap 4. The grid takes `width: 100%; min-width: 0` so it can shrink with its host sub-card.
+
+At the design's ~196px wide host, the formula resolves to 25 columns × 4 rows = 100 dots (1 dot ≈ 1%), matching the original Figma. As the Telemetry-completeness sub-card narrows (e.g. when the H&P card itself shrinks at smaller viewports), columns drop and each remaining dot represents a proportionally larger slice. Filled area always reads as the percentage — the indicator just gets coarser, never wrong.
+
+> **Why ResizeObserver, not a CSS-only `auto-fill` grid:** the filled-dot count needs to know the column count, and CSS doesn't expose that to JS. A flex-row + `flex-wrap` would visually wrap correctly but you can't tell where the wrap landed, so the filled count would skew at partial last rows. Authoritative width → authoritative columns → authoritative filled count.
+
+> **Why rows are fixed, columns vary** (and not the other way around): a fixed row count keeps the grid's vertical footprint stable, so the Telemetry completeness sub-card's height doesn't twitch as the viewport resizes. Variable rows would push surrounding layout around at every breakpoint.
+
+> **API renamed `filled` → `percent`** (load-bearing semantic change). Earlier the prop was a literal dot count out of a fixed `total: 100`. Now it's a percentage value (0–100) that the component maps to a dot count internally, since `total` is no longer stable. At the call site `<DotGrid percent={98} />` looks identical to the old `<DotGrid filled={98} />` because at 100 total dots count and percent are interchangeable — but they diverge at every other column count, and the new name makes the unit unambiguous.
 
 #### Type token mapping (Figma → design system)
 
-The Figma uses several font sizes that don't exist in the canonical 12-token scale. They're mapped to the closest existing token rather than introducing one-off sizes:
+Figma's H&P sizes drove updates to the existing stat tokens (T_DISPLAY, T_STAT_NUM, T_STAT_UNIT) and added two new ones (T_STAT_MED, T_VALUE) so every text element still picks one canonical token instead of inlining font properties.
 
-| Element | Figma | Mapped to |
+| Element | Figma | Token |
 |---|---|---|
-| Total rules "730" | Inter Bold 64 / 46 | `T_DISPLAY` (Inter Bold 46/46) |
-| Telemetry uptime "98%" | Inter Bold 44 + 24 | `T_STAT_NUM` (30) + `T_STAT_UNIT` (18) |
-| Telemetry completeness "98%" | Inter Bold 20 + 12 | `T_STAT_UNIT` (18) + bolded `T_BODY_SEMI` (12) |
-| Response time "4.2 / 18.5" | Inter Bold 20 + 12 | `T_STAT_UNIT` (18) + bolded `T_BODY_SEMI` (12) |
-| Breakdown row values "210 / 95 / 72" | Geist Semi Bold 14 / 16 | `T_BODY_SEMI` (Inter SemiBold 12/18) — Geist isn't in the project per Fonts rule |
+| Total rules "730" | Inter Bold 64 / 46 | `T_DISPLAY` (Inter Bold 64/46, `-0.03px`) |
+| Telemetry uptime "98" | Inter Bold 44 / normal | `T_STAT_NUM` (Inter Bold 44/normal, `-0.02px`) |
+| Telemetry uptime "%" | Inter Bold 24 / normal | `T_STAT_UNIT` (Inter Bold 24/normal, `-0.02px`) |
+| Telemetry completeness "98" | Inter Bold 20 / normal | `T_STAT_MED` (Inter Bold 20/normal, `-0.02px`) — **NEW** |
+| Telemetry completeness "%" | Inter Bold 12 / normal | bolded `T_BODY_SEMI` (Inter SemiBold 12/18 + `fontWeight: 700`) |
+| Response time "4.2 / 18.5" | Inter Bold 20 / normal | `T_STAT_MED` |
+| Response time "h" | Inter Bold 12 / normal | bolded `T_BODY_SEMI` |
+| Breakdown row values "210 / 95 / 72" | Geist SemiBold 14 / 16 | `T_VALUE` (Inter SemiBold 14/16) — **NEW**, Inter is substituted for Geist (no third font family) |
 
-If the visual hierarchy ever feels too compressed, the right move is **adding canonical tokens** (e.g. `T_STAT_LG` 44/normal, `T_STAT_MID` 20/22) — not inlining `fontSize` overrides at call sites. None added in this iteration; revisit if multiple components want the larger scale.
+`T_DISPLAY`, `T_STAT_NUM`, and `T_STAT_UNIT` were resized in place (single-call-site tokens, so the change is contained). `T_STAT_MED` and `T_VALUE` are new additions — token count is now 13.
 
 #### Retired patterns
 
@@ -1142,7 +1342,7 @@ Spreads the canonical `INNER_CARD` style (8px radius) with the cell bg overridde
   {tier && (
     <>
       <span style={{ width: 2, alignSelf: "stretch", borderRadius: 100, background: HEATMAP_TIERS[tier].bar, flexShrink: 0 }} />
-      <div /* col, no gap — id (T_BODY #f2f4f7) sits directly above name (T_CAPTION rgba(242,244,247,0.5)); both ellipsis. The vertical rhythm comes from each token's line-height alone, not a flex gap. */ />
+      <div /* col, no gap — id (T_BODY var(--text-primary)) sits directly above name (T_CAPTION color-mix(--text-primary 50% transparent)); both ellipsis. The vertical rhythm comes from each token's line-height alone, not a flex gap. */ />
     </>
   )}
 </div>

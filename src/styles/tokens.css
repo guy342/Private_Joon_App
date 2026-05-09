@@ -14,6 +14,53 @@
   --bg-card:           #1a1c22;  /* top-level cards in MainContent + topbar — was #1e2026 */
   --bg-elevated:       #1e2026;  /* Inner Card surfaces — stat tiles, list rows, tooltip, expanded queue groups, Teamwork rows. Same value as --bg-base; kept as a separate token so the semantic role (sub-card vs sidebar) is explicit at the call site. */
   --bg-icon:           #292b31;  /* icon button + active nav item background */
+  --bg-action:         #1f2126;  /* StatusBar action pill bg (⌘K kbd chip, "Last 7 days" date button, Jira chip in H&P). One shade brighter than --bg-elevated so action buttons read as interactive against --bg-card. Promoted from raw hex 2026-05-09 alongside light-mode rollout. */
+  --bar-track:         #23252a;  /* Passive track for filled-bar visualizations (currently the StackedRulesBar in H&P). Was using --border (`#23252a` in dark, `#d8dbe1` in light) — same value in dark mode but in light mode `#d8dbe1` was too heavy/harsh against the white H&P card. The track is visual chrome behind a colored fill; it should read as a soft groove, not a hard line. Dark stays `#23252a` (current behavior preserved); light gets a much softer value (see light block). */
+
+  /* ---------------------------------------------------------------------------
+     OVERLAYS (theme-aware translucent fills)
+     White-on-dark in dark mode; dark-on-light in light mode. Use at call sites
+     instead of raw rgba(255,255,255,X) — those don't theme.
+  --------------------------------------------------------------------------- */
+  --overlay-subtle:    rgba(255, 255, 255, 0.02);  /* sidebar IconBtn bg + border */
+  --overlay-hover:     rgba(255, 255, 255, 0.05);  /* NeutralBadge bg, ConnectorChip bg, SearchField bg */
+  --overlay-strong:    rgba(255, 255, 255, 0.10);  /* heatmap-slider-thumb hover halo */
+
+  /* ---------------------------------------------------------------------------
+     GLASS SURFACE (FloatingStatusPills)
+     The two pill backgrounds composite a 75%-alpha gradient over whatever's
+     scrolling beneath. Define as separate `from` / `to` tokens so the gradient
+     can theme to a light-glass equivalent in light mode.
+  --------------------------------------------------------------------------- */
+  --bg-glass-from:     rgba(26, 28, 34, 0.75);  /* --bg-card at 75% */
+  --bg-glass-to:       rgba(31, 33, 41, 0.75);  /* --bg-action at 75% */
+
+  /* Top-edge fade (linear-gradient that hides scrolled content under the
+     floating pills). Page-color rgba — needs to match --bg-page in alpha. */
+  --bg-page-fade:      rgba(15, 17, 22, 0.55);
+
+  /* Drop shadow under FloatingStatusPills. Strong (40% black) in dark mode
+     so the pills lift cleanly off the dark page; flips to a much subtler
+     light-mode value below — a 40% black shadow on a white page reads as a
+     hard, heavy drop shadow that doesn't fit the lighter surface family. */
+  --pill-shadow:       0 2px 20px 0 rgba(0, 0, 0, 0.40);
+
+  /* Heatmap slider thumb — the round grab-handle on the heatmap scroll track.
+     White in dark mode (high contrast against dark track), soft mid-gray in
+     light mode (NOT --text-primary, which renders as near-black and reads as
+     a hard, scary blob against the light track). The thumb is a passive
+     affordance — distinguishable from the track but not visually dominant. */
+  --slider-thumb:      #ffffff;
+
+  /* ---------------------------------------------------------------------------
+     SHIMMER TEXT (Workload child name "Detection WN-730")
+     A repeating linear-gradient is clipped to the text via background-clip:text;
+     animating background-position makes the bright peak sweep across. Both ends
+     of the gradient need to theme — without these tokens, light-mode shows
+     near-white text on a white card, and the shimmer reads as invisible.
+  --------------------------------------------------------------------------- */
+  --shimmer-text-base: rgba(255, 255, 255, 0.25);  /* faint baseline at gradient ends */
+  --shimmer-text-peak: #ffffff;                    /* bright peak at gradient midpoint */
 
   /* ---------------------------------------------------------------------------
      BORDERS
@@ -138,6 +185,131 @@
   --ls-body:       -0.2px;
   --ls-caption:    -0.2px;
 
+}
+
+/* =============================================================================
+   LIGHT THEME
+   Activated by `<html data-theme="light">`. Only NEUTRALS flip — backgrounds,
+   text, borders. Accents (--green, --blue, --purple, severity, heatmap tiers)
+   keep their dark-mode hex; the hues read on both surfaces. Their *-bg 5%-alpha
+   variants may need a saturation bump on white — flag for phase-3 polish if
+   visibility suffers, don't pre-emptively change here.
+
+   Hierarchy mirrors dark mode: the page is one "tier" (gray), top-level cards
+   are LIFTED (white — lighter than page), the sidebar is DISTINCT (slightly
+   darker than page so the rail reads as chrome), and inner-card surfaces SINK
+   (a hair darker than the white card so sub-cards read as embedded).
+
+   Don't reintroduce borders on cards in light mode — page→card contrast
+   (#f4f5f7 → #ffffff) is roughly the same magnitude as dark mode's
+   (#0f1116 → #1a1c22), so depth-by-tint still works. The "borders only on
+   buttons / action items" rule holds across both themes.
+   ============================================================================= */
+
+[data-theme="light"] {
+
+  /* Backgrounds */
+  --bg-page:           #f4f5f7;
+  --bg-base:           #eef0f3;  /* sidebar — slightly darker than page, reads as chrome */
+  --bg-card:           #ffffff;  /* top-level cards — pure white, lifted off the page */
+  --bg-elevated:       #fafbfc;  /* inner card surfaces — JUST a hair darker than the white card so sub-cards "sink in" gently. Earlier draft used #f4f5f7 (= --bg-page) but that read as too harsh against pure white — sub-cards looked like rectangles cut OUT of the card instead of nested within it. Stay close to white; let depth come from the soft delta, not a hard tint. */
+  --bg-icon:           #f0f2f5;  /* icon button + active nav item background. Earlier draft used #e8eaef (3 ticks darker than the white card) but that read as harsh against pure white — IconBtns looked stamped onto the card rather than living on it, especially next to the much softer #f7f8fa --bg-action chips in the same StatusBar. Stay close to --bg-action's value; let prominence come from the border, not the fill. */
+  --bg-action:         #f7f8fa;  /* StatusBar action pill bg — one shade darker than the white card so action buttons read as interactive */
+  --bar-track:         #eef0f3;  /* Passive track for filled-bar visualizations (StackedRulesBar). Same value as --bg-base (sidebar) — reads as soft chrome behind the colored fill. Earlier the track was using --border (#d8dbe1) which was too heavy against the white card and felt like a hard groove instead of a soft one. */
+
+  /* Borders — visible on white, but lighter than the original draft. The
+     earlier #d8dbe1 read as a hard outline against #ffffff cards (the user
+     called it "way too strong" on action items); #e4e7eb is a gentler
+     middle gray that still defines the action chips' shape but doesn't
+     compete with their contents for attention. */
+  --border:            #e4e7eb;
+  --border-subtle:     rgba(0, 0, 0, 0.04);  /* dark-on-light needs a touch more alpha than light-on-dark */
+  --border-input:      #cdd1d9;
+
+  /* Text — hierarchy inverted */
+  --text-primary:      #0f1116;
+  --text-secondary:    #3d424c;
+  --text-tertiary:     #6c7280;
+  --text-disabled:     #a4abb6;
+
+  /* Overlays — flip from white-on-dark to dark-on-light. Same role at the call
+     site (subtle bg, hover bg, hover halo); the alpha is bumped slightly because
+     dark-on-light needs more contrast than light-on-dark to read at the same
+     visual weight. */
+  --overlay-subtle:    rgba(0, 0, 0, 0.04);
+  --overlay-hover:     rgba(0, 0, 0, 0.05);
+  --overlay-strong:    rgba(0, 0, 0, 0.10);
+
+  /* Glass surface — pills composite a 85%-alpha white gradient over whatever's
+     scrolling beneath. Stronger alpha than dark mode (75%) because a near-white
+     glass needs more opacity to keep the 1px border + content readable; at 75%
+     in light mode the underlying cards bled through and the pill outline lost
+     definition. */
+  --bg-glass-from:     rgba(255, 255, 255, 0.85);
+  --bg-glass-to:       rgba(247, 248, 250, 0.85);
+
+  /* Top-edge fade — page color (#f4f5f7) at 55% alpha. */
+  --bg-page-fade:      rgba(244, 245, 247, 0.55);
+
+  /* Pill drop shadow — much softer than dark mode. A 40%-black shadow on a
+     white-ish page looks like a hard, heavy drop shadow; light surfaces
+     want a low-alpha, slightly tighter blur that reads as a gentle lift
+     rather than a cast shadow. */
+  --pill-shadow:       0 2px 12px 0 rgba(15, 17, 22, 0.08);
+
+  /* Heatmap slider thumb — light gray. Bumped lighter than the original draft
+     (#a4abb6 → #c5c9d1) because the mid-gray still read as too heavy on the
+     light track. The thumb's built-in drop shadow (.heatmap-slider-thumb in
+     globals.css) carries most of the "this is a grabbable knob" signal; the
+     fill just needs to be a clearly-different-from-track gray, not a dark
+     anchor. Don't lighten past ~#d8dbe1 — beyond that the thumb dissolves
+     into the empty end of the track. */
+  --slider-thumb:      #c5c9d1;
+
+  /* Accent backgrounds bumped to 10% alpha — 5% of an accent on white reads
+     as nearly nothing, especially for the green/blue/purple/orange/red badge
+     fills used by DeltaBadge, Running Badge, severity badges, and the Last
+     Covered "Deployed" pill. 10% keeps the tint clearly visible without
+     pushing the badge body so far that the foreground accent text loses
+     contrast against it. Adjust per-badge if a specific surface lands wrong. */
+  --green-bg:             rgba(3, 208, 125, 0.10);
+  --blue-bg:              rgba(38, 132, 255, 0.10);
+  --purple-bg:            rgba(151, 71, 255, 0.10);
+  --severity-critical-bg: rgba(228, 0, 84, 0.10);
+  --severity-high-bg:     rgba(255, 115, 0, 0.10);
+
+  /* Shimmer text — flips to a dark-on-white shimmer (faint dark baseline,
+     full near-black peak) so the text stays readable against the white card
+     while still reading as a horizontal pulse. */
+  --shimmer-text-base: rgba(15, 17, 22, 0.25);
+  --shimmer-text-peak: #0f1116;
+
+  /* Heatmap tiers recalibrated for white card surface. Same role as dark mode
+     (saturation gradient from "high coverage" down to "no coverage"); literals
+     are flipped to green-tinted lights so cells still read as green-coded
+     against the white card. Bars stay the same green hues as dark mode — the
+     accent column on the cell's left edge is the consistent visual anchor
+     across both themes.
+       100 → strongest green tint   (#bce5d1)
+        75 → medium green tint      (#cfead9)
+        50 → light green tint       (#dfeee3)
+        25 → barely tinted          (#e8efeb)
+         0 → near-neutral light     (#eef0f2)
+     Empty cell sits one shade lighter than tier-0 so it reads as a "no data"
+     surface, distinct from a "0% covered" surface. */
+  --heatmap-tier-100-bg:  #bce5d1;
+  --heatmap-tier-100-bar: #03d07d;
+  --heatmap-tier-75-bg:   #cfead9;
+  --heatmap-tier-75-bar:  #0aa467;
+  --heatmap-tier-50-bg:   #dfeee3;
+  --heatmap-tier-50-bar:  #117852;
+  --heatmap-tier-25-bg:   #e8efeb;
+  --heatmap-tier-25-bar:  #2a8b65;
+  --heatmap-tier-0-bg:    #eef0f2;
+  --heatmap-tier-0-bar:   #b4d4c4;
+  --heatmap-empty:        #f0f1f3;
+
+  /* Other accents intentionally unchanged — see header comment. */
 }
 
 /* =============================================================================

@@ -11,12 +11,14 @@ import {
   ChevronRight,
   ListFilter,
   Maximize2,
+  Moon,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
   RefreshCw,
   Search,
   Settings,
+  Sun,
 } from "lucide-react";
 import mainContentStyles from "./main-content.module.css";
 
@@ -161,14 +163,18 @@ const LAST_COVERED = [
 
 type HeatmapTier = "100" | "75" | "50" | "25" | "0";
 
+// Tier values flow through CSS variables so the entire scale themes via the
+// `[data-theme="light"]` block in tokens.css. Don't inline raw hex here — the
+// dark map and the light map are intentionally calibrated separately, and
+// hardcoded literals would bypass the light overrides entirely.
 const HEATMAP_TIERS: Record<HeatmapTier, { bg: string; bar: string }> = {
-  "100": { bg: "#163931", bar: "#03d07d" },
-  "75":  { bg: "#17322d", bar: "#0aa467" },
-  "50":  { bg: "#182a29", bar: "#117852" },
-  "25":  { bg: "#192326", bar: "#174c3c" },
-  "0":   { bg: "#11181a", bar: "#0c261e" },
+  "100": { bg: "var(--heatmap-tier-100-bg)", bar: "var(--heatmap-tier-100-bar)" },
+  "75":  { bg: "var(--heatmap-tier-75-bg)",  bar: "var(--heatmap-tier-75-bar)" },
+  "50":  { bg: "var(--heatmap-tier-50-bg)",  bar: "var(--heatmap-tier-50-bar)" },
+  "25":  { bg: "var(--heatmap-tier-25-bg)",  bar: "var(--heatmap-tier-25-bar)" },
+  "0":   { bg: "var(--heatmap-tier-0-bg)",   bar: "var(--heatmap-tier-0-bar)" },
 };
-const HEATMAP_EMPTY_BG = "#17191f";
+const HEATMAP_EMPTY_BG = "var(--heatmap-empty)";
 
 const HEATMAP_COLUMN_WIDTH = 145;
 const HEATMAP_CELL_HEIGHT = 52;
@@ -296,7 +302,7 @@ const FONT_INTER = "var(--font-inter), 'Inter', sans-serif";
 const FONT_MONO = "var(--font-jetbrains-mono), 'JetBrains Mono', monospace";
 
 const T_HEADING: React.CSSProperties = {
-  fontFamily: FONT_INTER, fontWeight: 500, fontSize: 18, lineHeight: "24px", color: "#f2f4f7",
+  fontFamily: FONT_INTER, fontWeight: 500, fontSize: 18, lineHeight: "24px", color: "var(--text-primary)",
 };
 const T_BODY: React.CSSProperties = {
   fontFamily: FONT_INTER, fontWeight: 400, fontSize: 12, lineHeight: "18px", letterSpacing: "-0.2px",
@@ -320,25 +326,25 @@ const T_MONO_MED: React.CSSProperties = {
   fontFamily: FONT_MONO, fontWeight: 500, fontSize: 12, lineHeight: "18px", letterSpacing: "-0.2px",
 };
 const T_DISPLAY: React.CSSProperties = {
-  fontFamily: FONT_INTER, fontWeight: 700, fontSize: 64, lineHeight: "46px", letterSpacing: "-0.03px", color: "#f2f4f7",
+  fontFamily: FONT_INTER, fontWeight: 700, fontSize: 64, lineHeight: "46px", letterSpacing: "-0.03px", color: "var(--text-primary)",
 };
 const T_STAT_NUM: React.CSSProperties = {
-  fontFamily: FONT_INTER, fontWeight: 700, fontSize: 44, lineHeight: "normal", letterSpacing: "-0.02px", color: "#f2f4f7",
+  fontFamily: FONT_INTER, fontWeight: 700, fontSize: 44, lineHeight: "normal", letterSpacing: "-0.02px", color: "var(--text-primary)",
 };
 const T_STAT_UNIT: React.CSSProperties = {
-  fontFamily: FONT_INTER, fontWeight: 700, fontSize: 24, lineHeight: "normal", letterSpacing: "-0.02px", color: "#f2f4f7",
+  fontFamily: FONT_INTER, fontWeight: 700, fontSize: 24, lineHeight: "normal", letterSpacing: "-0.02px", color: "var(--text-primary)",
 };
 // Medium-sized stat (Response time number "4.2", Telemetry completeness "98").
 // Sits one size step below T_STAT_UNIT so it still reads as a stat number but
 // fits in the smaller Inner Cards on the H&P right column.
 const T_STAT_MED: React.CSSProperties = {
-  fontFamily: FONT_INTER, fontWeight: 700, fontSize: 20, lineHeight: "normal", letterSpacing: "-0.02px", color: "#f2f4f7",
+  fontFamily: FONT_INTER, fontWeight: 700, fontSize: 20, lineHeight: "normal", letterSpacing: "-0.02px", color: "var(--text-primary)",
 };
 // Tabular value used in the H&P Total Rules breakdown rows ("210", "95",
 // "72"). Inter SemiBold 14 / 16 — Figma's reference uses Geist SemiBold but
 // we substitute with Inter so we don't pull in a third font family.
 const T_VALUE: React.CSSProperties = {
-  fontFamily: FONT_INTER, fontWeight: 600, fontSize: 14, lineHeight: "16px", color: "#f2f4f7",
+  fontFamily: FONT_INTER, fontWeight: 600, fontSize: 14, lineHeight: "16px", color: "var(--text-primary)",
 };
 
 // ─── Inner Card ───────────────────────────────────────────────────────────────
@@ -347,7 +353,7 @@ const T_VALUE: React.CSSProperties = {
 // so inner surfaces feel "lifted" off the parent Card (--bg-card, #1a1c22).
 
 const INNER_CARD: React.CSSProperties = {
-  background: "#1e2026",
+  background: "var(--bg-elevated)",
   borderRadius: 8,
 };
 
@@ -359,10 +365,10 @@ const INNER_CARD: React.CSSProperties = {
 
 const STATUS_PILL_GLASS: React.CSSProperties = {
   borderRadius: 100,
-  border: "1px solid #23252a",
+  border: "1px solid var(--border)",
   background:
-    "linear-gradient(90deg, rgba(26,28,34,0.75) 0%, rgba(31,33,41,0.75) 100%)",
-  boxShadow: "0 2px 20px 0 rgba(0,0,0,0.40)",
+    "linear-gradient(90deg, var(--bg-glass-from) 0%, var(--bg-glass-to) 100%)",
+  boxShadow: "var(--pill-shadow)",
   backdropFilter: "blur(5px)",
   WebkitBackdropFilter: "blur(5px)",
   display: "flex",
@@ -371,6 +377,110 @@ const STATUS_PILL_GLASS: React.CSSProperties = {
 };
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
+
+// Hover tooltip used in the collapsed rail. Appears 8px to the right of the
+// wrapped button at the button's vertical center, captures the action label
+// since the button is icon-only in this state.
+//
+// Why `position: fixed` (not absolute): the sidebar wrapper has `overflow:
+// clip` to handle the expand-animation case, which would clip an absolutely-
+// positioned descendant trying to render outside the rail. Fixed positioning
+// escapes the clip because the wrapper has no transform/filter/etc. that
+// would establish a containing block for fixed elements. Coords are
+// computed at mouseenter from the wrapped element's bounding rect, so we
+// don't have to keep them in sync with scroll/layout — the tooltip is only
+// alive while hovered.
+//
+// Why a custom component (not the project's Radix `<Tooltip>`): this page
+// is a single self-contained file built with inline styles; pulling in
+// Radix + `<TooltipProvider>` for one decoration would break that pattern.
+function SidebarTooltip({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  const [visible, setVisible] = useState(false);
+  // Tracks the unmount timer queued on mouseleave. If the user re-enters the
+  // same button before the fade-out finishes we cancel the timer so the
+  // tooltip stays mounted and the fade-in just resumes from wherever it is,
+  // no flicker.
+  const unmountTimerRef = useRef<number | null>(null);
+
+  function handleEnter() {
+    if (unmountTimerRef.current !== null) {
+      window.clearTimeout(unmountTimerRef.current);
+      unmountTimerRef.current = null;
+    }
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setPos({
+      left: rect.right + 8,
+      top: rect.top + rect.height / 2,
+    });
+    // Mount with `visible: false` (opacity 0, slight left offset), then flip
+    // to true on the next frame so the CSS transition has a "from" state to
+    // interpolate from. Without the rAF gap, React batches setPos + setVisible
+    // into one render and the transition never fires — the tooltip just
+    // appears at opacity 1 instantly.
+    requestAnimationFrame(() => setVisible(true));
+  }
+
+  function handleLeave() {
+    setVisible(false);
+    // Wait for the fade-out to finish before unmounting (clearing pos), so
+    // the user actually sees the leaving transition rather than a snap.
+    unmountTimerRef.current = window.setTimeout(() => {
+      setPos(null);
+      unmountTimerRef.current = null;
+    }, 150);
+  }
+
+  return (
+    <div
+      ref={ref}
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
+      style={{ display: "inline-flex" }}
+    >
+      {children}
+      {pos && (
+        <span
+          role="tooltip"
+          style={{
+            position: "fixed",
+            left: pos.left,
+            top: pos.top,
+            transform: visible
+              ? "translateY(-50%) translateX(0)"
+              : "translateY(-50%) translateX(-4px)",
+            opacity: visible ? 1 : 0,
+            transition: "opacity 150ms ease, transform 150ms ease",
+            background: "var(--bg-card)",
+            color: "var(--text-primary)",
+            padding: "6px 10px",
+            borderRadius: 6,
+            fontFamily: FONT_INTER,
+            fontWeight: 400,
+            fontSize: 12,
+            lineHeight: "18px",
+            letterSpacing: "-0.2px",
+            whiteSpace: "nowrap",
+            pointerEvents: "none",
+            zIndex: 100,
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.4)",
+          }}
+        >
+          {label}
+        </span>
+      )}
+    </div>
+  );
+}
 
 function SidebarIconBtn({
   icon: Icon,
@@ -386,18 +496,19 @@ function SidebarIconBtn({
       type="button"
       aria-label={label}
       onClick={onClick}
+      className="hover-tint"
       style={{
         width: 34,
         height: 34,
         borderRadius: 100,
-        background: "rgba(255,255,255,0.02)",
-        border: "1px solid rgba(255,255,255,0.02)",
+        background: "var(--overlay-subtle)",
+        border: "1px solid var(--overlay-subtle)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         cursor: "pointer",
         flexShrink: 0,
-        color: "#b4b9c2",
+        color: "var(--text-secondary)",
         padding: 0,
       }}
     >
@@ -422,6 +533,7 @@ function NavRow({
   return (
     <button
       type="button"
+      className="hover-tint"
       style={{
         height: 32,
         padding: "5px 8px",
@@ -430,10 +542,10 @@ function NavRow({
         gap: 10,
         borderRadius: 5,
         width: "100%",
-        background: active ? "#292b31" : "transparent",
+        background: active ? "var(--bg-icon)" : "transparent",
         border: "none",
         cursor: "pointer",
-        color: active ? "#f2f4f7" : "#b4b9c2",
+        color: active ? "var(--text-primary)" : "var(--text-secondary)",
         fontFamily: FONT_INTER,
         fontWeight: 400,
         fontSize: 14,
@@ -450,7 +562,7 @@ function NavRow({
             width: 16,
             height: 16,
             borderRadius: "50%",
-            backgroundColor: "#1a1c22",
+            backgroundColor: "var(--bg-elevated)",
             backgroundImage: `url('${avatarUrl}')`,
             backgroundSize: "cover",
             backgroundPosition: "center",
@@ -463,13 +575,13 @@ function NavRow({
             width: 16,
             height: 16,
             borderRadius: "50%",
-            background: "#1a1c22",
+            background: "var(--bg-card)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: 8,
             lineHeight: 1,
-            color: active ? "#f2f4f7" : "#b4b9c2",
+            color: active ? "var(--text-primary)" : "var(--text-secondary)",
             flexShrink: 0,
           }}
         >
@@ -478,7 +590,19 @@ function NavRow({
       ) : Icon ? (
         <Icon size={16} strokeWidth={1.75} style={{ flexShrink: 0 }} />
       ) : null}
-      <span>{label}</span>
+      {/* `white-space: nowrap` is load-bearing for the collapse→expand
+          transition. The wrapper animates width 64→232 over 240ms while the
+          expanded sidebar renders instantly inside it, so during the first
+          ~100ms there isn't horizontal room for multi-word labels. Without
+          nowrap, "Customer Profile" wraps to a second line at narrow widths
+          and the row's flex `align-items: center` shifts the text vertically
+          as it un-wraps — the visible "jump." With nowrap, the label
+          overflows horizontally (clipped by the wrapper's `overflow: clip`)
+          and only ever moves left-to-right as the wrapper widens.
+          Single-word labels (Activity, Detection, Memory, etc.) don't show
+          the bug because they can't wrap, but the rule applies to all rows
+          for consistency. */}
+      <span style={{ whiteSpace: "nowrap" }}>{label}</span>
     </button>
   );
 }
@@ -504,6 +628,7 @@ function CollapsedNavBtn({
     <button
       type="button"
       aria-label={label}
+      className="hover-tint"
       style={{
         width: 64,
         height: isAvatar ? 56 : 52,
@@ -513,7 +638,7 @@ function CollapsedNavBtn({
         background: "transparent",
         border: "none",
         cursor: "pointer",
-        color: active ? "#f2f4f7" : "#b4b9c2",
+        color: active ? "var(--text-primary)" : "var(--text-secondary)",
         flexShrink: 0,
         padding: 0,
         borderRadius: 5,
@@ -528,7 +653,7 @@ function CollapsedNavBtn({
             alignItems: "center",
             justifyContent: "center",
             borderRadius: 8,
-            background: active ? "#292b31" : "transparent",
+            background: active ? "var(--bg-icon)" : "transparent",
           }}
         >
           <span
@@ -538,7 +663,7 @@ function CollapsedNavBtn({
               width: 30,
               height: 30,
               borderRadius: "50%",
-              backgroundColor: "#1a1c22",
+              backgroundColor: "var(--bg-elevated)",
               backgroundImage: `url('${avatarUrl}')`,
               backgroundSize: "cover",
               backgroundPosition: "center",
@@ -594,7 +719,9 @@ function CollapsedSidebar({ onExpand }: { onExpand: () => void }) {
             width: "100%",
           }}
         >
-          <SidebarIconBtn icon={Search} label="Search" />
+          <SidebarTooltip label="Search">
+            <SidebarIconBtn icon={Search} label="Search" />
+          </SidebarTooltip>
         </div>
 
         {/* Two nav groups separated by a 12px gap. */}
@@ -620,15 +747,25 @@ function CollapsedSidebar({ onExpand }: { onExpand: () => void }) {
               width: "100%",
             }}
           >
-            <CollapsedNavBtn label="Activity" icon={Activity} />
-            <CollapsedNavBtn
-              label="Detection"
-              avatarUrl="/Avatar_Sean.png"
-              active
-            />
-            <CollapsedNavBtn label="Investigation" avatarUrl="/Avatar_Helen.png" />
-            <CollapsedNavBtn label="Hunting" avatarUrl="/Avatar_Helen.png" />
-            <CollapsedNavBtn label="Validation" avatarUrl="/Avatar_Valery.png" />
+            <SidebarTooltip label="Activity">
+              <CollapsedNavBtn label="Activity" icon={Activity} />
+            </SidebarTooltip>
+            <SidebarTooltip label="Detection">
+              <CollapsedNavBtn
+                label="Detection"
+                avatarUrl="/Avatar_Dawn.png"
+                active
+              />
+            </SidebarTooltip>
+            <SidebarTooltip label="Investigation">
+              <CollapsedNavBtn label="Investigation" avatarUrl="/Avatar_Helen.png" />
+            </SidebarTooltip>
+            <SidebarTooltip label="Hunting">
+              <CollapsedNavBtn label="Hunting" avatarUrl="/Avatar_Sean.png" />
+            </SidebarTooltip>
+            <SidebarTooltip label="Validation">
+              <CollapsedNavBtn label="Validation" avatarUrl="/Avatar_Valery.png" />
+            </SidebarTooltip>
           </nav>
 
           {/* Categories — three 64×52 icon buttons. Per the Figma the icons
@@ -643,9 +780,15 @@ function CollapsedSidebar({ onExpand }: { onExpand: () => void }) {
               width: "100%",
             }}
           >
-            <CollapsedNavBtn label="Customer Profile" icon={BookOpen} />
-            <CollapsedNavBtn label="Memory" icon={Brain} />
-            <CollapsedNavBtn label="Settings" icon={Settings} />
+            <SidebarTooltip label="Customer Profile">
+              <CollapsedNavBtn label="Customer Profile" icon={BookOpen} />
+            </SidebarTooltip>
+            <SidebarTooltip label="Memory">
+              <CollapsedNavBtn label="Memory" icon={Brain} />
+            </SidebarTooltip>
+            <SidebarTooltip label="Settings">
+              <CollapsedNavBtn label="Settings" icon={Settings} />
+            </SidebarTooltip>
           </div>
         </div>
       </div>
@@ -662,11 +805,13 @@ function CollapsedSidebar({ onExpand }: { onExpand: () => void }) {
           width: "100%",
         }}
       >
-        <SidebarIconBtn
-          icon={PanelLeftOpen}
-          label="Expand sidebar"
-          onClick={onExpand}
-        />
+        <SidebarTooltip label="Expand sidebar">
+          <SidebarIconBtn
+            icon={PanelLeftOpen}
+            label="Expand sidebar"
+            onClick={onExpand}
+          />
+        </SidebarTooltip>
       </div>
     </aside>
   );
@@ -675,6 +820,28 @@ function CollapsedSidebar({ onExpand }: { onExpand: () => void }) {
 // Sidebar is now a controlled component — collapsed state is owned by
 // DetectionPage so other UI (FloatingStatusPills' fixed left position) can
 // react to it. The toggle button still wires to the same onToggle callback.
+//
+// Both content trees (expanded aside + <CollapsedSidebar/>) are mounted at
+// all times and crossfade based on `collapsed`. Earlier iterations swapped
+// content trees imperatively (instant swap on expand, lag-then-swap on
+// collapse) — both directions still felt harsh because the swap moment
+// was a single-frame opacity step (1 → 0 in one tick). Crossfading via
+// CSS opacity transitions on always-mounted siblings is the only way to
+// get a *gentle* fade; there's no lerping a "swap." Pattern:
+//
+//   <relative>
+//     <expanded   absolute inset:0 opacity={collapsed ? 0 : 1} pointerEvents={collapsed ? "none" : "auto"} transition="opacity 200ms ease" />
+//     <collapsed  absolute inset:0 opacity={collapsed ? 1 : 0} pointerEvents={collapsed ? "auto" : "none"} transition="opacity 200ms ease" />
+//   </relative>
+//
+// The wrapper's `width: 232 ↔ 64` transition (240ms) runs in parallel with
+// the opacity crossfade (200ms — slightly faster so the new tree is fully
+// visible before the wrapper finishes morphing). `pointer-events` follows
+// the target state instantly so clicks always go to the visible tree.
+//
+// Trade-off: both trees pay render cost at all times. Neither tree is
+// heavy, so this is fine. Don't try to defer-mount the inactive tree to
+// "save renders" — you'll reintroduce the swap moment.
 function Sidebar({
   collapsed,
   onToggle,
@@ -684,13 +851,47 @@ function Sidebar({
 }) {
   const toggle = onToggle;
 
-  if (collapsed) {
-    return <CollapsedSidebar onExpand={toggle} />;
-  }
-
   return (
-    <aside
+    <div
       style={{
+        // Positioning ancestor for the two absolute content trees below.
+        // `flex: 1; align-self: stretch` makes this fill the wrapper in
+        // DetectionPage just like the bare aside used to.
+        position: "relative",
+        flex: 1,
+        alignSelf: "stretch",
+      }}
+    >
+      {/* Collapsed tree — rendered first so the expanded tree paints
+          ON TOP of it during the crossfade. (DOM order = z-order for
+          siblings without explicit z-index.) Top-of-stack matters: when
+          collapsed=false (rest), expanded is opaque 1 and covers the
+          collapsed tree even though collapsed.opacity=0 — explicit
+          painter's-algorithm safety in case any browser quirks with
+          pointer-events on opacity:0 elements. */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          // CollapsedSidebar's <aside> uses `flex: 1; align-self: stretch`
+          // to fill its parent — needs a flex parent to honor those props.
+          display: "flex",
+          flexDirection: "column",
+          opacity: collapsed ? 1 : 0,
+          pointerEvents: collapsed ? "auto" : "none",
+          transition: "opacity 200ms ease",
+        }}
+      >
+        <CollapsedSidebar onExpand={toggle} />
+      </div>
+      {/* Expanded tree */}
+      <aside
+        style={{
+          position: "absolute",
+          inset: 0,
+          opacity: collapsed ? 0 : 1,
+          pointerEvents: collapsed ? "none" : "auto",
+          transition: "opacity 200ms ease",
         // Width/bg/radius/margin live on the wrapper in DetectionPage so they
         // can transition across the collapsed/expanded swap. This aside is
         // just the content layout — full wrapper width + height, flex-column
@@ -728,21 +929,21 @@ function Sidebar({
               fillRule="evenodd"
               clipRule="evenodd"
               d="M54.5042 0.0995671C60.9088 0.0995671 66.1008 5.226 66.1008 11.5498C66.1008 17.8736 60.9088 23 54.5042 23C48.0996 23 42.9076 17.8736 42.9076 11.5498C42.9076 5.226 48.0996 0.0995671 54.5042 0.0995671ZM54.5042 4.67965C50.6614 4.67965 47.5462 7.75552 47.5462 11.5498C47.5462 15.3441 50.6614 18.4199 54.5042 18.4199C58.347 18.4199 61.4622 15.3441 61.4622 11.5498C61.4622 7.75552 58.347 4.67965 54.5042 4.67965Z"
-              fill="white"
+              fill="var(--text-primary)"
             />
             <path
               fillRule="evenodd"
               clipRule="evenodd"
               d="M28.6891 0.0995671C35.0937 0.0995671 40.2857 5.226 40.2857 11.5498C40.2857 17.8736 35.0937 23 28.6891 23C22.2844 23 17.0924 17.8736 17.0924 11.5498C17.0924 5.226 22.2844 0.0995671 28.6891 0.0995671ZM28.6891 4.67965C24.8463 4.67965 21.7311 7.75552 21.7311 11.5498C21.7311 15.3441 24.8463 18.4199 28.6891 18.4199C32.5319 18.4199 35.6471 15.3441 35.6471 11.5498C35.6471 7.75552 32.5319 4.67965 28.6891 4.67965Z"
-              fill="white"
+              fill="var(--text-primary)"
             />
             <path
               d="M79.4118 0C85.2595 0 90 4.68066 90 10.4545V22.8009H85.3613V10.4545C85.3613 7.21017 82.6976 4.58009 79.4118 4.58009C76.1259 4.58009 73.4622 7.21017 73.4622 10.4545V22.8009H68.8235V10.4545C68.8235 4.68066 73.564 0 79.4118 0Z"
-              fill="white"
+              fill="var(--text-primary)"
             />
             <path
               d="M14.1176 15.7316C14.1176 19.5809 10.9573 22.7013 7.05882 22.7013C3.16034 22.7013 0 19.5809 0 15.7316V14.0028H4.63866V15.7316C4.63866 17.0513 5.7222 18.1212 7.05882 18.1212C8.39545 18.1212 9.47899 17.0513 9.47899 15.7316V0.298701H14.1176V15.7316Z"
-              fill="white"
+              fill="var(--text-primary)"
             />
           </svg>
         </span>
@@ -776,9 +977,9 @@ function Sidebar({
           }}
         >
           <NavRow label="Activity" icon={Activity} />
-          <NavRow label="Detection" avatarUrl="/Avatar_Sean.png" active />
+          <NavRow label="Detection" avatarUrl="/Avatar_Dawn.png" active />
           <NavRow label="Investigation" avatarUrl="/Avatar_Helen.png" />
-          <NavRow label="Hunting" avatarUrl="/Avatar_Helen.png" />
+          <NavRow label="Hunting" avatarUrl="/Avatar_Sean.png" />
           <NavRow label="Validation" avatarUrl="/Avatar_Valery.png" />
         </nav>
 
@@ -810,12 +1011,12 @@ function Sidebar({
                 fontSize: 14,
                 lineHeight: "20px",
                 letterSpacing: "-0.2px",
-                color: "#858a94",
+                color: "var(--text-tertiary)",
               }}
             >
               Workspace
             </span>
-            <ChevronDown size={12} strokeWidth={1.75} color="#858a94" />
+            <ChevronDown size={12} strokeWidth={1.75} color="var(--text-tertiary)" />
           </div>
           <NavRow label="Customer Profile" icon={BookOpen} />
           <NavRow label="Memory" icon={Brain} />
@@ -848,13 +1049,79 @@ function Sidebar({
             fontSize: 10,
             lineHeight: "16px",
             letterSpacing: "-0.2px",
-            color: "#5e6370",
+            color: "var(--text-disabled)",
           }}
         >
           v0.43.2
         </span>
       </div>
     </aside>
+    </div>
+  );
+}
+
+// ─── ThemeToggle ──────────────────────────────────────────────────────────────
+// Testing aid (added 2026-05-09 for the light-mode rollout) — small icon
+// button on the StatusBar's left side that flips between dark / light themes
+// by setting `html[data-theme]`. State persists in localStorage('joon-theme');
+// the synchronous init script in `src/app/layout.tsx` applies the saved theme
+// before paint to prevent flash-of-wrong-theme on first load. Lives in BOTH
+// the regular StatusBar AND the FloatingStatusPills' left pill so the toggle
+// stays reachable at any scroll position.
+
+function ThemeToggle() {
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  // Read whatever the layout.tsx init script set (or fall back to the SSR
+  // default "dark"). Reading from the DOM here — not from localStorage
+  // directly — keeps this component in sync with the init script's logic
+  // and lets that logic evolve in one place later (e.g. add
+  // prefers-color-scheme as a fallback).
+  useEffect(() => {
+    const current =
+      (document.documentElement.dataset.theme as "dark" | "light" | undefined) ??
+      "dark";
+    setTheme(current);
+  }, []);
+
+  const toggle = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    document.documentElement.dataset.theme = next;
+    try {
+      localStorage.setItem("joon-theme", next);
+    } catch {
+      // localStorage can throw in private mode / iframes — ignore; the
+      // toggle still works for the current page session.
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+      className="hover-tint"
+      style={{
+        width: 32,
+        height: 32,
+        borderRadius: 999,
+        background: "var(--bg-action)",
+        border: "1px solid var(--border)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "var(--text-secondary)",
+        cursor: "pointer",
+        flexShrink: 0,
+      }}
+    >
+      {theme === "dark" ? (
+        <Sun size={14} strokeWidth={1.75} />
+      ) : (
+        <Moon size={14} strokeWidth={1.75} />
+      )}
+    </button>
   );
 }
 
@@ -865,7 +1132,7 @@ function StatusBar() {
     <header
       style={{
         alignSelf: "stretch",
-        background: "#1a1c22",
+        background: "var(--bg-card)",
         borderRadius: 16,
         display: "flex",
         alignItems: "center",
@@ -881,7 +1148,7 @@ function StatusBar() {
             width: 44,
             height: 44,
             borderRadius: "50%",
-            backgroundColor: "#292b31",
+            backgroundColor: "var(--bg-icon)",
             backgroundImage: "url('/Avatar_Dawn.png')",
             backgroundSize: "cover",
             backgroundPosition: "center",
@@ -892,13 +1159,13 @@ function StatusBar() {
           <span
             style={{
               ...T_BODY,
-              color: "#f2f4f7",
+              color: "var(--text-primary)",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
             }}
           >
-            Detection Engineering <span style={{ color: "#5e6370" }}>·</span> Dawn
+            Detection Engineering <span style={{ color: "var(--text-disabled)" }}>·</span> Dawn
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span
@@ -906,28 +1173,29 @@ function StatusBar() {
                 width: 6,
                 height: 6,
                 borderRadius: 999,
-                background: "#03d07d",
-                boxShadow: "0 0 0 2px rgba(3,208,125,0.25)",
+                background: "var(--green)",
+                boxShadow: "0 0 0 2px var(--green-stroke)",
                 flexShrink: 0,
               }}
             />
-            <span style={{ ...T_BODY, color: "#b4b9c2" }}>Active</span>
+            <span style={{ ...T_BODY, color: "var(--text-secondary)" }}>Active</span>
           </div>
         </div>
+        <ThemeToggle />
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
         <span
           style={{
             ...T_CAPTION,
-            background: "#1f2126",
-            border: "1px solid #23252a",
+            background: "var(--bg-action)",
+            border: "1px solid var(--border)",
             borderRadius: 100,
             padding: "8px 10px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "#b4b9c2",
+            color: "var(--text-secondary)",
           }}
         >
           ⌘K
@@ -935,17 +1203,18 @@ function StatusBar() {
 
         <button
           type="button"
+          className="hover-tint"
           style={{
             ...T_BODY_MED,
-            background: "#1f2126",
-            border: "1px solid #23252a",
+            background: "var(--bg-action)",
+            border: "1px solid var(--border)",
             borderRadius: 100,
             padding: "8px 10px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             gap: 6,
-            color: "#f2f4f7",
+            color: "var(--text-primary)",
             cursor: "pointer",
           }}
         >
@@ -954,7 +1223,7 @@ function StatusBar() {
           <ChevronDown size={12} strokeWidth={1.75} />
         </button>
 
-        <span style={{ ...T_BODY, color: "#858a94" }}>Updated 2h ago</span>
+        <span style={{ ...T_BODY, color: "var(--text-tertiary)" }}>Updated 2h ago</span>
       </div>
     </header>
   );
@@ -975,10 +1244,10 @@ function FloatingStatusPills({
 }) {
   // Tracks the sidebar's actual rendered width:
   //   expanded  → 232 + 12 (shell padding-left) + 20 (shell-gap) = 264
-  //   collapsed → 44  + 12 + 20 = 76
+  //   collapsed → 64  + 12 + 20                                  = 96
   // Without this the pills stay anchored to the wide-sidebar position
-  // even after the user collapses the rail, leaving a 188px gap on the left.
-  const left = sidebarCollapsed ? 76 : 264;
+  // even after the user collapses the rail, leaving a 168px gap on the left.
+  const left = sidebarCollapsed ? 96 : 264;
   return (
     <div
       aria-hidden={!visible}
@@ -1030,7 +1299,7 @@ function FloatingStatusPills({
               width: 36,
               height: 36,
               borderRadius: "50%",
-              backgroundColor: "#292b31",
+              backgroundColor: "var(--bg-icon)",
               backgroundImage: "url('/Avatar_Dawn.png')",
               backgroundSize: "cover",
               backgroundPosition: "center",
@@ -1041,13 +1310,13 @@ function FloatingStatusPills({
             <span
               style={{
                 ...T_BODY,
-                color: "#f2f4f7",
+                color: "var(--text-primary)",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
               }}
             >
-              Detection Engineering <span style={{ color: "#5e6370" }}>·</span> Dawn
+              Detection Engineering <span style={{ color: "var(--text-disabled)" }}>·</span> Dawn
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span
@@ -1055,14 +1324,15 @@ function FloatingStatusPills({
                   width: 6,
                   height: 6,
                   borderRadius: 999,
-                  background: "#03d07d",
-                  boxShadow: "0 0 0 2px rgba(3,208,125,0.25)",
+                  background: "var(--green)",
+                  boxShadow: "0 0 0 2px var(--green-stroke)",
                   flexShrink: 0,
                 }}
               />
-              <span style={{ ...T_BODY, color: "#b4b9c2" }}>Active</span>
+              <span style={{ ...T_BODY, color: "var(--text-secondary)" }}>Active</span>
             </div>
           </div>
+          <ThemeToggle />
         </div>
 
         {/* RIGHT PILL — actions */}
@@ -1076,14 +1346,14 @@ function FloatingStatusPills({
           <span
             style={{
               ...T_CAPTION,
-              background: "#1f2126",
-              border: "1px solid #23252a",
+              background: "var(--bg-action)",
+              border: "1px solid var(--border)",
               borderRadius: 100,
               padding: "8px 10px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#b4b9c2",
+              color: "var(--text-secondary)",
             }}
           >
             ⌘K
@@ -1091,17 +1361,18 @@ function FloatingStatusPills({
 
           <button
             type="button"
+            className="hover-tint"
             style={{
               ...T_BODY_MED,
-              background: "#1f2126",
-              border: "1px solid #23252a",
+              background: "var(--bg-action)",
+              border: "1px solid var(--border)",
               borderRadius: 100,
               padding: "8px 10px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               gap: 6,
-              color: "#f2f4f7",
+              color: "var(--text-primary)",
               cursor: "pointer",
             }}
           >
@@ -1115,7 +1386,7 @@ function FloatingStatusPills({
               display: "flex",
               alignItems: "center",
               gap: 6,
-              color: "#858a94",
+              color: "var(--text-tertiary)",
             }}
           >
             <RefreshCw size={12} strokeWidth={1.75} />
@@ -1142,7 +1413,7 @@ function Card({
     <div
       className={className}
       style={{
-        background: "#1a1c22",
+        background: "var(--bg-card)",
         borderRadius: 16,
         display: "flex",
         flexDirection: "column",
@@ -1176,7 +1447,7 @@ function CardHeader({
       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
         <span style={T_HEADING}>{title}</span>
         {subtitle && (
-          <span style={{ ...T_BODY, color: "#858a94" }}>{subtitle}</span>
+          <span style={{ ...T_BODY, color: "var(--text-tertiary)" }}>{subtitle}</span>
         )}
       </div>
       {right && (
@@ -1191,7 +1462,7 @@ function CardHeader({
 function IconBtn({
   label,
   children,
-  background = "#292b31",
+  background = "var(--bg-icon)",
 }: {
   label: string;
   children: React.ReactNode;
@@ -1203,18 +1474,19 @@ function IconBtn({
     <button
       type="button"
       aria-label={label}
+      className="hover-tint"
       style={{
         width: 34,
         height: 34,
         borderRadius: 100,
         background,
-        border: "1px solid #23252a",
+        border: "1px solid var(--border)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         cursor: "pointer",
         flexShrink: 0,
-        color: "#b4b9c2",
+        color: "var(--text-secondary)",
         padding: 0,
       }}
     >
@@ -1230,8 +1502,8 @@ function DeltaBadge({ text }: { text: string }) {
         ...T_CAPTION,
         borderRadius: 999,
         padding: "2px 6px",
-        background: "rgba(104,238,118,0.05)",
-        color: "#68ee76",
+        background: "var(--green-bg)",
+        color: "var(--green)",
         display: "inline-flex",
         alignItems: "center",
       }}
@@ -1250,8 +1522,8 @@ function RunningBadge({ text }: { text: string }) {
         borderRadius: 999,
         height: 22,
         padding: "2px 10px 2px 6px",
-        background: "rgba(3,208,125,0.05)",
-        color: "#03d07d",
+        background: "var(--green-bg)",
+        color: "var(--green)",
         display: "flex",
         alignItems: "center",
         gap: 4,
@@ -1289,8 +1561,8 @@ function RunningBadge({ text }: { text: string }) {
           width: 6,
           height: 6,
           borderRadius: 999,
-          background: "#03d07d",
-          boxShadow: "0 0 0 2px rgba(3,208,125,0.25)",
+          background: "var(--green)",
+          boxShadow: "0 0 0 2px var(--green-stroke)",
           flexShrink: 0,
         }}
       />
@@ -1346,8 +1618,8 @@ function NeutralBadge({
         ...T_CAPTION,
         borderRadius: 999,
         padding: size === "md" ? "2px 10px" : "2px 6px",
-        background: "rgba(255,255,255,0.05)",
-        color: "#858a94",
+        background: "var(--overlay-hover)",
+        color: "var(--text-tertiary)",
         display: "inline-flex",
         alignItems: "center",
       }}
@@ -1374,7 +1646,7 @@ function ConnectorChip({
         alignItems: "center",
         gap: 4,
         borderRadius: 100,
-        background: "rgba(255,255,255,0.05)",
+        background: "var(--overlay-hover)",
       }}
     >
       <span
@@ -1387,7 +1659,7 @@ function ConnectorChip({
           justifyContent: "center",
           gap: 10,
           borderRadius: 100,
-          background: "#1e2026",
+          background: "var(--bg-elevated)",
           flexShrink: 0,
         }}
       >
@@ -1402,7 +1674,7 @@ function ConnectorChip({
           />
         )}
       </span>
-      <span style={{ ...T_BODY, color: "#858a94" }}>{label}</span>
+      <span style={{ ...T_BODY, color: "var(--text-tertiary)" }}>{label}</span>
     </span>
   );
 }
@@ -1427,8 +1699,8 @@ function ConnectorChip({
 
 // Stacked progress bar — three segments matching the Figma: gradient deep→
 // brand green (Deployed), light green (Proposals), ice white sliver (In test).
-// Asymmetric corner radii so the outer edges round off (8px) and inner edges
-// stay crisp (2px). Reusable: pass any 3-segment data; for now widths are
+// Asymmetric corner radii so the outer edges round off (7px) and inner edges
+// stay crisp (4px). Reusable: pass any 3-segment data; for now widths are
 // visual-fixed per design.
 function StackedRulesBar() {
   return (
@@ -1441,7 +1713,12 @@ function StackedRulesBar() {
         height: 22,
         padding: 4,
         borderRadius: 100,
-        background: "#23252a",
+        // `--bar-track` is the dedicated token for passive bar grooves — soft
+        // chrome behind a colored fill. Don't reach for `--border` here even
+        // though dark-mode values match: `--border` in light is `#d8dbe1`
+        // which renders as a hard groove on the white H&P card; the dedicated
+        // token routes light to a much softer `#eef0f3` (sidebar tone).
+        background: "var(--bar-track)",
       }}
     >
       {/* Deployed (fills) — green vertical gradient */}
@@ -1450,8 +1727,8 @@ function StackedRulesBar() {
           flex: "1 0 0",
           minWidth: 0,
           height: "100%",
-          background: "linear-gradient(to bottom, #99ffa3, #68ee76)",
-          borderRadius: "30px 4px 4px 30px",
+          background: "linear-gradient(to bottom, #99ffa3, #03d07d)",
+          borderRadius: "7px 4px 4px 7px",
         }}
       />
       {/* Proposals — fixed 59 wide, blue gradient */}
@@ -1470,7 +1747,7 @@ function StackedRulesBar() {
           width: 23,
           height: "100%",
           background: "linear-gradient(to bottom, #ff9364, #f25f33)",
-          borderRadius: "4px 30px 30px 4px",
+          borderRadius: "4px 7px 7px 4px",
           flexShrink: 0,
         }}
       />
@@ -1525,7 +1802,7 @@ function RulesBreakdownRow({
           whiteSpace: "nowrap",
         }}
       >
-        <span style={{ ...T_BODY, color: "#b4b9c2" }}>{label}</span>
+        <span style={{ ...T_BODY, color: "var(--text-secondary)" }}>{label}</span>
         <span style={T_VALUE}>{value}</span>
       </div>
     </div>
@@ -1541,7 +1818,7 @@ function RulesBreakdownSeparator() {
       style={{
         alignSelf: "stretch",
         height: 1,
-        background: "#23252a",
+        background: "var(--border)",
       }}
     />
   );
@@ -1554,7 +1831,7 @@ function RulesBreakdownSeparator() {
 function Sparkline({
   data,
   height = 68,
-  color = "#68ee76",
+  color = "var(--green)",
   strokeWidth = 4,
   lineAreaHeight = 40,
   lineTopOffset = 16,
@@ -1621,29 +1898,86 @@ function Sparkline({
   );
 }
 
-// Dot grid — N×M grid of 4×4 dots, with `filled` count rendered in brand
-// green and the remainder dimmed. Reusable for any "out of 100" visualization.
+// Dot grid — width-responsive N-column × M-row grid of 4×4 dots. The grid
+// re-fills its container width (rows fixed, columns vary) and re-computes the
+// total dot count on every resize so the *filled area* always corresponds to
+// `percent` (0–100). At the design's ~196px wide host this resolves to 25×4 =
+// 100 dots (so each dot ≈ 1% of the percentage value); as the host shrinks,
+// columns drop and each remaining dot represents a proportionally larger slice
+// (e.g. 15 cols × 4 rows = 60 dots → ~1.67%/dot). Visual fidelity stays
+// faithful to the percentage at every width — the indicator just gets
+// coarser, not wrong.
+//
+// Why ResizeObserver (not a CSS-only `auto-fill` grid): we need to *know*
+// the column count to compute `filled`, and CSS doesn't expose that count
+// to JS. A flex-row + `flex-wrap` would work visually but you can't tell
+// JS where the wrap landed, so the filled count would be off whenever the
+// last row was partial. ResizeObserver gives us authoritative width →
+// authoritative columns → authoritative filled count.
+//
+// Why rows are fixed (default 4) and columns vary: a fixed row count keeps
+// the grid's vertical footprint stable — the Telemetry completeness card's
+// height doesn't twitch as you resize the viewport. If we let rows vary
+// instead, the card would grow taller as the host narrows, pushing
+// surrounding layout around.
 function DotGrid({
-  filled,
-  total = 100,
-  columns = 25,
+  percent,
+  rows = 4,
   dotSize = 4,
   gap = 4,
 }: {
-  filled: number;
-  total?: number;
-  columns?: number;
+  percent: number; // 0–100
+  rows?: number;
   dotSize?: number;
   gap?: number;
 }) {
-  const rows = Math.ceil(total / columns);
+  const ref = useRef<HTMLDivElement>(null);
+  // Initial guess matches the original 25-col design so the first paint is
+  // close to final and the resize observer just refines it.
+  const [columns, setColumns] = useState(25);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const compute = () => {
+      const w = el.clientWidth;
+      // columns = floor((w + gap) / (dotSize + gap)) — gap appears between
+      // every pair of adjacent dots, so N dots take N×dotSize + (N-1)×gap
+      // pixels. Solving for N gives the formula above. `+ gap` in the
+      // numerator cancels the missing trailing gap; the floor gives us the
+      // largest N that still fits. `Math.max(1, …)` floors at 1 column so
+      // we never render an empty grid even at extreme narrow widths.
+      const cols = Math.max(1, Math.floor((w + gap) / (dotSize + gap)));
+      setColumns(cols);
+    };
+    compute();
+    const ro = new ResizeObserver(compute);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [dotSize, gap]);
+
+  const total = columns * rows;
+  const filled = Math.round((percent / 100) * total);
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap }}>
+    <div
+      ref={ref}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap,
+        // `width: 100%` + `min-width: 0` lets the grid shrink with its host
+        // sub-card. Without these, the inner flex rows' intrinsic widths
+        // would pin the grid to its content size and prevent the parent
+        // sub-card from honoring `flex: 1 0 0`.
+        width: "100%",
+        minWidth: 0,
+      }}
+    >
       {Array.from({ length: rows }).map((_, r) => (
         <div key={r} style={{ display: "flex", gap }}>
           {Array.from({ length: columns }).map((_, c) => {
             const idx = r * columns + c;
-            if (idx >= total) return null;
             const isFilled = idx < filled;
             return (
               <span
@@ -1652,7 +1986,7 @@ function DotGrid({
                   width: dotSize,
                   height: dotSize,
                   borderRadius: 999,
-                  background: isFilled ? "#03d07d" : "rgba(3,208,125,0.20)",
+                  background: isFilled ? "var(--green)" : "rgba(3,208,125,0.20)",
                   flexShrink: 0,
                 }}
               />
@@ -1681,13 +2015,24 @@ function ResponseTimeRow({
   // these rows flips between column-stack (with separator) and row (two
   // rows side-by-side, no separator) via a container query — see
   // `.response-time-data` and `.response-time-row` in globals.css.
+  //
+  // Explicit tight line-heights on both spans (20 for the stat, 16 for the
+  // caption) — without these, T_STAT_MED's `line-height: normal` adds ~4px
+  // of unwanted air below "4.2h" and T_BODY's 18 adds another ~6px below
+  // "To fix". At the Response time card's actual height (~160px after
+  // padding), those ~10px push the data block past the card's content area
+  // and leave zero room for the title-to-data Auto gap. Tightening lets the
+  // data block hug to ~89px (vs ~109 with default line-heights), which is
+  // what unlocks the visible breathing room above and below the divider.
   return (
     <div className="response-time-row">
-      <span style={T_STAT_MED}>
+      <span style={{ ...T_STAT_MED, lineHeight: "20px" }}>
         {value}
         <span style={{ ...T_BODY_SEMI, fontWeight: 700 }}>{unit}</span>
       </span>
-      <span style={{ ...T_BODY, color: "#b4b9c2" }}>{caption}</span>
+      <span style={{ ...T_BODY, color: "var(--text-secondary)", lineHeight: "16px" }}>
+        {caption}
+      </span>
     </div>
   );
 }
@@ -1730,7 +2075,11 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
             display: "flex",
             flexDirection: "column",
             alignItems: "flex-start",
-            gap: 8,
+            // 0 gap between card title and subtitle — canonical card-header
+            // rhythm (matches `<CardHeader>` and the rest of the cards).
+            // The vertical separation comes from the title's line-height
+            // alone; don't reintroduce a flex gap here.
+            gap: 0,
           }}
         >
           <span
@@ -1740,18 +2089,18 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
               fontSize: 18,
               lineHeight: "normal",
               letterSpacing: "0.06px",
-              color: "#ffffff",
+              color: "var(--text-primary)",
             }}
           >
             Health & Performance
           </span>
-          <span style={{ ...T_BODY, color: "#858a94", letterSpacing: "0.06px" }}>
+          <span style={{ ...T_BODY, color: "var(--text-tertiary)", letterSpacing: "0.06px" }}>
             Overview of the agent and the system
           </span>
         </div>
         <IconBtn
           label="Open Health & Performance in Jira"
-          background="#1f2126"
+          background="var(--bg-action)"
         >
           <img
             src="/jira_icon.svg"
@@ -1788,13 +2137,13 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
               justifyContent: "space-between",
             }}
           >
-            <span style={{ ...T_BODY, color: "#b4b9c2" }}>Total rules</span>
+            <span style={{ ...T_BODY, color: "var(--text-secondary)" }}>Total rules</span>
             <DeltaBadge text="↑ 1.6%" />
           </div>
 
           <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
             <span style={T_DISPLAY}>730</span>
-            <span style={{ ...T_BODY, color: "#858a94" }}>/ 1,250</span>
+            <span style={{ ...T_BODY, color: "var(--text-tertiary)" }}>/ 1,250</span>
           </div>
 
           {/* Bar + list share a wrapper that flex-grows to fill the remaining
@@ -1826,7 +2175,7 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
             >
               {/* Dot colors match the dominant (darker) end of each segment's
                   gradient in the new StackedRulesBar — green / blue / orange. */}
-              <RulesBreakdownRow color="#68ee76" label="Deployed"  value="210" />
+              <RulesBreakdownRow color="var(--green)" label="Deployed"  value="210" />
               <RulesBreakdownSeparator />
               <RulesBreakdownRow color="#4fbaf0" label="Proposals" value="95"  />
               <RulesBreakdownSeparator />
@@ -1859,7 +2208,7 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
                 justifyContent: "space-between",
               }}
             >
-              <span style={{ ...T_BODY, color: "#b4b9c2" }}>Telemetry uptime</span>
+              <span style={{ ...T_BODY, color: "var(--text-secondary)" }}>Telemetry uptime</span>
               <DeltaBadge text="↑ 1.6%" />
             </div>
             <div
@@ -1889,7 +2238,16 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
               minWidth: 0,
             }}
           >
-            {/* Telemetry completeness — content-sized */}
+            {/* Telemetry completeness — fills 50% of the row. Earlier this
+                was content-sized (`flexShrink: 0`) and the DotGrid's fixed
+                25-col grid pinned its width to ~196px, leaving Response time
+                (which has `flex: 1 0 0`) to take whatever was left over.
+                That meant the two sub-cards were NEVER equal width — Response
+                time grew/shrank with the parent while Telemetry stayed
+                fixed. Now both sides use `flex: 1 0 0` + `minWidth: 0` so
+                they always split 50/50, and the DotGrid is responsive
+                (re-fills its parent on resize, recomputing total dots so
+                the filled area still maps to `percent`). */}
             <div
               style={{
                 ...INNER_CARD,
@@ -1898,18 +2256,19 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
                 flexDirection: "column",
                 justifyContent: "space-between",
                 overflow: "clip",
-                flexShrink: 0,
+                flex: "1 0 0",
+                minWidth: 0,
               }}
             >
-              <span style={{ ...T_BODY, color: "#b4b9c2" }}>
+              <span style={{ ...T_BODY, color: "var(--text-secondary)" }}>
                 Telemetry completeness
               </span>
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <span style={T_STAT_MED}>
                   98
                   <span style={{ ...T_BODY_SEMI, fontWeight: 700 }}>%</span>
                 </span>
-                <DotGrid filled={98} />
+                <DotGrid percent={98} />
               </div>
             </div>
 
@@ -1917,9 +2276,11 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
                 `response-time-card` class which sets `container-type: inline-size`
                 so the inner data block can flip layout via a container query
                 instead of a viewport media query (the Figma's two variants
-                differ on the *card* width, not the viewport). At ≥220px wide
-                the data block becomes a 2-column row (no separator); below
-                that it stays vertical with a 1px separator between rows. */}
+                differ on the *card* width, not the viewport). At ≥180px wide
+                the data block becomes a 2-column row; below that it stays
+                vertical (4.2h/To fix above 18.5h/To close gaps). 180 is the
+                minimum where each side-by-side row can host the longer "To
+                close gaps" caption without major truncation. */}
             <div
               className="response-time-card"
               style={{
@@ -1933,10 +2294,9 @@ function HealthAndPerformance({ style }: { style?: React.CSSProperties }) {
                 minWidth: 0,
               }}
             >
-              <span style={{ ...T_BODY, color: "#b4b9c2" }}>Response time</span>
+              <span style={{ ...T_BODY, color: "var(--text-secondary)" }}>Response time</span>
               <div className="response-time-data">
                 <ResponseTimeRow value="4.2" unit="h" caption="To fix" />
-                <div className="response-time-separator" aria-hidden />
                 <ResponseTimeRow value="18.5" unit="h" caption="To close gaps" />
               </div>
             </div>
@@ -2020,6 +2380,7 @@ function ActiveWorkloadQueue({ style }: { style?: React.CSSProperties }) {
                 <button
                   type="button"
                   onClick={() => toggle(i)}
+                  className="hover-tint"
                   style={{
                     width: "100%",
                     height: 44,
@@ -2031,15 +2392,16 @@ function ActiveWorkloadQueue({ style }: { style?: React.CSSProperties }) {
                     alignItems: "center",
                     justifyContent: "space-between",
                     gap: 8,
+                    borderRadius: 8,
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
                     {isOpen ? (
-                      <ChevronDown size={12} strokeWidth={1.75} color="#858a94" style={{ flexShrink: 0 }} />
+                      <ChevronDown size={12} strokeWidth={1.75} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
                     ) : (
-                      <ChevronRight size={12} strokeWidth={1.75} color="#858a94" style={{ flexShrink: 0 }} />
+                      <ChevronRight size={12} strokeWidth={1.75} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
                     )}
-                    <span style={{ ...T_BODY_MED, color: "#f2f4f7", textAlign: "left" }}>
+                    <span style={{ ...T_BODY_MED, color: "var(--text-primary)", textAlign: "left" }}>
                       {group.label}
                     </span>
                   </div>
@@ -2107,7 +2469,7 @@ function ActiveWorkloadQueue({ style }: { style?: React.CSSProperties }) {
                           fill="none"
                           style={{ display: "block", flexShrink: 0, overflow: "visible" }}
                         >
-                          <path d={d} stroke="#292b31" />
+                          <path d={d} stroke="var(--bg-icon)" />
                         </svg>
                       );
                     })}
@@ -2148,7 +2510,7 @@ function ActiveWorkloadQueue({ style }: { style?: React.CSSProperties }) {
                             alignItems: "center",
                             gap: 4,
                             borderRadius: 999,
-                            backgroundColor: "#1a1c22",
+                            backgroundColor: "var(--bg-card)",
                             backgroundImage:
                               "linear-gradient(rgba(151,71,255,0.05), rgba(151,71,255,0.05))",
                           }}
@@ -2188,7 +2550,7 @@ function ActiveWorkloadQueue({ style }: { style?: React.CSSProperties }) {
                           style={{
                             ...T_BODY,
                             backgroundImage:
-                              "linear-gradient(90deg, rgba(255,255,255,0.25) 0%, #ffffff 50%, rgba(255,255,255,0.25) 100%)",
+                              "linear-gradient(90deg, var(--shimmer-text-base) 0%, var(--shimmer-text-peak) 50%, var(--shimmer-text-base) 100%)",
                             backgroundSize: "200% 100%",
                             backgroundRepeat: "repeat",
                             animationName: "joon-shimmer",
@@ -2207,7 +2569,7 @@ function ActiveWorkloadQueue({ style }: { style?: React.CSSProperties }) {
                         </span>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 64, flexShrink: 0 }}>
-                        <span style={{ ...T_CAPTION, color: "#03d07d", width: 94, flexShrink: 0 }}>
+                        <span style={{ ...T_CAPTION, color: "var(--green)", width: 94, flexShrink: 0 }}>
                           {child.status}
                           <span
                             style={{
@@ -2240,7 +2602,7 @@ function ActiveWorkloadQueue({ style }: { style?: React.CSSProperties }) {
                             .
                           </span>
                         </span>
-                        <span style={{ ...T_MONO_SMALL, color: "#858a94" }}>{child.time}</span>
+                        <span style={{ ...T_MONO_SMALL, color: "var(--text-tertiary)" }}>{child.time}</span>
                       </div>
                     </div>
                   ))}
@@ -2270,7 +2632,7 @@ function ProposalRow({ label, value, max }: { label: string; value: number; max:
         alignSelf: "stretch",
       }}
     >
-      <span style={{ ...T_BODY, color: "#b4b9c2" }}>{label}</span>
+      <span style={{ ...T_BODY, color: "var(--text-secondary)" }}>{label}</span>
       <div style={{ position: "relative", height: 14 }}>
         <span
           style={{
@@ -2279,7 +2641,7 @@ function ProposalRow({ label, value, max }: { label: string; value: number; max:
             right: 0,
             top: "50%",
             height: 1,
-            background: "#1a1c22",
+            background: "var(--bg-card)",
             transform: "translateY(-50%)",
           }}
         />
@@ -2290,7 +2652,7 @@ function ProposalRow({ label, value, max }: { label: string; value: number; max:
             top: "50%",
             height: 1.5,
             width: `${pct}%`,
-            background: "#f2f4f7",
+            background: "var(--text-primary)",
             transform: "translateY(-50%)",
           }}
         />
@@ -2302,12 +2664,12 @@ function ProposalRow({ label, value, max }: { label: string; value: number; max:
             width: 8,
             height: 8,
             borderRadius: 999,
-            background: "#f2f4f7",
+            background: "var(--text-primary)",
             transform: "translate(-50%, -50%)",
           }}
         />
       </div>
-      <span style={{ ...T_BODY_SEMI, color: "#f2f4f7", textAlign: "right" }}>{value}</span>
+      <span style={{ ...T_BODY_SEMI, color: "var(--text-primary)", textAlign: "right" }}>{value}</span>
     </div>
   );
 }
@@ -2351,7 +2713,7 @@ function ProposalDrivers({
         >
           <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
             <span style={T_HEADING}>Proposal Drivers</span>
-            <span style={{ ...T_BODY, color: "#858a94" }}>Sub handled</span>
+            <span style={{ ...T_BODY, color: "var(--text-tertiary)" }}>Sub handled</span>
           </div>
           <IconBtn label="Open Proposal Drivers">
             <ArrowUpRight size={14} strokeWidth={1.75} />
@@ -2422,11 +2784,11 @@ function Teamwork({ style }: { style?: React.CSSProperties }) {
                   width: 30,
                   height: 30,
                   borderRadius: 999,
-                  backgroundColor: "#1a1c22",
+                  backgroundColor: "var(--bg-card)",
                   backgroundImage: `url('${item.fromAvatar}')`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
-                  border: "2px solid #1e2026",
+                  border: "2px solid var(--bg-elevated)",
                 }}
               />
               <span
@@ -2439,17 +2801,17 @@ function Teamwork({ style }: { style?: React.CSSProperties }) {
                   width: 30,
                   height: 30,
                   borderRadius: 999,
-                  backgroundColor: "#1a1c22",
+                  backgroundColor: "var(--bg-card)",
                   backgroundImage: `url('${item.toAvatar}')`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
-                  border: "2px solid #1e2026",
+                  border: "2px solid var(--bg-elevated)",
                 }}
               />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
-              <span style={{ ...T_BODY_MED, color: "#f2f4f7" }}>{item.title}</span>
-              <span style={{ ...T_CAPTION, color: "#858a94" }}>{item.meta}</span>
+              <span style={{ ...T_BODY_MED, color: "var(--text-primary)" }}>{item.title}</span>
+              <span style={{ ...T_CAPTION, color: "var(--text-tertiary)" }}>{item.meta}</span>
             </div>
           </div>
         ))}
@@ -2495,7 +2857,7 @@ function LastCovered({ style }: { style?: React.CSSProperties }) {
             <span
               style={{
                 ...T_BODY,
-                color: "#f2f4f7",
+                color: "var(--text-primary)",
                 flex: 1,
                 minWidth: 0,
                 overflow: "hidden",
@@ -2520,7 +2882,7 @@ function LastCovered({ style }: { style?: React.CSSProperties }) {
             <span
               style={{
                 ...T_MONO_SMALL,
-                color: "#858a94",
+                color: "var(--text-tertiary)",
                 flexShrink: 0,
                 width: 48,
                 textAlign: "right",
@@ -2612,7 +2974,7 @@ function HeatmapCell({ cell }: { cell: HeatmapCellData }) {
         <span
           style={{
             ...T_BODY,
-            color: "#f2f4f7",
+            color: "var(--text-primary)",
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -2623,7 +2985,14 @@ function HeatmapCell({ cell }: { cell: HeatmapCellData }) {
         <span
           style={{
             ...T_CAPTION,
-            color: "rgba(242,244,247,0.5)",
+            // 50% of --text-primary so the technique name reads as a muted
+            // sub-line under the ID. Using color-mix instead of a hardcoded
+            // rgba so the alpha rides on top of the themed text color —
+            // dark-text@50% in light mode, light-text@50% in dark mode. The
+            // earlier hardcoded `rgba(242,244,247,0.5)` was light-text and
+            // disappeared completely against the pastel cell tints in
+            // light mode.
+            color: "color-mix(in srgb, var(--text-primary) 50%, transparent)",
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -2675,7 +3044,7 @@ function HeatmapColumn({ column }: { column: HeatmapColumnData }) {
         <span
           style={{
             ...T_BODY,
-            color: "#b4b9c2",
+            color: "var(--text-secondary)",
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -2683,7 +3052,7 @@ function HeatmapColumn({ column }: { column: HeatmapColumnData }) {
         >
           {column.category}
         </span>
-        <span style={{ ...T_BODY, color: "#f2f4f7" }}>
+        <span style={{ ...T_BODY, color: "var(--text-primary)" }}>
           {column.percent}%
         </span>
       </div>
@@ -2721,7 +3090,7 @@ function HeatmapLegend() {
               flexShrink: 0,
             }}
           />
-          <span style={{ ...T_CAPTION, color: "#b4b9c2" }}>{tier}%</span>
+          <span style={{ ...T_CAPTION, color: "var(--text-secondary)" }}>{tier}%</span>
         </div>
       ))}
     </div>
@@ -2818,9 +3187,9 @@ function HeatmapSlider({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElemen
         // footer, with the leftover gap sitting between legend and slider.
         maxWidth: 360,
         borderRadius: 3,
-        border: "1px solid rgba(255,255,255,0.05)",
+        border: "1px solid var(--overlay-hover)",
         background:
-          "linear-gradient(90deg, #07D582 0%, #0ABE77 12.5%, #0DA86B 25%, #137B54 50%, #1E2026 100%)",
+          "linear-gradient(90deg, #07D582 0%, #0ABE77 12.5%, #0DA86B 25%, #137B54 50%, var(--bg-elevated) 100%)",
         backgroundClip: "padding-box",
         boxSizing: "border-box",
       }}
@@ -2840,7 +3209,11 @@ function HeatmapSlider({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElemen
           width: HEATMAP_SLIDER_THUMB_SIZE,
           height: HEATMAP_SLIDER_THUMB_SIZE,
           borderRadius: 8,
-          background: "#fff",
+          // Theme-aware knob via --slider-thumb: white in dark mode (high
+          // contrast against dark track), soft mid-gray in light mode. Don't
+          // collapse this back to --text-primary — that's near-black on light
+          // and reads as a harsh dark blob on the bright track.
+          background: "var(--slider-thumb)",
           cursor: "grab",
           touchAction: "none",
         }}
@@ -2993,16 +3366,16 @@ function SearchField({
         height: 34,
         padding: "0 12px",
         borderRadius: 100,
-        background: "rgba(255,255,255,0.05)",
+        background: "var(--overlay-hover)",
         width,
         flexShrink: 0,
       }}
     >
-      <Search size={16} strokeWidth={1.75} color="#b4b9c2" style={{ flexShrink: 0 }} />
+      <Search size={16} strokeWidth={1.75} color="var(--text-secondary)" style={{ flexShrink: 0 }} />
       <span
         style={{
           ...T_BODY,
-          color: "#b4b9c2",
+          color: "var(--text-secondary)",
           whiteSpace: "nowrap",
           overflow: "hidden",
           textOverflow: "ellipsis",
@@ -3031,10 +3404,11 @@ function FilterPill({
   return (
     <button
       type="button"
+      className="hover-tint"
       style={{
         ...T_BODY,
-        background: "#1f2126",
-        border: "1px solid #23252a",
+        background: "var(--bg-action)",
+        border: "1px solid var(--border)",
         borderRadius: 100,
         padding: "0 13px",
         height: 34,
@@ -3043,7 +3417,7 @@ function FilterPill({
         alignItems: "center",
         justifyContent: "space-between",
         gap: 4,
-        color: "#b4b9c2",
+        color: "var(--text-secondary)",
         cursor: "pointer",
         flexShrink: 0,
       }}
@@ -3109,8 +3483,8 @@ function WorkloadDistribution() {
   };
   const headerCellBase: React.CSSProperties = {
     ...cellBase,
-    color: "#858a94",
-    borderBottom: "1px solid #23252a",
+    color: "var(--text-tertiary)",
+    borderBottom: "1px solid var(--border)",
   };
 
   return (
@@ -3144,8 +3518,8 @@ function WorkloadDistribution() {
             const isLast = i === WORKLOAD_ROWS.length - 1;
             const cell = (extra?: React.CSSProperties): React.CSSProperties => ({
               ...cellBase,
-              color: "#f2f4f7",
-              borderBottom: isLast ? "none" : "1px solid #23252a",
+              color: "var(--text-primary)",
+              borderBottom: isLast ? "none" : "1px solid var(--border)",
               ...extra,
             });
 
@@ -3180,7 +3554,7 @@ function WorkloadDistribution() {
                     className="workload-cell-action-icon"
                     size={14}
                     strokeWidth={1.75}
-                    color="#b4b9c2"
+                    color="var(--text-secondary)"
                   />
                 </div>
               </div>
@@ -3254,23 +3628,43 @@ function MainContent({
           band shows in the gap between the two pills (and the 12px strip above
           them). Three stacked blur layers, each masked into a band so the
           blur intensity decreases from top to bottom; color overlay sits on
-          top so the page-bg gradient stays opaque at the top edge. */}
+          top so the page-bg gradient stays opaque at the top edge.
+
+          Container is 80px tall (was 60). Each blur band's mask fades to
+          transparent at its bottom edge so blur intensity decays smoothly
+          to zero at y=80 — no hard horizontal cut where blur meets
+          un-blurred content. Earlier the lightest band (1px) ran solid
+          (`#000 100%`) at the container's bottom edge and then the
+          element just ended, leaving a visible cut line through anything
+          sitting just below 60px (the user spotted this slicing through
+          the "Teamwork" title). The 80px height + bottom-fading mask
+          together push the visible cut beyond typical card titles.
+
+          `left` tracks the sidebar's actual rendered width so the fade slides
+          along with the sidebar's collapse/expand animation:
+            expanded  → 232 + 12 (shell padding-left) + 20 (shell-gap) = 264
+            collapsed → 64  + 12 + 20                                  = 96
+          240ms ease on `left` matches the sidebar's own width transition so
+          the fade and sidebar move in lock-step. */}
       <div
         aria-hidden
         style={{
           position: "fixed",
           top: 0,
-          // sidebar (232) + shell padding-left (12) + shell-gap (20) = 264
-          left: 264,
+          left: sidebarCollapsed ? 96 : 264,
           right: 0,
-          height: 60,
+          height: 80,
           pointerEvents: "none",
           zIndex: 40,
           opacity: isScrolled ? 1 : 0,
-          transition: "opacity 200ms ease",
+          transition: "opacity 200ms ease, left 240ms ease",
         }}
       >
-        {/* Blur band 3 — lightest, near the bottom of the fade */}
+        {/* Blur band 3 — lightest (1px), bottom of the fade. Peak at ~65%,
+            fades to transparent by 100% so the blur intensity decays
+            smoothly to zero at the container's bottom edge. The earlier
+            `#000 100%` end stop produced a visible horizontal cut where
+            the blurred area abruptly ended. */}
         <div
           style={{
             position: "absolute",
@@ -3278,12 +3672,13 @@ function MainContent({
             backdropFilter: "blur(1px)",
             WebkitBackdropFilter: "blur(1px)",
             maskImage:
-              "linear-gradient(to bottom, transparent 33%, #000 66%, #000 100%)",
+              "linear-gradient(to bottom, transparent 25%, #000 55%, #000 70%, transparent 100%)",
             WebkitMaskImage:
-              "linear-gradient(to bottom, transparent 33%, #000 66%, #000 100%)",
+              "linear-gradient(to bottom, transparent 25%, #000 55%, #000 70%, transparent 100%)",
           }}
         />
-        {/* Blur band 2 — medium, centered in the fade */}
+        {/* Blur band 2 — medium (2px), middle of the fade. Both edges fade
+            so it overlaps band 1 (above) and band 3 (below) smoothly. */}
         <div
           style={{
             position: "absolute",
@@ -3291,12 +3686,13 @@ function MainContent({
             backdropFilter: "blur(2px)",
             WebkitBackdropFilter: "blur(2px)",
             maskImage:
-              "linear-gradient(to bottom, transparent 0%, #000 33%, #000 66%, transparent 100%)",
+              "linear-gradient(to bottom, transparent 0%, #000 25%, #000 55%, transparent 80%)",
             WebkitMaskImage:
-              "linear-gradient(to bottom, transparent 0%, #000 33%, #000 66%, transparent 100%)",
+              "linear-gradient(to bottom, transparent 0%, #000 25%, #000 55%, transparent 80%)",
           }}
         />
-        {/* Blur band 1 — heaviest, at the top edge */}
+        {/* Blur band 1 — heaviest (4px), at the top edge. Peak at 0%,
+            fades to transparent by ~55% so band 2 picks up smoothly. */}
         <div
           style={{
             position: "absolute",
@@ -3304,9 +3700,9 @@ function MainContent({
             backdropFilter: "blur(4px)",
             WebkitBackdropFilter: "blur(4px)",
             maskImage:
-              "linear-gradient(to bottom, #000 0%, #000 33%, transparent 66%)",
+              "linear-gradient(to bottom, #000 0%, #000 25%, transparent 55%)",
             WebkitMaskImage:
-              "linear-gradient(to bottom, #000 0%, #000 33%, transparent 66%)",
+              "linear-gradient(to bottom, #000 0%, #000 25%, transparent 55%)",
           }}
         />
         {/* Color overlay — page bg with a top-biased fall-off */}
@@ -3315,7 +3711,7 @@ function MainContent({
             position: "absolute",
             inset: 0,
             background:
-              "linear-gradient(to bottom, #0f1116 0%, rgba(15,17,22,0.55) 50%, transparent 100%)",
+              "linear-gradient(to bottom, var(--bg-page) 0%, var(--bg-page-fade) 50%, transparent 100%)",
           }}
         />
       </div>
@@ -3334,6 +3730,12 @@ export default function DetectionPage() {
   // Sidebar collapsed state lives here so other layout pieces (currently
   // <FloatingStatusPills>'s fixed `left`) can react to it. Sidebar is now
   // a controlled component fed by these props.
+  //
+  // The crossfade between expanded / collapsed content trees lives INSIDE
+  // <Sidebar> (both trees mounted always, opacity-driven). No lagged-swap
+  // state is needed here — earlier iterations did that, but a CSS opacity
+  // transition is the only way to get a *gentle* fade (a swap, no matter
+  // how well-timed, is always a single-frame opacity step).
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const toggleSidebar = () => setSidebarCollapsed((c) => !c);
 
@@ -3345,7 +3747,7 @@ export default function DetectionPage() {
         overflow: "hidden",
         padding: "0 0 0 12px",
         gap: 20,
-        background: "#0f1116",
+        background: "var(--bg-page)",
       }}
     >
       <style
@@ -3384,11 +3786,13 @@ export default function DetectionPage() {
       {/* Sidebar wrapper — owns the visible card styling (bg, radius, margin,
           width). Both the expanded and collapsed Sidebar components render
           inside here as transparent, full-size content. The wrapper carries
-          the `width` and `border-radius` transitions so the rail morphs
-          smoothly across the collapsed/expanded swap (~240ms is the gentle
-          casual feel — long enough to read as a transition, short enough not
-          to drag). `overflow: clip` hides any content that overshoots while
-          the wrapper is still narrowing/widening. */}
+          the `width` transition so the rail morphs smoothly across the
+          collapsed/expanded swap (~240ms is the gentle casual feel — long
+          enough to read as a transition, short enough not to drag). The
+          16px corner radius stays constant in both states — the rail keeps
+          the same card shape whether it's a wide or narrow column.
+          `overflow: clip` hides any content that overshoots while the
+          wrapper is still narrowing/widening. */}
       <div
         style={{
           display: "flex",
@@ -3398,11 +3802,10 @@ export default function DetectionPage() {
           alignSelf: "stretch",
           marginTop: 12,
           marginBottom: 12,
-          background: "#1e2026",
-          borderRadius: sidebarCollapsed ? 100 : 16,
+          background: "var(--bg-base)",
+          borderRadius: 16,
           overflow: "clip",
-          transition:
-            "width 240ms ease, border-radius 240ms ease",
+          transition: "width 240ms ease",
         }}
       >
         <Sidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
